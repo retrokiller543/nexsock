@@ -1,5 +1,5 @@
 use nexsock_protocol::commands::list_services::ListServicesResponse;
-use nexsock_protocol::commands::manage_service::{ServiceIdentifier, ServiceRef, StartServicePayload};
+use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::ServiceStatus;
 
 pub trait ServiceManagement {

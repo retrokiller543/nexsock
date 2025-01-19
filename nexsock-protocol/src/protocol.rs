@@ -56,15 +56,12 @@ impl Protocol {
     {
         // Serialize payload first to get length
         let payload_data = if let Some(payload) = payload {
-            dbg!(&payload);
             let config = bincode::config::standard();
             bincode::encode_to_vec(payload, config)
                 .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
         } else {
             Vec::new()
         };
-
-        dbg!(&payload_data);
 
         let header = MessageHeader {
             version: self.version,

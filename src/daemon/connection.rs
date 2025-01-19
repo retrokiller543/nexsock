@@ -1,5 +1,6 @@
 use crate::error;
 use crate::service_manager::ServiceManager;
+use crate::statics::SERVICE_MANAGER;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
 use nexsock_protocol::commands::error::ErrorPayload;
@@ -7,6 +8,7 @@ use nexsock_protocol::commands::manage_service::StartServicePayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
+use std::error::Error;
 use std::fmt::Debug;
 use std::io;
 use tokio::io::{BufReader, BufWriter};
@@ -69,12 +71,11 @@ impl Connection {
         // Handle the command
         match self.handle_command(header.command, payload).await {
             Ok(response) => {
-                // Send success response with optional payload
-                if let Some(payload) = response {
-                    self.send_success_with_payload(&payload).await?;
-                } else {
+                if response.is_empty() {
                     self.send_success().await?;
                 }
+
+                self.send_success_with_payload(&response).await?;
             }
             Err(e) => {
                 // Send error response
@@ -90,49 +91,70 @@ impl Connection {
         &mut self,
         command: Command,
         payload: Option<Vec<u8>>,
-    ) -> crate::error::Result<Option<CommandPayload>> {
+    ) -> crate::error::Result<CommandPayload> {
         match command {
             Command::StartService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                self.start_service(&payload).await?;
-                Ok(None)
+                SERVICE_MANAGER.start(&payload).await?;
+
+                Ok(CommandPayload::Empty)
             }
-            Command::StopService => Ok(None),
-            Command::RestartService => Ok(None),
+            Command::StopService => {
+                let payload = Self::read_req_payload(payload)?;
+
+                SERVICE_MANAGER.stop(&payload).await?;
+
+                Ok(CommandPayload::Empty)
+            }
+            Command::RestartService => {
+                let payload = Self::read_req_payload(payload)?;
+
+                SERVICE_MANAGER.restart(&payload).await?;
+
+                Ok(CommandPayload::Empty)
+            }
             Command::GetServiceStatus => {
                 let payload = Self::read_req_payload(payload)?;
 
-                let manager = ServiceManager;
+                let status = SERVICE_MANAGER.get_status(&payload).await?;
 
-                let status = manager.get_status(&payload).await?;
-
-                Ok(Some(CommandPayload::Status(status)))
+                Ok(CommandPayload::Status(status))
             }
-            Command::AddService => Ok(None),
-            Command::RemoveService => Ok(None),
+            Command::AddService => {
+                /*let payload = Self::read_req_payload(payload)?;
+
+                SERVICE_MANAGER.start(&payload).await?;*/
+
+                Ok(CommandPayload::Empty)
+            }
+            Command::RemoveService => {
+                let payload = Self::read_req_payload(payload)?;
+
+                SERVICE_MANAGER.remove_service(&payload).await?;
+
+                Ok(CommandPayload::Empty)
+            }
             Command::ListServices => {
-                let manager = ServiceManager;
-
-                let services = manager.get_all().await?;
-                Ok(Some(CommandPayload::ListServices(services)))
+                let services = SERVICE_MANAGER.get_all().await?;
+                Ok(CommandPayload::ListServices(services))
             }
 
-            Command::UpdateConfig => Ok(None),
-            Command::GetConfig => Ok(None),
+            Command::UpdateConfig => Ok(CommandPayload::Empty),
+            Command::GetConfig => Ok(CommandPayload::Empty),
 
-            Command::AddDependency => Ok(None),
-            Command::RemoveDependency => Ok(None),
-            Command::ListDependencies => Ok(None),
+            Command::AddDependency => Ok(CommandPayload::Empty),
+            Command::RemoveDependency => Ok(CommandPayload::Empty),
+            Command::ListDependencies => Ok(CommandPayload::Empty),
 
-            Command::CheckoutBranch => Ok(None),
-            Command::GetRepoStatus => Ok(None),
+            Command::CheckoutBranch => Ok(CommandPayload::Empty),
+            Command::GetRepoStatus => Ok(CommandPayload::Empty),
 
-            Command::Shutdown => Ok(None),
-            Command::GetSystemStatus => Ok(None),
+            Command::Shutdown => Ok(CommandPayload::Empty),
+            Command::GetSystemStatus => Ok(CommandPayload::Empty),
 
-            Command::Success => Ok(None),
-            Command::Error => Ok(None),
+            Command::Success => Ok(CommandPayload::Empty),
+            Command::Error => Ok(CommandPayload::Empty),
 
             // Add other command handlers...
             _ => Err(crate::error::Error::Io(io::Error::new(
@@ -191,11 +213,5 @@ impl Connection {
                 MessageFlags::HAS_PAYLOAD,
             )
             .await
-    }
-
-    // Implement your service management functions here
-    async fn start_service(&mut self, payload: &StartServicePayload) -> io::Result<()> {
-        info!("Got request to start service {payload:#?}");
-        Ok(())
     }
 }

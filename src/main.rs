@@ -4,6 +4,7 @@ mod models;
 pub mod prelude;
 mod repositories;
 mod service_manager;
+mod statics;
 mod test;
 pub mod traits;
 
