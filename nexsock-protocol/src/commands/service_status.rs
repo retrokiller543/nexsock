@@ -1,10 +1,10 @@
 use crate::commands::CommandPayload;
 use crate::commands::dependency_info::DependencyInfo;
+use crate::commands::manage_service::ServiceRef;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
-use crate::commands::manage_service::ServiceRef;
 
 service_command! {
     pub struct GetServiceStatus<ServiceRef, ServiceStatus> = GetServiceStatus

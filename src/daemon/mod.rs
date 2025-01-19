@@ -1,4 +1,5 @@
 use crate::prelude::*;
+#[cfg(unix)]
 use std::fs;
 use std::sync::Arc;
 #[cfg(windows)]

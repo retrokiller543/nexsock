@@ -1,9 +1,9 @@
 use crate::service_command;
 use bincode::{Decode, Encode};
+use derive_more::{From, TryFrom};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
-use derive_more::{From, TryFrom};
 
 service_command! {
     pub struct StartServiceCommand<StartServicePayload, ()> = StartService {
@@ -47,13 +47,13 @@ pub struct StartServicePayload {
     Encode,
     Decode,
     TryFrom,
-    From
+    From,
 )]
 pub enum ServiceRef {
     #[try_from(Option<i64>)]
     Id(i64),
     #[try_from(Option<String>, Option<&str>)]
-    Name(String)
+    Name(String),
 }
 
 impl Default for ServiceRef {

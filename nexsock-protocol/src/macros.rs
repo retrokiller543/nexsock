@@ -26,7 +26,7 @@ macro_rules! service_command {
             fn into_payload(self) -> Self::Input {}
         }
     };
-    
+
     {
         $vis:vis struct $command:ident<$input:ident, $output:ty> = $item:ident
     } => {

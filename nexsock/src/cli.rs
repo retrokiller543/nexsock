@@ -1,9 +1,9 @@
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
-use std::collections::HashMap;
 use derive_more::{FromStr, IsVariant};
 use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
 use nexsock_protocol::commands::manage_service::ServiceRef;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -21,7 +21,7 @@ pub enum Commands {
     /// Start a service
     Start {
         /// The name or id of a service.
-        /// 
+        ///
         /// The Parser will consider it a name if it fails to parse the text as an integer
         #[arg(value_parser = ServiceRef::from_str)]
         service: ServiceRef,
@@ -49,7 +49,7 @@ pub enum Commands {
         service: ServiceRef,
 
         /// Environment variables in KEY=VALUE format
-        /// 
+        ///
         /// Variables are separated by `;` and Key & Value are separated by`=`
         #[arg(short, long, value_delimiter = ';')]
         env: Vec<String>,
@@ -74,13 +74,13 @@ pub enum Commands {
 
         /// Repository URL for the service
         repo_url: String,
-        
+
         /// Path to the repository
         repo_path: String,
 
         /// Port number the service runs on
         port: i64,
-        
+
         /// Configuration file for the service
         #[arg(long)]
         config: Option<PathBuf>,
@@ -221,7 +221,9 @@ impl From<GitCommands> for CheckoutCommand {
     fn from(value: GitCommands) -> Self {
         match value {
             GitCommands::Checkout { service, branch } => CheckoutCommand::new(service, branch),
-            GitCommands::Status { .. } => panic!("Can not create checkout command from a git status input")
+            GitCommands::Status { .. } => {
+                panic!("Can not create checkout command from a git status input")
+            }
         }
     }
 }
@@ -229,21 +231,21 @@ impl From<GitCommands> for CheckoutCommand {
 impl From<GitCommands> for GetRepoStatusCommand {
     fn from(value: GitCommands) -> Self {
         match value {
-            GitCommands::Checkout { .. } => panic!("Can not create checkout command from a git status input"),
-            GitCommands::Status { service } => GetRepoStatusCommand::new(service)
+            GitCommands::Checkout { .. } => {
+                panic!("Can not create checkout command from a git status input")
+            }
+            GitCommands::Status { service } => GetRepoStatusCommand::new(service),
         }
     }
 }
 
 impl Cli {
     pub fn parse_env_vars(env_vars: Vec<String>) -> HashMap<String, String> {
-        env_vars.into_iter()
+        env_vars
+            .into_iter()
             .filter_map(|pair| {
                 let mut parts = pair.splitn(2, '=');
-                Some((
-                    parts.next()?.to_string(),
-                    parts.next()?.to_string()
-                ))
+                Some((parts.next()?.to_string(), parts.next()?.to_string()))
             })
             .collect()
     }

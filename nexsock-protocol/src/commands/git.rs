@@ -1,7 +1,7 @@
-use bincode::{Decode, Encode};
-use serde::{Deserialize, Serialize};
 use crate::commands::manage_service::ServiceRef;
 use crate::service_command;
+use bincode::{Decode, Encode};
+use serde::{Deserialize, Serialize};
 
 #[derive(
     Clone,

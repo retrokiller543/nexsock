@@ -1,9 +1,9 @@
 use crate::models::service_record::ServiceRecord;
+use nexsock_protocol::commands::manage_service::ServiceRef;
 use sqlx::{QueryBuilder, query, query_as};
 use sqlx_utils::filter::equals;
 use sqlx_utils::traits::SqlFilter;
 use sqlx_utils::{repository, sql_filter, traits::Model};
-use nexsock_protocol::commands::manage_service::ServiceRef;
 
 sql_filter! {
     pub struct ServiceRecordFilter {
@@ -16,7 +16,7 @@ impl From<ServiceRef> for ServiceRecordFilter {
         let filter = Self::new();
         match value {
             ServiceRef::Id(id) => filter.id(id),
-            ServiceRef::Name(name) => filter.name(name)
+            ServiceRef::Name(name) => filter.name(name),
         }
     }
 }
@@ -26,7 +26,7 @@ impl From<&ServiceRef> for ServiceRecordFilter {
         let filter = Self::new();
         match value {
             ServiceRef::Id(id) => filter.id(*id),
-            ServiceRef::Name(name) => filter.name(name)
+            ServiceRef::Name(name) => filter.name(name),
         }
     }
 }

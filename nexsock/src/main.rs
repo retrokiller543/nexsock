@@ -1,9 +1,9 @@
-use anyhow::bail;
 use crate::cli::Cli;
 use crate::client::Client;
+use crate::commands::create_command;
+use anyhow::bail;
 use clap::Parser;
 use nexsock_protocol::commands::ServiceCommand;
-use crate::commands::create_command;
 
 mod cli;
 mod client;
@@ -19,9 +19,9 @@ async fn main() -> anyhow::Result<()> {
 
     // Connect to daemon
     let mut client = Client::connect(cli.socket).await?;
-    
+
     let command = create_command(cli.command)?;
-    
+
     let response = match command {
         ServiceCommand::Start(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Stop(cmd) => client.execute_command(cmd).await?,
@@ -37,9 +37,9 @@ async fn main() -> anyhow::Result<()> {
         ServiceCommand::DependencyList(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::GitCheckout(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::GitStatus(cmd) => client.execute_command(cmd).await?,
-        _ => bail!("Unknown command")
+        _ => bail!("Unknown command"),
     };
-    
+
     dbg!(response);
 
     Ok(())
