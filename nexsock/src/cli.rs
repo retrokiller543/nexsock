@@ -5,7 +5,6 @@ use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::collections::HashMap;
 #[cfg(windows)]
 use std::net::SocketAddr;
-#[cfg(unix)]
 use std::path::PathBuf;
 
 #[derive(Parser)]
