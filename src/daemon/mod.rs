@@ -41,7 +41,7 @@ impl Daemon {
     }
 
     #[cfg(windows)]
-    pub fn new(config: DaemonConfig) -> Result<Self> {
+    pub async fn new(config: DaemonConfig) -> Result<Self> {
         // Ensure old socket is cleaned up
         let addr = if config.socket_addr.is_empty() {
             error!("Socket address cant be empty, using default");
@@ -50,7 +50,7 @@ impl Daemon {
             &config.socket_addr
         };
 
-        let listener = Arc::new(TcpListener::bind(&addr)?);
+        let listener = Arc::new(TcpListener::bind(&addr).await?);
         info!("Bound to {:?}", config.socket_path);
 
         Ok(Self { listener, config })
@@ -67,10 +67,12 @@ impl Daemon {
     pub async fn shutdown(self) -> Result<()> {
         info!("Shutting down daemon...");
 
+        #[cfg(unix)]
         if self.config.socket_path.exists() {
             debug!("Removing socket file");
             fs::remove_file(&self.config.socket_path)?;
         }
+
         Ok(())
     }
 }

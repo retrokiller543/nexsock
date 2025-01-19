@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use std::path::PathBuf;
 #[cfg(windows)]
-use tokio::net::unix::SocketAddr;
+use tokio::net::SocketAddr;
 
 #[derive(Debug, Clone)] // Remove Clone derive
 pub struct DaemonConfig {
