@@ -4,6 +4,7 @@ use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use sqlx_utils::traits::Model;
+#[cfg(feature = "git")]
 use std::path::Path;
 
 // Database model for services table

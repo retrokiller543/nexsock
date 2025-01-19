@@ -15,6 +15,7 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error(transparent)]
     Tracing(#[from] SetGlobalDefaultError),
+    #[cfg(feature = "git")]
     #[error(transparent)]
     Git2(#[from] git2::Error),
     #[error(transparent)]
