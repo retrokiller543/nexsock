@@ -5,7 +5,9 @@ use binrw::{BinRead, BinWrite};
 use std::fmt::Debug;
 use std::io;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
-use tracing::{debug, error};
+use tracing::debug;
+#[cfg(debug_assertions)]
+use tracing::error;
 
 #[derive(Debug, Default)]
 pub struct Protocol {
