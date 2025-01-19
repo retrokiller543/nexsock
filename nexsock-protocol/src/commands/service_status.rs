@@ -4,13 +4,10 @@ use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
-use crate::commands::manage_service::ServiceIdentifier;
+use crate::commands::manage_service::ServiceRef;
 
 service_command! {
-    pub struct GetServiceStatus<ServiceIdentifier, ServiceStatus> = GetServiceStatus {
-        id: Option<i64>,
-        name: Option<String>
-    }
+    pub struct GetServiceStatus<ServiceRef, ServiceStatus> = GetServiceStatus
 }
 
 #[derive(

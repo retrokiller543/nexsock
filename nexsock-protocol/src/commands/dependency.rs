@@ -1,30 +1,27 @@
 use crate::commands::dependency_info::DependencyInfo;
-use crate::commands::manage_service::ServiceIdentifier;
-use crate::commands::{Command, CommandPayload};
+use crate::commands::manage_service::ServiceRef;
+use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 service_command! {
     pub struct AddDependencyCommand<AddDependencyPayload, ()> = AddDependency {
-        service_name: String,
-        dependent_service_name: String,
+        service: ServiceRef,
+        dependent_service: ServiceRef,
         tunnel_enabled: bool,
     }
 }
 
 service_command! {
     pub struct RemoveDependencyCommand<RemoveDependencyPayload, ()> = RemoveDependency {
-        service_name: String,
-        dependent_service_name: String,
+        service: ServiceRef,
+        dependent_service: ServiceRef,
     }
 }
 
 service_command! {
-    pub struct ListDependenciesCommand<ServiceIdentifier, ListDependenciesResponse> = ListDependencies {
-        id: Option<i64>,
-        name: Option<String>
-    }
+    pub struct ListDependenciesCommand<ServiceRef, ListDependenciesResponse> = ListDependencies
 }
 
 try_from!(Dependencies => ListDependenciesResponse);
@@ -44,8 +41,8 @@ try_from!(Dependencies => ListDependenciesResponse);
     Decode,
 )]
 pub struct AddDependencyPayload {
-    pub service_name: String,
-    pub dependent_service_name: String,
+    pub service: ServiceRef,
+    pub dependent_service: ServiceRef,
     pub tunnel_enabled: bool,
 }
 
@@ -64,8 +61,8 @@ pub struct AddDependencyPayload {
     Decode,
 )]
 pub struct RemoveDependencyPayload {
-    pub service_name: String,
-    pub dependent_service_name: String,
+    pub service: ServiceRef,
+    pub dependent_service: ServiceRef,
 }
 
 #[derive(

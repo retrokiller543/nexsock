@@ -1,6 +1,6 @@
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
-use crate::commands::manage_service::ServiceIdentifier;
+use crate::commands::manage_service::ServiceRef;
 use crate::service_command;
 
 #[derive(
@@ -18,7 +18,7 @@ use crate::service_command;
     Decode,
 )]
 pub struct CheckoutPayload {
-    pub service_name: String,
+    pub service: ServiceRef,
     pub branch: String,
 }
 
@@ -44,14 +44,11 @@ pub struct RepoStatus {
 
 service_command! {
     pub struct CheckoutCommand<CheckoutPayload, ()> = CheckoutBranch {
-        service_name: String,
+        service: ServiceRef,
         branch: String
     }
 }
 
 service_command! {
-    pub struct GetRepoStatusCommand<ServiceIdentifier, RepoStatus> = GetRepoStatus {
-        id: Option<i64>,
-        name: Option<String>,
-    }
+    pub struct GetRepoStatusCommand<ServiceRef, RepoStatus> = GetRepoStatus
 }

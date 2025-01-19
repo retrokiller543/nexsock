@@ -1,21 +1,14 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use std::collections::HashMap;
-use anyhow::bail;
-use derive_more::{IsVariant, TryUnwrap, Unwrap};
-use nexsock_protocol::commands::{
-    manage_service::{ServiceIdentifier, StartServicePayload},
-    config::{ServiceConfigPayload, ConfigFormat},
-    dependency::{AddDependencyPayload, RemoveDependencyPayload},
-    git::CheckoutPayload,
-    add_service::AddServicePayload,
-};
+use derive_more::{FromStr, IsVariant};
 use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
-use nexsock_protocol::traits::ServiceCommand;
+use nexsock_protocol::commands::manage_service::ServiceRef;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
+    /// Socket path to use to communicate with the daemon
     #[arg(short, long, default_value = "/tmp/nexsockd.sock")]
     pub(crate) socket: PathBuf,
 
@@ -27,41 +20,39 @@ pub struct Cli {
 pub enum Commands {
     /// Start a service
     Start {
-        /// Name of the service
-        name: String,
+        /// The name or id of a service.
+        /// 
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
 
         /// Environment variables in KEY=VALUE format
         #[arg(short, long, value_delimiter = ',')]
         env: Vec<String>,
-
-        /// Service ID (optional)
-        #[arg(short, long)]
-        id: Option<i64>,
     },
 
     /// Stop a service
     Stop {
-        /// Name of the service
-        #[arg(short, long)]
-        name: Option<String>,
-
-        /// Service ID
-        #[arg(short, long)]
-        id: Option<i64>,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
     },
 
     /// Restart a service
     Restart {
-        /// Name of the service
-        name: String,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
 
         /// Environment variables in KEY=VALUE format
-        #[arg(short, long, value_delimiter = ',')]
+        /// 
+        /// Variables are separated by `;` and Key & Value are separated by`=`
+        #[arg(short, long, value_delimiter = ';')]
         env: Vec<String>,
-
-        /// Service ID (optional)
-        #[arg(short, long)]
-        id: Option<i64>,
     },
 
     /// List all services
@@ -69,46 +60,39 @@ pub enum Commands {
 
     /// Get status of a service
     Status {
-        /// Name of the service
-        #[arg(short, long)]
-        name: Option<String>,
-
-        /// Service ID
-        #[arg(short, long)]
-        id: Option<i64>,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
     },
 
     /// Add a new service
     Add {
-        /// Service name
+        /// Name of the service to add
         name: String,
 
-        /// Repository URL
-        #[arg(short, long)]
+        /// Repository URL for the service
         repo_url: String,
-
-        /// Port number
-        #[arg(short, long)]
-        port: i64,
-
-        /// Repository path
-        #[arg(short, long)]
+        
+        /// Path to the repository
         repo_path: String,
 
-        /// Configuration file
+        /// Port number the service runs on
+        port: i64,
+        
+        /// Configuration file for the service
         #[arg(long)]
         config: Option<PathBuf>,
     },
 
     /// Remove a service
     Remove {
-        /// Name of the service
-        #[arg(short, long)]
-        name: Option<String>,
-
-        /// Service ID
-        #[arg(short, long)]
-        id: Option<i64>,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
     },
 
     /// Update service configuration
@@ -134,24 +118,20 @@ pub enum Commands {
 pub enum ConfigCommands {
     /// Get service configuration
     Get {
-        /// Name of the service
-        #[arg(short, long)]
-        name: Option<String>,
-
-        /// Service ID
-        #[arg(short, long)]
-        id: Option<i64>,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
     },
 
     /// Update service configuration
     Update {
-        /// Name of the service
-        #[arg(short, long)]
-        name: Option<String>,
-
-        /// Service ID
-        #[arg(short, long)]
-        id: Option<i64>,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
 
         /// Configuration filename
         #[arg(short, long)]
@@ -171,11 +151,17 @@ pub enum ConfigCommands {
 pub enum DependencyCommands {
     /// Add a dependency
     Add {
-        /// Service name
-        service: String,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
 
-        /// Dependent service name
-        dependent: String,
+        /// The name or id of the dependant service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        dependent: ServiceRef,
 
         /// Enable tunneling
         #[arg(short, long)]
@@ -184,22 +170,26 @@ pub enum DependencyCommands {
 
     /// Remove a dependency
     Remove {
-        /// Service name
-        service: String,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
 
-        /// Dependent service name
-        dependent: String,
+        /// The name or id of the dependant service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        dependent: ServiceRef,
     },
 
     /// List dependencies
     List {
-        /// Name of the service
-        #[arg(short, long)]
-        name: Option<String>,
-
-        /// Service ID
-        #[arg(short, long)]
-        id: Option<i64>,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
     },
 }
 
@@ -207,8 +197,11 @@ pub enum DependencyCommands {
 pub enum GitCommands {
     /// Checkout a branch
     Checkout {
-        /// Service name
-        service: String,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
 
         /// Branch name
         branch: String,
@@ -216,9 +209,11 @@ pub enum GitCommands {
 
     /// Get repository status
     Status {
-        /// Service name
-        id: Option<i64>,
-        name: Option<String>,
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
     },
 }
 
@@ -235,7 +230,7 @@ impl From<GitCommands> for GetRepoStatusCommand {
     fn from(value: GitCommands) -> Self {
         match value {
             GitCommands::Checkout { .. } => panic!("Can not create checkout command from a git status input"),
-            GitCommands::Status { id, name } => GetRepoStatusCommand::new(id, name) 
+            GitCommands::Status { service } => GetRepoStatusCommand::new(service)
         }
     }
 }
@@ -251,30 +246,5 @@ impl Cli {
                 ))
             })
             .collect()
-    }
-
-    pub fn into_command(self) -> nexsock_protocol::commands::Command {
-        match self.command {
-            Commands::Start { .. } => nexsock_protocol::commands::Command::StartService,
-            Commands::Stop { .. } => nexsock_protocol::commands::Command::StopService,
-            Commands::Restart { .. } => nexsock_protocol::commands::Command::RestartService,
-            Commands::List => nexsock_protocol::commands::Command::ListServices,
-            Commands::Status { .. } => nexsock_protocol::commands::Command::GetServiceStatus,
-            Commands::Add { .. } => nexsock_protocol::commands::Command::AddService,
-            Commands::Remove { .. } => nexsock_protocol::commands::Command::RemoveService,
-            Commands::Config { command } => match command {
-                ConfigCommands::Get { .. } => nexsock_protocol::commands::Command::GetConfig,
-                ConfigCommands::Update { .. } => nexsock_protocol::commands::Command::UpdateConfig,
-            },
-            Commands::Dependency { command } => match command {
-                DependencyCommands::Add { .. } => nexsock_protocol::commands::Command::AddDependency,
-                DependencyCommands::Remove { .. } => nexsock_protocol::commands::Command::RemoveDependency,
-                DependencyCommands::List { .. } => nexsock_protocol::commands::Command::ListDependencies,
-            },
-            Commands::Git { command } => match command {
-                GitCommands::Checkout { .. } => nexsock_protocol::commands::Command::CheckoutBranch,
-                GitCommands::Status { .. } => nexsock_protocol::commands::Command::GetRepoStatus,
-            },
-        }
     }
 }

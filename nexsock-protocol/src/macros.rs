@@ -26,6 +26,29 @@ macro_rules! service_command {
             fn into_payload(self) -> Self::Input {}
         }
     };
+    
+    {
+        $vis:vis struct $command:ident<$input:ident, $output:ty> = $item:ident
+    } => {
+        $vis struct $command($input);
+
+        impl $command {
+            $vis fn new(input: impl Into<$input>) -> Self {
+                Self(input.into())
+            }
+        }
+
+        impl $crate::traits::ServiceCommand for $command {
+            type Input = $input;
+            type Output = $output;
+
+            const COMMAND: $crate::commands::Command = $crate::commands::Command::$item;
+
+            fn into_payload(self) -> Self::Input {
+                self.0
+            }
+        }
+    };
 
     {
         $vis:vis struct $command:ident<$input:ty, $output:ty> = $item:ident {

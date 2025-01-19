@@ -146,7 +146,7 @@ impl Connection {
         let payload = if let Some(payload) = payload {
             payload
         } else {
-            return Err(crate::error::Error::ExpectedPayload);
+            return Err(error::Error::ExpectedPayload);
         };
 
         let Some(data): Option<T> = Protocol::read_payload(&payload)? else {

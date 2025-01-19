@@ -3,10 +3,31 @@ use sqlx::{QueryBuilder, query, query_as};
 use sqlx_utils::filter::equals;
 use sqlx_utils::traits::SqlFilter;
 use sqlx_utils::{repository, sql_filter, traits::Model};
+use nexsock_protocol::commands::manage_service::ServiceRef;
 
 sql_filter! {
     pub struct ServiceRecordFilter {
         SELECT * FROM service WHERE ?id = i64 OR ?name LIKE String
+    }
+}
+
+impl From<ServiceRef> for ServiceRecordFilter {
+    fn from(value: ServiceRef) -> Self {
+        let filter = Self::new();
+        match value {
+            ServiceRef::Id(id) => filter.id(id),
+            ServiceRef::Name(name) => filter.name(name)
+        }
+    }
+}
+
+impl From<&ServiceRef> for ServiceRecordFilter {
+    fn from(value: &ServiceRef) -> Self {
+        let filter = Self::new();
+        match value {
+            ServiceRef::Id(id) => filter.id(*id),
+            ServiceRef::Name(name) => filter.name(name)
+        }
     }
 }
 

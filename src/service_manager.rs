@@ -3,7 +3,7 @@ use crate::repositories::service_record::{SERVICE_RECORD_REPOSITORY, ServiceReco
 use crate::traits::service_management::ServiceManagement;
 use anyhow::anyhow;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
-use nexsock_protocol::commands::manage_service::{ServiceIdentifier, StartServicePayload};
+use nexsock_protocol::commands::manage_service::{ServiceIdentifier, ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::ServiceStatus;
 use sqlx_utils::traits::Repository;
 
@@ -14,7 +14,7 @@ impl ServiceManagement for ServiceManager {
         todo!()
     }
 
-    async fn stop(&self, _payload: &ServiceIdentifier) -> crate::error::Result<()> {
+    async fn stop(&self, _payload: &ServiceRef) -> crate::error::Result<()> {
         todo!()
     }
 
@@ -22,21 +22,12 @@ impl ServiceManagement for ServiceManager {
         todo!()
     }
 
-    async fn remove_service(&self, _payload: &ServiceIdentifier) -> crate::error::Result<()> {
+    async fn remove_service(&self, _payload: &ServiceRef) -> crate::error::Result<()> {
         todo!()
     }
 
-    async fn get_status(&self, payload: &ServiceIdentifier) -> crate::error::Result<ServiceStatus> {
-        let mut filter = ServiceRecordFilter::new();
-
-        if let Some(id) = &payload.id {
-            filter = filter.id(*id);
-        };
-
-        if let Some(name) = &payload.name {
-            filter = filter.name(name)
-        }
-
+    async fn get_status(&self, payload: &ServiceRef) -> crate::error::Result<ServiceStatus> {
+        let filter: ServiceRecordFilter = payload.into();
         let services = SERVICE_RECORD_REPOSITORY.get_by_any_filter(filter).await?;
 
         if services.is_empty() {

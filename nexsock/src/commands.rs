@@ -2,31 +2,31 @@ use std::path::Path;
 use nexsock_protocol::commands::add_service::AddServiceCommand;
 use nexsock_protocol::commands::config::{ConfigFormat, GetConfig, ServiceConfigPayload, UpdateConfigCommand};
 use nexsock_protocol::commands::dependency::{AddDependencyCommand, ListDependenciesCommand, RemoveDependencyCommand};
-use nexsock_protocol::commands::git::{CheckoutCommand, CheckoutPayload, GetRepoStatusCommand};
+use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
 use nexsock_protocol::commands::list_services::ListServicesCommand;
-use nexsock_protocol::commands::manage_service::{RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand};
+use nexsock_protocol::commands::manage_service::{RemoveServiceCommand, RestartServiceCommand, ServiceRef, StartServiceCommand, StopServiceCommand};
 use nexsock_protocol::commands::service_status::GetServiceStatus;
 use nexsock_protocol::commands::ServiceCommand;
 use crate::cli::{Cli, Commands, ConfigCommands, DependencyCommands, GitCommands};
 
 pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
     match cli {
-        Commands::Start { name, id, env } => {
+        Commands::Start { service, env } => {
             let env_vars = Cli::parse_env_vars(env);
             Ok(StartServiceCommand::new(
-                (name, id),
+                service,
                 env_vars,
             ).into())
         }
 
-        Commands::Stop { name, id } => {
-            Ok(StopServiceCommand::new(id, name).into())
+        Commands::Stop { service } => {
+            Ok(StopServiceCommand::new(service).into())
         }
 
-        Commands::Restart { name, id, env } => {
+        Commands::Restart { service, env } => {
             let env_vars = Cli::parse_env_vars(env);
             Ok(RestartServiceCommand::new(
-                (name, id),
+                service,
                 env_vars,
             ).into())
         }
@@ -35,8 +35,8 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             Ok(ListServicesCommand::new().into())
         }
 
-        Commands::Status { name, id } => {
-            Ok(GetServiceStatus::new(id, name).into())
+        Commands::Status { service } => {
+            Ok(GetServiceStatus::new(service).into())
         }
 
         Commands::Add { name, repo_url, port, repo_path, config } => {
@@ -55,20 +55,20 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             ).into())
         }
 
-        Commands::Remove { name, id } => {
-            Ok(RemoveServiceCommand::new(id, name).into())
+        Commands::Remove { service } => {
+            Ok(RemoveServiceCommand::new(service).into())
         }
 
         Commands::Config { command } => match command {
-            ConfigCommands::Get { name, id } => {
-                Ok(GetConfig::new(id, name).into())
+            ConfigCommands::Get { service } => {
+                Ok(GetConfig::new(service).into())
             }
-            ConfigCommands::Update { name, id, filename, format, path } => {
+            ConfigCommands::Update { service, filename, format, path } => {
                 let content = std::fs::read_to_string(path)?;
                 let format = ConfigFormat::from(format);
 
                 Ok(UpdateConfigCommand::new(
-                    (name, id),
+                    service,
                     filename,
                     format,
                     content,
@@ -90,8 +90,8 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
                     dependent,
                 ).into())
             }
-            DependencyCommands::List { name, id } => {
-                Ok(ListDependenciesCommand::new(id, name).into())
+            DependencyCommands::List { service } => {
+                Ok(ListDependenciesCommand::new(service).into())
             }
         }
 
@@ -99,8 +99,8 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             GitCommands::Checkout { service, branch } => {
                 Ok(CheckoutCommand::new(service, branch).into())
             }
-            GitCommands::Status { id, name } => {
-                Ok(GetRepoStatusCommand::new(id, name).into())
+            GitCommands::Status { service } => {
+                Ok(GetRepoStatusCommand::new(service).into())
             }
         }
     }
@@ -115,7 +115,7 @@ fn read_config(path: &Path) -> anyhow::Result<ServiceConfigPayload> {
     };
 
     Ok(ServiceConfigPayload {
-        service_identifier: Default::default(), // This will be filled in later
+        service: ServiceRef::default(),
         filename: path.file_name()
             .and_then(|s| s.to_str())
             .unwrap_or("config")

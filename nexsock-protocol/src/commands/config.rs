@@ -1,20 +1,17 @@
 use crate::commands::CommandPayload;
-use crate::commands::manage_service::ServiceIdentifier;
+use crate::commands::manage_service::ServiceRef;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
 
 service_command! {
-    pub struct GetConfig<ServiceIdentifier, ServiceConfigPayload> = GetConfig {
-        id: Option<i64>,
-        name: Option<String>
-    }
+    pub struct GetConfig<ServiceRef, ServiceConfigPayload> = GetConfig
 }
 
 service_command! {
     pub struct UpdateConfigCommand<ServiceConfigPayload, ()> = UpdateConfig {
-        service_identifier: ServiceIdentifier,
+        service: ServiceRef,
         filename: String,
         format: ConfigFormat,
         content: String
@@ -36,7 +33,7 @@ service_command! {
     Decode,
 )]
 pub struct ServiceConfigPayload {
-    pub service_identifier: ServiceIdentifier,
+    pub service: ServiceRef,
     pub filename: String,
     pub format: ConfigFormat,
     pub content: String,
