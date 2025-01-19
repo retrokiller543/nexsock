@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::repositories::service::SERVICE_REPOSITORY;
 use crate::repositories::service_record::{SERVICE_RECORD_REPOSITORY, ServiceRecordFilter};
 use crate::traits::service_management::ServiceManagement;
@@ -12,7 +14,7 @@ use std::sync::Arc;
 use tokio::process::{Child, Command};
 use tokio::sync::RwLock;
 use tokio::sync::broadcast;
-use tracing::{info, warn};
+use tracing::warn;
 
 // Track running processes and their states
 #[derive(Debug)]
@@ -185,7 +187,7 @@ impl ServiceManagement for ServiceManager {
 
     async fn restart(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
         // First stop the service
-        self.stop(&payload.service.clone().into()).await?;
+        self.stop(&payload.service.clone()).await?;
 
         // Then start it again
         self.start(payload).await?;

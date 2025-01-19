@@ -1,14 +1,11 @@
 use crate::error;
-use crate::service_manager::ServiceManager;
 use crate::statics::SERVICE_MANAGER;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
 use nexsock_protocol::commands::error::ErrorPayload;
-use nexsock_protocol::commands::manage_service::StartServicePayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
-use std::error::Error;
 use std::fmt::Debug;
 use std::io;
 use tokio::io::{BufReader, BufWriter};

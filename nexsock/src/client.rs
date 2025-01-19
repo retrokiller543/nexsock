@@ -1,16 +1,15 @@
 use anyhow::{Context, Result, bail};
-use bincode::{Decode, Encode};
+use bincode::Encode;
 use nexsock_protocol::commands::error::ErrorPayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
 use nexsock_protocol::traits::ServiceCommand;
-use std::error::Error;
 use std::fmt::Debug;
 use std::path::PathBuf;
 use tokio::io::{BufReader, BufWriter};
 use tokio::net::UnixStream;
-use tracing::{debug, info};
+use tracing::debug;
 
 pub struct Client {
     reader: BufReader<tokio::net::unix::OwnedReadHalf>,
