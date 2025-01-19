@@ -1,7 +1,17 @@
 [package]
 name = "nexsock"
-version = "0.1.0"
+version = "1.0.0-0"
 edition = "2024"
+authors = ["Emil Schütt <emil.schutt@gmail.com>"]
+description = "A Cli tool for managing servics running on the local machine"
+repository = "https://github.com/retrokiller543/nexsock"
+homepage = "https://github.com/retrokiller543/nexsock"
+
+[package.metadata.wix]
+upgrade-guid = "5F8BC1FC-F490-4726-94AE-ED565F29CB2C"
+path-guid = "E179084C-7EEC-4820-93CA-9C2E979A1E79"
+license = false
+eula = false
 
 [dependencies]
 tokio = { version = "1.43", features = ["full"] }

@@ -3,8 +3,18 @@ members = ['.', 'nexsock', "nexsock-protocol"]
 
 [package]
 name = "nexsockd"
-version = "0.1.0"
+version = "1.0.0-0"
 edition = "2024"
+authors = ["Emil Schütt <emil.schutt@gmail.com>"]
+description = "Daemon service for managing other services on the running machine"
+homepage = "https://github.com/retrokiller543/nexsock"
+repository = "https://github.com/retrokiller543/nexsock"
+
+[package.metadata.wix]
+upgrade-guid = "A648CB9F-74B1-4655-A238-FA91CE16304A"
+path-guid = "E4A4BF37-405C-4659-93E6-0CB7C8B63EC8"
+license = false
+eula = false
 
 [workspace.dependencies]
 nexsock-protocol = { path = "nexsock-protocol" }
