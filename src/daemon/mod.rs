@@ -23,6 +23,7 @@ pub struct Daemon {
     listener: Arc<TcpListener>,
     #[cfg(unix)]
     listener: Arc<UnixListener>,
+    #[allow(dead_code)]
     config: DaemonConfig,
 }
 
