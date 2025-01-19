@@ -50,9 +50,6 @@ async fn main() -> Result<()> {
 
     let config = DaemonConfig::default();
 
-    #[cfg(unix)]
-    let server = DaemonServer::new(config)?;
-    #[cfg(windows)]
     let server = DaemonServer::new(config).await?;
 
     server.run().await?;
