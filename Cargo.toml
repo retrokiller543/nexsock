@@ -34,3 +34,8 @@ anyhow = "1.0.95"
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 tokio = { version = "1.43", features = ["full"] }
 sqlx-utils = { workspace = true }
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
