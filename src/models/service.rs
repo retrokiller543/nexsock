@@ -1,7 +1,8 @@
 use crate::models::service_config::ServiceConfig;
 use crate::models::service_dependency::ServiceDependency;
 use crate::models::service_record::ServiceRecord;
-use crate::traits::GitService;
+#[cfg(feature = "git")]
+use crate::traits::git_service::GitService;
 use nexsock_protocol::commands::list_services::ServiceInfo;
 use sqlx_utils::traits::Model;
 use std::path::Path;
@@ -40,6 +41,7 @@ impl Model for Service {
     }
 }
 
+#[cfg(feature = "git")]
 impl GitService for Service {
     #[inline]
     fn repository_path(&self) -> &Path {

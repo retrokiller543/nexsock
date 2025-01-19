@@ -1,4 +1,5 @@
-use crate::traits::GitService;
+#[cfg(feature = "git")]
+use crate::traits::git_service::GitService;
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -19,6 +20,7 @@ pub struct ServiceRecord {
     pub status: ServiceState,
 }
 
+#[cfg(feature = "git")]
 impl GitService for ServiceRecord {
     #[inline]
     fn repository_path(&self) -> &Path {
