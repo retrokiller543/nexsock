@@ -1,8 +1,8 @@
 use crate::prelude::*;
 use std::fs;
 use std::sync::Arc;
-use tokio::net::UnixListener;
-use tracing::{debug, info};
+use tokio::net::{TcpListener, UnixListener};
+use tracing::{debug, error, info};
 
 use config::DaemonConfig;
 use connection::Connection;
@@ -13,12 +13,15 @@ pub mod server;
 
 #[derive(Debug, Clone)]
 pub struct Daemon {
+    #[cfg(windows)]
+    listener: Arc<TcpListener>,
+    #[cfg(unix)]
     listener: Arc<UnixListener>,
     config: DaemonConfig,
 }
 
 impl Daemon {
-    // Just creates the daemon instance
+    #[cfg(unix)]
     pub fn new(config: DaemonConfig) -> Result<Self> {
         // Ensure old socket is cleaned up
         if config.socket_path.exists() {
@@ -27,6 +30,22 @@ impl Daemon {
         }
 
         let listener = Arc::new(UnixListener::bind(&config.socket_path)?);
+        info!("Bound to {:?}", config.socket_path);
+
+        Ok(Self { listener, config })
+    }
+
+    #[cfg(windows)]
+    pub fn new_windows(config: DaemonConfig) -> Result<Self> {
+        // Ensure old socket is cleaned up
+        let addr = if config.socket_addr.is_empty() {
+            error!("Socket address cant be empty, using default");
+            &DaemonConfig::default().socket_addr
+        } else {
+            &config.socket_addr
+        };
+
+        let listener = Arc::new(TcpListener::bind(&addr)?);
         info!("Bound to {:?}", config.socket_path);
 
         Ok(Self { listener, config })

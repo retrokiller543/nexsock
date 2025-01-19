@@ -9,7 +9,13 @@ use nexsock_protocol::protocol::Protocol;
 use std::fmt::Debug;
 use std::io;
 use tokio::io::{BufReader, BufWriter};
+#[cfg(windows)]
+use tokio::net::TcpStream;
+#[cfg(unix)]
 use tokio::net::UnixStream;
+#[cfg(windows)]
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
+#[cfg(unix)]
 use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
 use tracing::{debug, info, warn};
 
@@ -20,7 +26,7 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn new(stream: UnixStream) -> Self {
+    pub fn new(#[cfg(unix)] stream: UnixStream, #[cfg(windows)] stream: TcpStream) -> Self {
         // Split the stream into reader and writer
         let (read_half, write_half) = stream.into_split();
         let reader = BufReader::new(read_half);

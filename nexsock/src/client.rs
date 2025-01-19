@@ -8,23 +8,44 @@ use nexsock_protocol::traits::ServiceCommand;
 use std::fmt::Debug;
 use std::path::PathBuf;
 use tokio::io::{BufReader, BufWriter};
-use tokio::net::UnixStream;
+#[cfg(windows)]
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
+#[cfg(windows)]
+use tokio::net::{TcpStream, ToSocketAddrs};
 use tracing::debug;
 
+#[cfg(unix)]
+use tokio::net::UnixStream;
+#[cfg(unix)]
+use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
+
 pub struct Client {
-    reader: BufReader<tokio::net::unix::OwnedReadHalf>,
-    writer: BufWriter<tokio::net::unix::OwnedWriteHalf>,
+    reader: BufReader<OwnedReadHalf>,
+    writer: BufWriter<OwnedWriteHalf>,
     protocol: Protocol,
 }
 
 impl Client {
-    pub async fn connect(socket_path: impl Into<PathBuf>) -> Result<Self> {
-        let socket_path = socket_path.into();
-        debug!("Connecting to daemon at {:?}", socket_path);
+    pub async fn connect(
+        #[cfg(unix)] socket_path: impl Into<PathBuf>,
+        #[cfg(windows)] socket_addr: impl ToSocketAddrs,
+    ) -> Result<Self> {
+        #[cfg(windows)]
+        let stream = {
+            TcpStream::connect(socket_addr)
+                .await
+                .context("Failed to connect to Unix socket")?
+        };
 
-        let stream = UnixStream::connect(&socket_path)
-            .await
-            .context("Failed to connect to Unix socket")?;
+        #[cfg(unix)]
+        let stream = {
+            let socket_path = socket_path.into();
+            debug!("Connecting to daemon at {:?}", socket_path);
+
+            UnixStream::connect(&socket_path)
+                .await
+                .context("Failed to connect to Unix socket")?
+        };
 
         let (read_half, write_half) = stream.into_split();
 
