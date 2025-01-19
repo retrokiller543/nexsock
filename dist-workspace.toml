@@ -16,9 +16,9 @@ install-path = "CARGO_HOME"
 # Whether to install an updater program
 install-updater = false
 
-[workspace.metadata.dist.dependencies.apt]
+[dist.dependencies.apt]
 libssl-dev = "*"
 pkg-config = "*"
 
-[workspace.metadata.dist.dependencies.brew]
+[dist.dependencies.homebrew]
 openssl = "*"
