@@ -3,8 +3,8 @@ members = ['.', 'nexsock', "nexsock-protocol"]
 
 [package]
 name = "nexsockd"
-version = "1.0.0-0"
-edition = "2024"
+version = "1.0.0-1"
+edition = "2021"
 authors = ["Emil Schütt <emil.schutt@gmail.com>"]
 description = "Daemon service for managing other services on the running machine"
 homepage = "https://github.com/retrokiller543/nexsock"

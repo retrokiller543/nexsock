@@ -1,7 +1,7 @@
 [package]
 name = "nexsock"
-version = "1.0.0-0"
-edition = "2024"
+version = "1.0.0-1"
+edition = "2021"
 authors = ["Emil Schütt <emil.schutt@gmail.com>"]
 description = "A Cli tool for managing servics running on the local machine"
 repository = "https://github.com/retrokiller543/nexsock"
