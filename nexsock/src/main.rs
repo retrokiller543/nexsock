@@ -18,7 +18,11 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     // Connect to daemon
+    #[cfg(unix)]
     let mut client = Client::connect(cli.socket).await?;
+
+    #[cfg(windows)]
+    let mut client = Client::connect(cli.address).await?;
 
     let command = create_command(cli.command)?;
 

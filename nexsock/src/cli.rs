@@ -3,14 +3,23 @@ use derive_more::{FromStr, IsVariant};
 use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::collections::HashMap;
+#[cfg(windows)]
+use std::net::SocketAddr;
+#[cfg(unix)]
 use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     /// Socket path to use to communicate with the daemon
+    #[cfg(unix)]
     #[arg(short, long, default_value = "/tmp/nexsockd.sock")]
     pub(crate) socket: PathBuf,
+
+    /// Tcp address to use to communicate with the daemon
+    #[cfg(windows)]
+    #[arg(short, long, default_value = "/tmp/nexsockd.sock")]
+    pub(crate) address: SocketAddr,
 
     #[command(subcommand)]
     pub(crate) command: Commands,
