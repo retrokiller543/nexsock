@@ -51,7 +51,7 @@ impl Daemon {
         };
 
         let listener = Arc::new(TcpListener::bind(&addr).await?);
-        info!("Bound to {:?}", config.socket_path);
+        info!("Bound to {:?}", listener.local_addr()?);
 
         Ok(Self { listener, config })
     }

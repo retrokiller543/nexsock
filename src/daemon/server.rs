@@ -9,8 +9,11 @@ pub struct DaemonServer {
 }
 
 impl DaemonServer {
-    pub fn new(config: DaemonConfig) -> error::Result<Self> {
+    pub async fn new(config: DaemonConfig) -> error::Result<Self> {
+        #[cfg(unix)]
         let daemon = Daemon::new(config)?;
+        #[cfg(windows)]
+        let daemon = Daemon::new(config).await?;
         Ok(Self { daemon })
     }
 
