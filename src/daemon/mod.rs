@@ -1,8 +1,13 @@
 use crate::prelude::*;
 use std::fs;
 use std::sync::Arc;
-use tokio::net::{TcpListener, UnixListener};
-use tracing::{debug, error, info};
+#[cfg(windows)]
+use tokio::net::TcpListener;
+#[cfg(unix)]
+use tokio::net::UnixListener;
+#[cfg(windows)]
+use tracing::error;
+use tracing::{debug, info};
 
 use config::DaemonConfig;
 use connection::Connection;
@@ -36,7 +41,7 @@ impl Daemon {
     }
 
     #[cfg(windows)]
-    pub fn new_windows(config: DaemonConfig) -> Result<Self> {
+    pub fn new(config: DaemonConfig) -> Result<Self> {
         // Ensure old socket is cleaned up
         let addr = if config.socket_addr.is_empty() {
             error!("Socket address cant be empty, using default");
