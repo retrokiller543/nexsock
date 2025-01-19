@@ -1,15 +1,15 @@
-use tokio::net::UnixListener;
+use crate::prelude::*;
 use std::fs;
 use std::sync::Arc;
+use tokio::net::UnixListener;
 use tracing::{debug, info};
-use crate::prelude::*;
 
 use config::DaemonConfig;
 use connection::Connection;
 
 pub mod config;
-pub mod server;
 pub mod connection;
+pub mod server;
 
 #[derive(Debug, Clone)]
 pub struct Daemon {
@@ -29,10 +29,7 @@ impl Daemon {
         let listener = Arc::new(UnixListener::bind(&config.socket_path)?);
         info!("Bound to {:?}", config.socket_path);
 
-        Ok(Self {
-            listener,
-            config,
-        })
+        Ok(Self { listener, config })
     }
 
     // Separate method just for accepting connections
@@ -45,7 +42,7 @@ impl Daemon {
     // Clean shutdown logic separated
     pub async fn shutdown(self) -> Result<()> {
         info!("Shutting down daemon...");
-        
+
         if self.config.socket_path.exists() {
             debug!("Removing socket file");
             fs::remove_file(&self.config.socket_path)?;

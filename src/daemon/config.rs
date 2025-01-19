@@ -8,8 +8,8 @@ pub struct DaemonConfig {
 impl Default for DaemonConfig {
     fn default() -> Self {
         let mut socket_path = PathBuf::from("/tmp");
-        socket_path.push("nexsock.sock");
-        
+        socket_path.push("nexsockd.sock");
+
         Self { socket_path }
     }
 }

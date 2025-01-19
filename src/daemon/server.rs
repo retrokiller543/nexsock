@@ -1,7 +1,7 @@
-use tokio::signal::ctrl_c;
-use crate::daemon::config::DaemonConfig;
 use crate::daemon::Daemon;
+use crate::daemon::config::DaemonConfig;
 use crate::error;
+use tokio::signal::ctrl_c;
 
 #[derive(Debug)]
 pub struct DaemonServer {
@@ -13,7 +13,7 @@ impl DaemonServer {
         let daemon = Daemon::new(config)?;
         Ok(Self { daemon })
     }
-    
+
     #[inline]
     async fn shutdown(&self) -> error::Result<()> {
         self.daemon.clone().shutdown().await?;

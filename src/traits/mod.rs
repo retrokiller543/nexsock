@@ -1,6 +1,12 @@
+#![allow(async_fn_in_trait)]
+
+pub mod configuration_management;
+pub mod dependency_management;
+pub mod service_management;
+
+use git2::Repository;
 use std::path::Path;
 use std::process::Command;
-use git2::Repository;
 
 pub trait GitService {
     fn repository_path(&self) -> &Path;

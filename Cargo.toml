@@ -1,11 +1,20 @@
+[workspace]
+members = ['.', 'nexsock', "nexsock-protocol"]
+
 [package]
-name = "nexsock"
+name = "nexsockd"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
-sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"], registry = "gitea" }
+[workspace.dependencies]
+nexsock-protocol = { path = "nexsock-protocol" }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
+sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
+bincode = { version = "2.0.0-rc.3" }
+
+[dependencies]
+sqlx-utils = { workspace = true }
+sqlx = { workspace = true }
 tokio = { version = "1.43", features = ["full"] }
 thiserror = "2.0.11"
 tempfile = "3.15.0"
@@ -16,3 +25,12 @@ tosic-utils = { version = "0.2.3", features = ["env", "dotenv", "tracing"], regi
 git2 = { version = "0.20.0" }
 serde = { version = "1.0.215", features = ["derive"] }
 paste = "1.0.15"
+futures = "0.3.31"
+nexsock-protocol = { workspace = true }
+bincode = { workspace = true }
+anyhow = "1.0.95"
+
+[build-dependencies]
+sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
+tokio = { version = "1.43", features = ["full"] }
+sqlx-utils = { workspace = true }

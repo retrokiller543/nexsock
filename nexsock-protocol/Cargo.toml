@@ -1,0 +1,17 @@
+[package]
+name = "nexsock-protocol"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+binrw = { version = "0.14.1" }
+tokio = { version = "1.43", features = ["full"] }
+thiserror = "2.0.11"
+anyhow = "1.0.95"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+serde = { version = "1.0.217", features = ["derive"] }
+sqlx = { workspace = true }
+bincode = { workspace = true }
+derive_more = { version = "1.0.0", features = ["full"] }
+paste = "1.0.15"

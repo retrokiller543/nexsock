@@ -1,18 +1,20 @@
+use nexsock_protocol::commands::config::ConfigFormat;
 use serde::{Deserialize, Serialize};
+use sqlx_utils::traits::Model;
 
 // Database model for service_config table
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, Ord, PartialOrd, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ServiceConfig {
-    pub id: i32,
+    pub id: i64,
     pub filename: String,
-    pub format: ServiceConfigFormat,
+    pub format: ConfigFormat,
+    pub run_command: Option<String>,
 }
 
-#[derive(Clone, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
-pub enum ServiceConfigFormat {
-    #[serde(rename = "Env")]
-    #[default]
-    Env,
-    #[serde(rename = "Properties")]
-    Properties,
+impl Model for ServiceConfig {
+    type Id = i64;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        Some(self.id)
+    }
 }
