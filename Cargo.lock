@@ -238,9 +238,9 @@ checksum = "325918d6fe32f23b19878fe4b34794ae41fc19ddbe53b10571a4874d44ffd39b"
 
 [[package]]
 name = "cc"
-version = "1.2.9"
+version = "1.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8293772165d9345bdaaa39b45b2109591e63fe5e6fbc23c6ff930a048aa310b"
+checksum = "13208fcbb66eaeffe09b99fffbe1af420f00a7b35aa99ad683dfc1aa76145229"
 dependencies = [
  "jobserver",
  "libc",
@@ -1595,9 +1595,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.135"
+version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b0d7ba2887406110130a978386c4e1befb98c674b4fba677954e4db976630d9"
+checksum = "336a0c23cf42a38d9eaa7cd22c7040d04e1228a19a933890805ffd00a16437d2"
 dependencies = [
  "itoa",
  "memchr",
@@ -1914,7 +1914,7 @@ dependencies = [
 [[package]]
 name = "sqlx-utils"
 version = "1.0.0-2"
-source = "git+https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git#942525974048c800d95d136848d61dfaba8c495c"
+source = "git+https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git#1699b7e4f8f2f2013413fb12e646af5476b6efea"
 dependencies = [
  "futures",
  "paste",
@@ -1928,7 +1928,7 @@ dependencies = [
 [[package]]
 name = "sqlx-utils-macro"
 version = "1.0.0-2"
-source = "git+https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git#942525974048c800d95d136848d61dfaba8c495c"
+source = "git+https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git#1699b7e4f8f2f2013413fb12e646af5476b6efea"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
