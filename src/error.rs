@@ -34,6 +34,7 @@ impl Error {
             Error::Migration(_) => 3,
             Error::Io(_) => 4,
             Error::Tracing(_) => 5,
+            #[cfg(feature = "git")]
             Error::Git2(_) => 6,
             Error::Generic(_) => 7,
             Error::ExpectedPayload => 8,
