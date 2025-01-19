@@ -1,4 +1,4 @@
-use crate::commands::Command;
+use crate::commands::{Command, CommandPayload};
 
 pub trait ServiceCommand {
     type Input;

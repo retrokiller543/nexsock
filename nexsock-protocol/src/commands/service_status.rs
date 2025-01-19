@@ -4,14 +4,12 @@ use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
+use crate::commands::manage_service::ServiceIdentifier;
 
 service_command! {
-    pub struct GetServiceStatus<_, ServiceStatus> = GetServiceStatus
-}
-
-impl From<ServiceStatus> for CommandPayload {
-    fn from(value: ServiceStatus) -> Self {
-        Self::Status(value)
+    pub struct GetServiceStatus<ServiceIdentifier, ServiceStatus> = GetServiceStatus {
+        id: Option<i64>,
+        name: Option<String>
     }
 }
 

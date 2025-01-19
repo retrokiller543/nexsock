@@ -8,15 +8,18 @@ pub mod list_services;
 pub mod manage_service;
 pub mod service_status;
 
-use crate::commands::config::ServiceConfigPayload;
-use crate::commands::dependency::ListDependenciesResponse;
+use crate::commands::config::{GetConfig, ServiceConfigPayload, UpdateConfigCommand};
+use crate::commands::dependency::{AddDependencyCommand, ListDependenciesCommand, ListDependenciesResponse, RemoveDependencyCommand};
 use crate::commands::error::ErrorPayload;
-use crate::commands::list_services::ListServicesResponse;
-use crate::commands::service_status::ServiceStatus;
+use crate::commands::list_services::{ListServicesCommand, ListServicesResponse};
+use crate::commands::service_status::{GetServiceStatus, ServiceStatus};
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinWrite};
-use derive_more::{Into, IsVariant, TryUnwrap, Unwrap};
+use derive_more::{From, Into, IsVariant, TryUnwrap, Unwrap};
 use serde::{Deserialize, Serialize};
+use crate::commands::add_service::AddServiceCommand;
+use crate::commands::git::{CheckoutCommand, GetRepoStatusCommand};
+use crate::commands::manage_service::{RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand};
 
 #[macro_export]
 macro_rules! try_from {
@@ -74,7 +77,9 @@ pub enum Command {
     Error = 0xFFFF,
 }
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, IsVariant, Unwrap, TryUnwrap)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, IsVariant, Unwrap, TryUnwrap, From)]
+#[unwrap(ref, ref_mut)]
+#[try_unwrap(ref, ref_mut)]
 #[non_exhaustive]
 pub enum CommandPayload {
     Status(ServiceStatus),
@@ -89,6 +94,27 @@ pub enum CommandPayload {
 }
 
 try_from!(Empty => ());
+
+#[derive(From, IsVariant, Unwrap, TryUnwrap)]
+#[unwrap(ref, ref_mut)]
+#[try_unwrap(ref, ref_mut)]
+#[non_exhaustive]
+pub enum ServiceCommand {
+    Start(StartServiceCommand),
+    Stop(StopServiceCommand),
+    Restart(RestartServiceCommand),
+    List(ListServicesCommand),
+    Status(GetServiceStatus),
+    Add(AddServiceCommand),
+    Remove(RemoveServiceCommand),
+    ConfigGet(GetConfig),
+    ConfigUpdate(UpdateConfigCommand),
+    DependencyAdd(AddDependencyCommand),
+    DependencyRemove(RemoveDependencyCommand),
+    DependencyList(ListDependenciesCommand),
+    GitCheckout(CheckoutCommand),
+    GitStatus(GetRepoStatusCommand)
+}
 
 impl<T: Into<CommandPayload>> From<Option<T>> for CommandPayload {
     fn from(value: Option<T>) -> Self {

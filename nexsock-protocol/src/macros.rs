@@ -1,5 +1,3 @@
-use crate::commands::Command;
-
 #[macro_export]
 macro_rules! service_command {
     {

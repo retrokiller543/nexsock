@@ -12,12 +12,6 @@ service_command! {
     }
 }
 
-impl From<ServiceConfigPayload> for CommandPayload {
-    fn from(value: ServiceConfigPayload) -> Self {
-        Self::ServiceConfig(value)
-    }
-}
-
 service_command! {
     pub struct UpdateConfigCommand<ServiceConfigPayload, ()> = UpdateConfig {
         service_identifier: ServiceIdentifier,

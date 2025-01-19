@@ -1,13 +1,13 @@
-use crate::cli::{Cli, Commands};
+use anyhow::bail;
+use crate::cli::Cli;
 use crate::client::Client;
 use clap::Parser;
-use nexsock_protocol::commands::list_services::ListServicesCommand;
-use nexsock_protocol::commands::manage_service::{StartServiceCommand, StopServiceCommand};
-use std::collections::HashMap;
-use tracing::error;
+use nexsock_protocol::commands::ServiceCommand;
+use crate::commands::create_command;
 
 mod cli;
 mod client;
+mod commands;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -19,48 +19,28 @@ async fn main() -> anyhow::Result<()> {
 
     // Connect to daemon
     let mut client = Client::connect(cli.socket).await?;
-
-    // Execute command
-    match cli.command {
-        Commands::Start { name, env } => {
-            let env_vars: HashMap<_, _> = env
-                .into_iter()
-                .filter_map(|pair| {
-                    let mut parts = pair.splitn(2, '=');
-                    Some((parts.next()?.to_string(), parts.next()?.to_string()))
-                })
-                .collect();
-
-            client
-                .execute_command(StartServiceCommand::new(name, env_vars))
-                .await?;
-        }
-        Commands::Stop { name } => {
-            client
-                .execute_command(StopServiceCommand::new(None, name))
-                .await?;
-        }
-        Commands::List => {
-            let res = client.execute_command(ListServicesCommand::new()).await?;
-
-            if res.is_empty() {
-                error!("Got no response from the Daemon");
-            }
-
-            let services = match res.try_unwrap_list_services() {
-                Ok(services) => services,
-                Err(error) => {
-                    error!("Got a payload that was not expected! `{error}`");
-                    return Err(error.into());
-                }
-            };
-
-            println!("Services: {services:#?}")
-        }
-        Commands::Status { name, id } => {
-            // Implement status check
-        }
-    }
+    
+    let command = create_command(cli.command)?;
+    
+    let response = match command {
+        ServiceCommand::Start(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::Stop(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::Restart(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::List(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::Status(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::Add(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::Remove(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::ConfigGet(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::ConfigUpdate(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::DependencyAdd(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::DependencyRemove(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::DependencyList(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::GitCheckout(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::GitStatus(cmd) => client.execute_command(cmd).await?,
+        _ => bail!("Unknown command")
+    };
+    
+    dbg!(response);
 
     Ok(())
 }

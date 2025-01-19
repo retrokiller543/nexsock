@@ -24,10 +24,4 @@ pub struct ErrorPayload {
     pub details: Option<String>,
 }
 
-impl From<ErrorPayload> for CommandPayload {
-    fn from(value: ErrorPayload) -> Self {
-        Self::Error(value)
-    }
-}
-
 try_from!(Error => ErrorPayload);

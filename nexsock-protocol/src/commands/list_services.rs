@@ -26,12 +26,6 @@ service_command! {
     pub struct ListServicesCommand<_, ListServicesResponse> = ListServices
 }
 
-impl From<ListServicesResponse> for CommandPayload {
-    fn from(value: ListServicesResponse) -> Self {
-        Self::ListServices(value)
-    }
-}
-
 try_from!(ListServices => ListServicesResponse);
 
 impl<T: Into<ServiceInfo>> FromIterator<T> for ListServicesResponse {

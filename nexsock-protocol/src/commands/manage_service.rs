@@ -94,3 +94,57 @@ impl From<(String, i64)> for ServiceIdentifier {
         }
     }
 }
+
+impl From<(Option<String>, i64)> for ServiceIdentifier {
+    fn from(value: (Option<String>, i64)) -> Self {
+        Self {
+            id: Some(value.1),
+            name: value.0,
+        }
+    }
+}
+
+impl From<(String, Option<i64>)> for ServiceIdentifier {
+    fn from(value: (String, Option<i64>)) -> Self {
+        Self {
+            id: value.1,
+            name: Some(value.0),
+        }
+    }
+}
+
+impl From<(Option<i64>, String)> for ServiceIdentifier {
+    fn from(value: (Option<i64>, String)) -> Self {
+        Self {
+            id: value.0,
+            name: Some(value.1),
+        }
+    }
+}
+
+impl From<(i64, Option<String>)> for ServiceIdentifier {
+    fn from(value: (i64, Option<String>)) -> Self {
+        Self {
+            id: Some(value.0),
+            name: value.1,
+        }
+    }
+}
+
+impl From<(Option<i64>, Option<String>)> for ServiceIdentifier {
+    fn from(value: (Option<i64>, Option<String>)) -> Self {
+        Self {
+            id: value.0,
+            name: value.1,
+        }
+    }
+}
+
+impl From<(Option<String>, Option<i64>)> for ServiceIdentifier {
+    fn from(value: (Option<String>, Option<i64>)) -> Self {
+        Self {
+            id: value.1,
+            name: value.0,
+        }
+    }
+}

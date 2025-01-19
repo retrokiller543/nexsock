@@ -12,3 +12,4 @@ tracing-subscriber = "0.3.19"
 nexsock-protocol = { workspace = true }
 bincode = { workspace = true }
 clap = { version = "4.5.26", features = ["derive"] }
+derive_more = { version = "1.0.0", features = ["full"] }

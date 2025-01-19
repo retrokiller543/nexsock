@@ -27,12 +27,6 @@ service_command! {
     }
 }
 
-impl From<ListDependenciesResponse> for CommandPayload {
-    fn from(value: ListDependenciesResponse) -> Self {
-        Self::Dependencies(value)
-    }
-}
-
 try_from!(Dependencies => ListDependenciesResponse);
 
 #[derive(
