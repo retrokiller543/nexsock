@@ -90,8 +90,12 @@ pub enum Commands {
         port: i64,
 
         /// Configuration file for the service
-        #[arg(long)]
+        #[arg(short, long)]
         config: Option<PathBuf>,
+
+        /// Command to run the service
+        #[arg(short, long)]
+        run_command: Option<String>,
     },
 
     /// Remove a service
@@ -151,7 +155,7 @@ pub enum ConfigCommands {
 
         /// Configuration file path
         #[arg(short, long)]
-        path: PathBuf,
+        run_command: String,
     },
 }
 

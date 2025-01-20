@@ -1,5 +1,6 @@
 use crate::error;
-use crate::statics::SERVICE_MANAGER;
+use crate::statics::{CONFIG_MANAGER, SERVICE_MANAGER};
+use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
 use nexsock_protocol::commands::error::ErrorPayload;
@@ -143,8 +144,20 @@ impl Connection {
                 Ok(CommandPayload::ListServices(services))
             }
 
-            Command::UpdateConfig => Ok(CommandPayload::Empty),
-            Command::GetConfig => Ok(CommandPayload::Empty),
+            Command::UpdateConfig => {
+                let payload = Self::read_req_payload(payload)?;
+
+                CONFIG_MANAGER.update_config(&payload).await?;
+
+                Ok(CommandPayload::Empty)
+            }
+            Command::GetConfig => {
+                let payload = Self::read_req_payload(payload)?;
+
+                let config = CONFIG_MANAGER.get_config(&payload).await?;
+
+                Ok(CommandPayload::ServiceConfig(config))
+            }
 
             Command::AddDependency => Ok(CommandPayload::Empty),
             Command::RemoveDependency => Ok(CommandPayload::Empty),

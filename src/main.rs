@@ -1,3 +1,4 @@
+mod config_manager;
 mod daemon;
 pub mod error;
 mod models;

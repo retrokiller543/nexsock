@@ -1,3 +1,4 @@
+use nexsock_protocol::commands::dependency_info::DependencyInfo;
 use nexsock_protocol::commands::service_status::ServiceState;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -17,6 +18,16 @@ pub struct ServiceDependency {
     pub repo_path: String,
     pub tunnel_enabled: bool,
     pub status: ServiceState,
+}
+
+impl From<ServiceDependency> for DependencyInfo {
+    fn from(value: ServiceDependency) -> Self {
+        Self {
+            id: value.service_id,
+            name: value.name,
+            tunnel_enabled: value.tunnel_enabled,
+        }
+    }
 }
 
 impl Model for ServiceDependency {

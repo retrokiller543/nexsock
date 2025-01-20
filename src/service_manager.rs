@@ -4,6 +4,7 @@ use crate::models::service_config::ServiceConfig;
 use crate::models::service_record::ServiceRecord;
 use crate::repositories::service::SERVICE_REPOSITORY;
 use crate::repositories::service_config::SERVICE_CONFIG_REPOSITORY;
+use crate::repositories::service_dependency::SERVICE_DEPENDENCY_REPOSITORY;
 use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
 use crate::traits::service_management::ServiceManagement;
 use anyhow::{anyhow, Context};
@@ -11,6 +12,7 @@ use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
+use sqlx_utils::filter::equals;
 use sqlx_utils::traits::Repository;
 use std::collections::HashMap;
 use std::path::Path;
@@ -304,12 +306,17 @@ impl ServiceManagement for ServiceManager {
 
         let service_id = service.id.ok_or_else(|| anyhow!("Service has no ID"))?;
 
+        let deps = SERVICE_DEPENDENCY_REPOSITORY
+            .get_by_any_filter(equals("sd.service_id", Some(service_id)))
+            .await?;
+
         // Get current state
         let state = self.get_service_state(service_id).await;
 
         // Get full service info
         let mut service: ServiceStatus = service.into();
         service.state = state;
+        service.dependencies = deps.into_iter().map(Into::into).collect();
 
         Ok(service)
     }
