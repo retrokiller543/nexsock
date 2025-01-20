@@ -1,5 +1,4 @@
 use crate::cli::{Cli, Commands, ConfigCommands, DependencyCommands, GitCommands};
-use nexsock_protocol::commands::ServiceCommand;
 use nexsock_protocol::commands::add_service::AddServiceCommand;
 use nexsock_protocol::commands::config::{
     ConfigFormat, GetConfig, ServiceConfigPayload, UpdateConfigCommand,
@@ -14,7 +13,7 @@ use nexsock_protocol::commands::manage_service::{
     StopServiceCommand,
 };
 use nexsock_protocol::commands::service_status::GetServiceStatus;
-use std::path::Path;
+use nexsock_protocol::commands::ServiceCommand;
 
 pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
     match cli {
@@ -40,9 +39,25 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             port,
             repo_path,
             config,
+            run_command,
         } => {
             let config = if let Some(config_path) = config {
-                Some(read_config(&config_path)?)
+                let format = if config_path.extension().and_then(|s| s.to_str()) == Some("env") {
+                    ConfigFormat::Env
+                } else {
+                    ConfigFormat::Properties
+                };
+
+                Some(ServiceConfigPayload {
+                    service: ServiceRef::default(),
+                    filename: config_path
+                        .file_name()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("config")
+                        .to_string(),
+                    format,
+                    run_command: run_command.unwrap_or_default(),
+                })
             } else {
                 None
             };
@@ -58,12 +73,11 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
                 service,
                 filename,
                 format,
-                path,
+                run_command,
             } => {
-                let content = std::fs::read_to_string(path)?;
                 let format = ConfigFormat::from(format);
 
-                Ok(UpdateConfigCommand::new(service, filename, format, content).into())
+                Ok(UpdateConfigCommand::new(service, filename, format, run_command).into())
             }
         },
 
@@ -88,24 +102,4 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             GitCommands::Status { service } => Ok(GetRepoStatusCommand::new(service).into()),
         },
     }
-}
-
-fn read_config(path: &Path) -> anyhow::Result<ServiceConfigPayload> {
-    let content = std::fs::read_to_string(path)?;
-    let format = if path.extension().and_then(|s| s.to_str()) == Some("env") {
-        ConfigFormat::Env
-    } else {
-        ConfigFormat::Properties
-    };
-
-    Ok(ServiceConfigPayload {
-        service: ServiceRef::default(),
-        filename: path
-            .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or("config")
-            .to_string(),
-        format,
-        content,
-    })
 }

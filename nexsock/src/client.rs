@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use bincode::Encode;
 use nexsock_protocol::commands::error::ErrorPayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
@@ -16,9 +16,9 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 use tracing::debug;
 
 #[cfg(unix)]
-use tokio::net::UnixStream;
-#[cfg(unix)]
 use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
+#[cfg(unix)]
+use tokio::net::UnixStream;
 
 pub struct Client {
     reader: BufReader<OwnedReadHalf>,

@@ -1,20 +1,26 @@
 #![allow(dead_code)]
 
+use crate::models::service_config::ServiceConfig;
+use crate::models::service_record::ServiceRecord;
 use crate::repositories::service::SERVICE_REPOSITORY;
-use crate::repositories::service_record::{SERVICE_RECORD_REPOSITORY, ServiceRecordFilter};
+use crate::repositories::service_config::SERVICE_CONFIG_REPOSITORY;
+use crate::repositories::service_dependency::SERVICE_DEPENDENCY_REPOSITORY;
+use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
 use crate::traits::service_management::ServiceManagement;
-use anyhow::{Context, anyhow};
+use anyhow::{anyhow, Context};
+use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
+use sqlx_utils::filter::equals;
 use sqlx_utils::traits::Repository;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::process::{Child, Command};
-use tokio::sync::RwLock;
 use tokio::sync::broadcast;
-use tracing::warn;
+use tokio::sync::RwLock;
+use tracing::{debug, warn};
 
 // Track running processes and their states
 #[derive(Debug)]
@@ -41,6 +47,7 @@ impl ServiceProcess {
     }
 }
 
+#[derive(Debug)]
 pub struct ServiceManager {
     running_services: Arc<RwLock<HashMap<i64, ServiceProcess>>>,
     shutdown_tx: broadcast::Sender<()>,
@@ -57,6 +64,27 @@ impl Default for ServiceManager {
 }
 
 impl ServiceManager {
+    pub(crate) async fn kill_all(&self) -> crate::error::Result<()> {
+        debug!("Terminating all child processes");
+        let mut ids = Vec::new();
+
+        {
+            let services = self.running_services.read().await;
+
+            for (service_id, _) in services.iter() {
+                ids.push(*service_id);
+            }
+        }
+
+        for id in ids {
+            self.kill_service_process(id).await?
+        }
+
+        debug!("Terminated all child processes");
+
+        Ok(())
+    }
+
     async fn spawn_service_process(
         &self,
         service_id: i64,
@@ -77,11 +105,14 @@ impl ServiceManager {
             .with_context(|| format!("Failed to spawn service process: {}", run_command))?;
 
         let mut services = self.running_services.write().await;
-        services.insert(service_id, ServiceProcess {
-            process,
-            state: ServiceState::Running,
-            env_vars,
-        });
+        services.insert(
+            service_id,
+            ServiceProcess {
+                process,
+                state: ServiceState::Running,
+                env_vars,
+            },
+        );
 
         Ok(())
     }
@@ -120,6 +151,7 @@ impl ServiceManager {
 }
 
 impl ServiceManagement for ServiceManager {
+    #[tracing::instrument]
     async fn start(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
         let StartServicePayload { service, env_vars } = payload;
 
@@ -165,6 +197,7 @@ impl ServiceManagement for ServiceManager {
         Ok(())
     }
 
+    #[tracing::instrument]
     async fn stop(&self, payload: &ServiceRef) -> crate::error::Result<()> {
         let filter: ServiceRecordFilter = payload.into();
         let services = SERVICE_RECORD_REPOSITORY.get_by_any_filter(filter).await?;
@@ -185,6 +218,7 @@ impl ServiceManagement for ServiceManager {
         Ok(())
     }
 
+    #[tracing::instrument]
     async fn restart(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
         // First stop the service
         self.stop(&payload.service.clone()).await?;
@@ -195,52 +229,38 @@ impl ServiceManagement for ServiceManager {
         Ok(())
     }
 
-    async fn get_status(&self, payload: &ServiceRef) -> crate::error::Result<ServiceStatus> {
-        let filter: ServiceRecordFilter = payload.into();
-        let services = SERVICE_RECORD_REPOSITORY.get_by_any_filter(filter).await?;
+    #[tracing::instrument]
+    async fn add_service(&self, payload: &AddServicePayload) -> crate::error::Result<()> {
+        let AddServicePayload {
+            name,
+            repo_url,
+            port,
+            repo_path,
+            config,
+        } = payload;
 
-        if services.is_empty() {
-            return Err(anyhow!("No service with that name or id").into());
-        }
+        let id = if let Some(config) = config {
+            let config_record = ServiceConfig::new(config.filename.to_owned(), config.format, None);
+            SERVICE_CONFIG_REPOSITORY.save(&config_record).await?;
+            None
+        } else {
+            None
+        };
 
-        let service = services
-            .into_iter()
-            .next()
-            .expect("Already checked for emptiness");
+        let record = ServiceRecord::new(
+            name.to_owned(),
+            repo_url.to_owned(),
+            *port,
+            repo_path.to_owned(),
+            id,
+        );
 
-        let service_id = service.id.ok_or_else(|| anyhow!("Service has no ID"))?;
+        SERVICE_RECORD_REPOSITORY.save(&record).await?;
 
-        // Get current state
-        let state = self.get_service_state(service_id).await;
-
-        // Get full service info
-        let mut service: ServiceStatus = service.into();
-        service.state = state;
-
-        Ok(service)
+        Ok(())
     }
 
-    async fn get_all(&self) -> crate::error::Result<ListServicesResponse> {
-        let services = SERVICE_REPOSITORY.get_all().await?;
-
-        // Update states based on running processes
-        let mut response_services = Vec::new();
-
-        for service in services {
-            let id = service
-                .record
-                .id
-                .ok_or_else(|| anyhow!("Service has no ID"))?;
-            let state = self.get_service_state(id).await;
-
-            let mut service = service;
-            service.record.status = state;
-            response_services.push(service);
-        }
-
-        Ok(response_services.into_iter().collect())
-    }
-
+    #[tracing::instrument]
     async fn remove_service(&self, payload: &ServiceRef) -> crate::error::Result<()> {
         let filter: ServiceRecordFilter = payload.into();
         let services = SERVICE_RECORD_REPOSITORY.get_by_any_filter(filter).await?;
@@ -268,5 +288,58 @@ impl ServiceManagement for ServiceManager {
         SERVICE_REPOSITORY.delete_by_id(service_id).await?;
 
         Ok(())
+    }
+
+    #[tracing::instrument]
+    async fn get_status(&self, payload: &ServiceRef) -> crate::error::Result<ServiceStatus> {
+        let filter: ServiceRecordFilter = payload.into();
+        let services = SERVICE_RECORD_REPOSITORY.get_by_any_filter(filter).await?;
+
+        if services.is_empty() {
+            return Err(anyhow!("No service with that name or id").into());
+        }
+
+        let service = services
+            .into_iter()
+            .next()
+            .expect("Already checked for emptiness");
+
+        let service_id = service.id.ok_or_else(|| anyhow!("Service has no ID"))?;
+
+        let deps = SERVICE_DEPENDENCY_REPOSITORY
+            .get_by_any_filter(equals("sd.service_id", Some(service_id)))
+            .await?;
+
+        // Get current state
+        let state = self.get_service_state(service_id).await;
+
+        // Get full service info
+        let mut service: ServiceStatus = service.into();
+        service.state = state;
+        service.dependencies = deps.into_iter().map(Into::into).collect();
+
+        Ok(service)
+    }
+
+    #[tracing::instrument]
+    async fn get_all(&self) -> crate::error::Result<ListServicesResponse> {
+        let services = SERVICE_REPOSITORY.get_all().await?;
+
+        // Update states based on running processes
+        let mut response_services = Vec::new();
+
+        for service in services {
+            let id = service
+                .record
+                .id
+                .ok_or_else(|| anyhow!("Service has no ID"))?;
+            let state = self.get_service_state(id).await;
+
+            let mut service = service;
+            service.record.status = state;
+            response_services.push(service);
+        }
+
+        Ok(response_services.into_iter().collect())
     }
 }

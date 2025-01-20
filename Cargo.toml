@@ -1,14 +1,23 @@
 [workspace]
 members = ['.', 'nexsock', "nexsock-protocol"]
 
-[package]
-name = "nexsockd"
-version = "1.0.0-4"
+[workspace.package]
+version = "1.0.0-5"
 edition = "2021"
 authors = ["Emil Schütt <emil.schutt@gmail.com>"]
-description = "Daemon service for managing other services on the running machine"
+license-file = "LICENSE"
 homepage = "https://github.com/retrokiller543/nexsock"
 repository = "https://github.com/retrokiller543/nexsock"
+
+[package]
+name = "nexsockd"
+version = "1.0.0-5"
+description = "Daemon service for managing other services on the running machine"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license-file.workspace = true
 
 [package.metadata.wix]
 upgrade-guid = "A648CB9F-74B1-4655-A238-FA91CE16304A"

@@ -1,5 +1,5 @@
-use crate::commands::CommandPayload;
 use crate::commands::service_status::ServiceState;
+use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};

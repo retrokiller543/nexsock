@@ -1106,7 +1106,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock"
-version = "1.0.0-4"
+version = "1.0.0-5"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1121,7 +1121,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-protocol"
-version = "1.0.0-4"
+version = "1.0.0-5"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1138,7 +1138,7 @@ dependencies = [
 
 [[package]]
 name = "nexsockd"
-version = "1.0.0-4"
+version = "1.0.0-5"
 dependencies = [
  "anyhow",
  "bincode",

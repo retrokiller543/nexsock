@@ -1,5 +1,5 @@
 use crate::models::service_dependency::ServiceDependency;
-use sqlx::{QueryBuilder, query, query_as};
+use sqlx::{query, query_as, QueryBuilder};
 use sqlx_utils::filter::equals;
 use sqlx_utils::traits::SqlFilter;
 use sqlx_utils::types::Query;

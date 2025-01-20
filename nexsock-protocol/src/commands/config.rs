@@ -1,5 +1,5 @@
-use crate::commands::CommandPayload;
 use crate::commands::manage_service::ServiceRef;
+use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ service_command! {
         service: ServiceRef,
         filename: String,
         format: ConfigFormat,
-        content: String
+        run_command: String
     }
 }
 
@@ -36,7 +36,7 @@ pub struct ServiceConfigPayload {
     pub service: ServiceRef,
     pub filename: String,
     pub format: ConfigFormat,
-    pub content: String,
+    pub run_command: String,
 }
 
 try_from!(ServiceConfig => ServiceConfigPayload);

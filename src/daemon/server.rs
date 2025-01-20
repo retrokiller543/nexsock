@@ -1,6 +1,7 @@
-use crate::daemon::Daemon;
 use crate::daemon::config::DaemonConfig;
+use crate::daemon::Daemon;
 use crate::error;
+use crate::statics::SERVICE_MANAGER;
 use tokio::signal::ctrl_c;
 
 #[derive(Debug)]
@@ -20,6 +21,7 @@ impl DaemonServer {
     #[inline]
     async fn shutdown(&self) -> error::Result<()> {
         self.daemon.clone().shutdown().await?;
+        SERVICE_MANAGER.kill_all().await?;
         Ok(())
     }
 

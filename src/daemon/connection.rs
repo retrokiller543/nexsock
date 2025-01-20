@@ -1,5 +1,6 @@
 use crate::error;
-use crate::statics::SERVICE_MANAGER;
+use crate::statics::{CONFIG_MANAGER, SERVICE_MANAGER};
+use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
 use nexsock_protocol::commands::error::ErrorPayload;
@@ -10,13 +11,13 @@ use std::fmt::Debug;
 use std::io;
 use tokio::io::{BufReader, BufWriter};
 #[cfg(windows)]
-use tokio::net::TcpStream;
-#[cfg(unix)]
-use tokio::net::UnixStream;
-#[cfg(windows)]
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 #[cfg(unix)]
 use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
+#[cfg(windows)]
+use tokio::net::TcpStream;
+#[cfg(unix)]
+use tokio::net::UnixStream;
 use tracing::{debug, info, warn};
 
 pub struct Connection {
@@ -125,9 +126,9 @@ impl Connection {
                 Ok(CommandPayload::Status(status))
             }
             Command::AddService => {
-                /*let payload = Self::read_req_payload(payload)?;
+                let payload = Self::read_req_payload(payload)?;
 
-                SERVICE_MANAGER.start(&payload).await?;*/
+                SERVICE_MANAGER.add_service(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
@@ -143,8 +144,20 @@ impl Connection {
                 Ok(CommandPayload::ListServices(services))
             }
 
-            Command::UpdateConfig => Ok(CommandPayload::Empty),
-            Command::GetConfig => Ok(CommandPayload::Empty),
+            Command::UpdateConfig => {
+                let payload = Self::read_req_payload(payload)?;
+
+                CONFIG_MANAGER.update_config(&payload).await?;
+
+                Ok(CommandPayload::Empty)
+            }
+            Command::GetConfig => {
+                let payload = Self::read_req_payload(payload)?;
+
+                let config = CONFIG_MANAGER.get_config(&payload).await?;
+
+                Ok(CommandPayload::ServiceConfig(config))
+            }
 
             Command::AddDependency => Ok(CommandPayload::Empty),
             Command::RemoveDependency => Ok(CommandPayload::Empty),
