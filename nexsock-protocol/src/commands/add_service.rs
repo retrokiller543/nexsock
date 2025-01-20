@@ -1,8 +1,7 @@
 use crate::commands::config::ServiceConfigPayload;
 use crate::service_command;
-use bincode::Encode;
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
-use sqlx::Decode;
 
 #[derive(
     Clone,

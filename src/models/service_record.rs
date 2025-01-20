@@ -21,6 +21,26 @@ pub struct ServiceRecord {
     pub status: ServiceState,
 }
 
+impl ServiceRecord {
+    pub fn new(
+        name: String,
+        repo_url: String,
+        port: i64,
+        repo_path: String,
+        config_id: Option<i64>,
+    ) -> Self {
+        Self {
+            id: None,
+            config_id,
+            name,
+            repo_url,
+            port,
+            repo_path,
+            status: ServiceState::Stopped,
+        }
+    }
+}
+
 #[cfg(feature = "git")]
 impl GitService for ServiceRecord {
     #[inline]

@@ -10,13 +10,13 @@ use std::fmt::Debug;
 use std::io;
 use tokio::io::{BufReader, BufWriter};
 #[cfg(windows)]
-use tokio::net::TcpStream;
-#[cfg(unix)]
-use tokio::net::UnixStream;
-#[cfg(windows)]
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 #[cfg(unix)]
 use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
+#[cfg(windows)]
+use tokio::net::TcpStream;
+#[cfg(unix)]
+use tokio::net::UnixStream;
 use tracing::{debug, info, warn};
 
 pub struct Connection {
@@ -125,9 +125,9 @@ impl Connection {
                 Ok(CommandPayload::Status(status))
             }
             Command::AddService => {
-                /*let payload = Self::read_req_payload(payload)?;
+                let payload = Self::read_req_payload(payload)?;
 
-                SERVICE_MANAGER.start(&payload).await?;*/
+                SERVICE_MANAGER.add_service(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
