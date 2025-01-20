@@ -1,6 +1,6 @@
-use crate::commands::CommandPayload;
 use crate::commands::dependency_info::DependencyInfo;
 use crate::commands::manage_service::ServiceRef;
+use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};

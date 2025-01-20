@@ -1,7 +1,5 @@
 #![allow(async_fn_in_trait)]
 
-use sqlx::{Database, Executor, FromRow, IntoArguments};
-
 pub mod configuration_management;
 pub mod dependency_management;
 pub mod git_service;
