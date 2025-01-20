@@ -5,7 +5,7 @@ members = ['.', 'nexsock', "nexsock-protocol"]
 version = "1.0.0-5"
 edition = "2021"
 authors = ["Emil Schütt <emil.schutt@gmail.com>"]
-license-file = "LICENSE"
+license = "Apache-2.0"
 homepage = "https://github.com/retrokiller543/nexsock"
 repository = "https://github.com/retrokiller543/nexsock"
 
@@ -17,7 +17,7 @@ edition.workspace = true
 authors.workspace = true
 homepage.workspace = true
 repository.workspace = true
-license-file.workspace = true
+license.workspace = true
 
 [package.metadata.wix]
 upgrade-guid = "A648CB9F-74B1-4655-A238-FA91CE16304A"

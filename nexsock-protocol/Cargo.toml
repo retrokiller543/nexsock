@@ -6,7 +6,7 @@ edition.workspace = true
 authors.workspace = true
 homepage.workspace = true
 repository.workspace = true
-license-file.workspace = true
+license.workspace = true
 
 [dependencies]
 binrw = { version = "0.14.1" }

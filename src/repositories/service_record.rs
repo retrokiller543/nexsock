@@ -2,7 +2,7 @@ use crate::models::service_record::ServiceRecord;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use sqlx::{query, query_as, QueryBuilder};
 use sqlx_utils::filter::equals;
-use sqlx_utils::traits::{Repository, SqlFilter};
+use sqlx_utils::traits::SqlFilter;
 use sqlx_utils::{repository, sql_filter, traits::Model};
 
 sql_filter! {
