@@ -1,11 +1,12 @@
 [package]
 name = "nexsock"
-version = "1.0.0-4"
-edition = "2021"
-authors = ["Emil Schütt <emil.schutt@gmail.com>"]
 description = "A Cli tool for managing servics running on the local machine"
-repository = "https://github.com/retrokiller543/nexsock"
-homepage = "https://github.com/retrokiller543/nexsock"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license-file.workspace = true
 
 [package.metadata.wix]
 upgrade-guid = "5F8BC1FC-F490-4726-94AE-ED565F29CB2C"
