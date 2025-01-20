@@ -2,7 +2,7 @@
 members = ['.', 'nexsock', "nexsock-protocol"]
 
 [workspace.package]
-version = "1.0.0-4"
+version = "1.0.0-5"
 edition = "2021"
 authors = ["Emil Schütt <emil.schutt@gmail.com>"]
 license-file = "LICENSE"
@@ -11,7 +11,7 @@ repository = "https://github.com/retrokiller543/nexsock"
 
 [package]
 name = "nexsockd"
-version = "1.0.0-4"
+version = "1.0.0-5"
 description = "Daemon service for managing other services on the running machine"
 edition.workspace = true
 authors.workspace = true
