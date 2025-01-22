@@ -1,5 +1,5 @@
 [workspace]
-members = ['.', 'nexsock', "nexsock-protocol"]
+members = ['.', 'nexsock', "nexsock-client", "nexsock-config", "nexsock-protocol", "nexsock-web"]
 
 [workspace.package]
 version = "1.0.0-5"
@@ -27,6 +27,8 @@ eula = false
 
 [workspace.dependencies]
 nexsock-protocol = { path = "nexsock-protocol" }
+nexsock-client = { path = "nexsock-client" }
+nexsock-config = { path = "nexsock-config" }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
 bincode = { version = "2.0.0-rc.3" }
@@ -46,8 +48,10 @@ serde = { version = "1.0.215", features = ["derive"] }
 paste = "1.0.15"
 futures = "0.3.31"
 nexsock-protocol = { workspace = true }
+nexsock-config = { workspace = true }
 bincode = { workspace = true }
 anyhow = "1.0.95"
+derive_more = {version = "1.0.0", features = ["full"]}
 
 [build-dependencies]
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }

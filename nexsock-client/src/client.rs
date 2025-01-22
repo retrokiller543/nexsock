@@ -13,7 +13,7 @@ use tokio::io::{BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 #[cfg(windows)]
 use tokio::net::{TcpStream, ToSocketAddrs};
-use tracing::debug;
+use tracing::{debug, error};
 
 #[cfg(unix)]
 use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
@@ -107,6 +107,8 @@ impl Client {
                     let error = Protocol::read_payload::<ErrorPayload>(&payload_data)
                         .context("Failed to decode error payload")?
                         .ok_or_else(|| anyhow::anyhow!("Expected error payload but got None"))?;
+
+                    error!("Got an error back from the daemon: {error:?}");
 
                     bail!("Server error {}: {}", error.code, error.message)
                 } else {

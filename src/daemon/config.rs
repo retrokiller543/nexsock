@@ -1,3 +1,4 @@
+use nexsock_config::NexsockConfig;
 #[cfg(unix)]
 use std::path::PathBuf;
 
@@ -7,6 +8,38 @@ pub struct DaemonConfig {
     pub(crate) socket_path: PathBuf,
     #[cfg(windows)]
     pub(crate) socket_addr: String,
+}
+
+impl From<NexsockConfig> for DaemonConfig {
+    fn from(value: NexsockConfig) -> Self {
+        if cfg!(unix) {
+            #[cfg(unix)]
+            {
+                let path = value
+                    .socket()
+                    .clone()
+                    .try_unwrap_path()
+                    .expect("Expected socket to be a string path on unix");
+
+                Self { socket_path: path }
+            }
+            #[cfg(windows)]
+            panic!("Socket paths and Unix sockets are not supported on windows");
+        } else {
+            #[cfg(windows)]
+            {
+                let port = value
+                    .socket()
+                    .clone()
+                    .try_unwrap_port()
+                    .expect("Expected socket to be a integer referencing a port");
+
+                Self { socket_addr: port }
+            }
+            #[cfg(unix)]
+            panic!("Some odd stuff has happened");
+        }
+    }
 }
 
 #[cfg(unix)]

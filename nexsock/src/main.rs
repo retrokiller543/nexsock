@@ -1,12 +1,11 @@
 use crate::cli::Cli;
-use crate::client::Client;
 use crate::commands::create_command;
 use anyhow::bail;
 use clap::Parser;
+use nexsock_client::Client;
 use nexsock_protocol::commands::ServiceCommand;
 
 mod cli;
-mod client;
 mod commands;
 
 #[tokio::main]

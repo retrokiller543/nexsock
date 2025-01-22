@@ -1,18 +1,11 @@
 [package]
-name = "nexsock"
-description = "A Cli tool for managing servics running on the local machine"
+name = "nexsock-web"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-license.workspace = true
-
-[package.metadata.wix]
-upgrade-guid = "5F8BC1FC-F490-4726-94AE-ED565F29CB2C"
-path-guid = "E179084C-7EEC-4820-93CA-9C2E979A1E79"
-license = false
-eula = false
 
 [dependencies]
 tokio = { version = "1.43", features = ["full"] }
@@ -23,5 +16,6 @@ tracing-subscriber = "0.3.19"
 nexsock-protocol = { workspace = true }
 nexsock-client = { workspace = true }
 bincode = { workspace = true }
-clap = { version = "4.5.26", features = ["derive"] }
-derive_more = { version = "1.0.0", features = ["full"] }
+axum = { version =  "0.8.1", features = ["macros"] }
+rust_html = { version = "1.1.6", features = ["axum"] }
+directories = "6.0.0"

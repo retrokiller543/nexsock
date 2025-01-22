@@ -1,3 +1,4 @@
+use nexsock_config::NexsockConfigError;
 use thiserror::Error;
 use tracing_core::dispatcher::SetGlobalDefaultError;
 
@@ -24,6 +25,8 @@ pub enum Error {
     ExpectedPayload,
     #[error("Failed to parse payload")]
     FailedToGetPayload,
+    #[error(transparent)]
+    Config(#[from] NexsockConfigError),
 }
 
 impl Error {
@@ -39,6 +42,7 @@ impl Error {
             Error::Generic(_) => 7,
             Error::ExpectedPayload => 8,
             Error::FailedToGetPayload => 9,
+            Error::Config(_) => 10,
         }
     }
 }
