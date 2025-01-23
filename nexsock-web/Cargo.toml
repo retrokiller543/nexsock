@@ -7,6 +7,12 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 
+[package.metadata.wix]
+upgrade-guid = "ED2077CB-A37D-4E75-9AE7-D4ACDFC9D5E9"
+path-guid = "38A97D20-C210-4F39-ADBA-821BFC0BD79F"
+license = false
+eula = false
+
 [dependencies]
 tokio = { version = "1.43", features = ["full"] }
 thiserror = "2.0.11"

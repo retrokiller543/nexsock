@@ -3,6 +3,7 @@ use crate::commands::manage_service::ServiceRef;
 use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
 
@@ -53,6 +54,7 @@ try_from!(Status => ServiceStatus);
     Type,
     Encode,
     Decode,
+    Display,
 )]
 pub enum ServiceState {
     Starting,

@@ -2,6 +2,7 @@ use crate::commands::service_status::ServiceState;
 use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
+use derive_more::AsRef;
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -17,6 +18,7 @@ use serde::{Deserialize, Serialize};
     Deserialize,
     Encode,
     Decode,
+    AsRef,
 )]
 pub struct ListServicesResponse {
     pub services: Vec<ServiceInfo>,

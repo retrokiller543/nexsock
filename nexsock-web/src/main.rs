@@ -1,11 +1,17 @@
+mod components;
+mod endpoints;
+mod layout;
+
+use crate::layout::Layout;
 use anyhow::{anyhow, Context};
 use axum::{extract::State, routing::get, Router};
-use std::{path::PathBuf, sync::Arc};
-
+use components::service_basic::ServiceBasic;
 use directories::ProjectDirs;
+use endpoints::get_services::get_service;
 use nexsock_client::Client;
 use nexsock_protocol::commands::list_services::ListServicesCommand;
-use rust_html::{rhtml, Template};
+use rust_html::{rhtml, Render, Template, TemplateGroup};
+use std::{path::PathBuf, sync::Arc};
 use tokio::net::TcpListener;
 #[cfg(windows)]
 use tokio::net::TcpStream;
@@ -24,56 +30,38 @@ async fn get_daemon_port(port_file: &PathBuf) -> anyhow::Result<String> {
     Ok(port)
 }
 
-async fn connect_to_daemon(state: &AppState) -> anyhow::Result<String> {
+async fn connect_to_daemon(state: &AppState) -> anyhow::Result<Vec<ServiceBasic>> {
     let mut client = Client::connect(&state.socket_path).await?;
 
     let res = client.execute_command(ListServicesCommand::new()).await?;
 
     if res.is_list_services() {
         let services = res.unwrap_list_services();
-        Ok(format!(
-            "Daemon is running with these available services to control: {services:#?}"
-        ))
+
+        Ok(ServiceBasic::from_iter(services.services))
     } else {
-        Ok("Daemon is running".to_string())
+        Ok(Vec::new())
     }
 }
 
 async fn serve_html(State(state): State<Arc<AppState>>) -> Template {
-    let status = connect_to_daemon(&state)
+    let services = connect_to_daemon(&state)
         .await
-        .unwrap_or_else(|e| format!("Error connecting to daemon: {}", e));
+        .unwrap()
+        .iter()
+        .map(|service| service.render())
+        .collect::<TemplateGroup>();
 
-    rhtml!(
+    let page = Layout::new(rhtml!(
         r#"
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Daemon Status</title>
-            <style>
-                body {{
-                    font-family: system-ui, -apple-system, sans-serif;
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 20px;
-                }}
-                .status {{
-                    padding: 15px;
-                    border-radius: 4px;
-                    background: #f0f0f0;
-                    margin: 20px 0;
-                }}
-            </style>
-        </head>
-        <body>
-            <h1>Daemon Status</h1>
-            <div class="status">
-                <p>Status: {status}</p>
-            </div>
-        </body>
-        </html>
+        <h1>Daemon Status</h1>
+        <div class="status">
+            {services}
+        </div>
     "#
-    )
+    ));
+
+    page.render()
 }
 
 fn get_project_dirs() -> Option<ProjectDirs> {
@@ -93,7 +81,10 @@ async fn main() -> anyhow::Result<()> {
         port_file: project_dirs.cache_dir().join("daemon-port"),
     });
 
-    let app = Router::new().route("/", get(serve_html)).with_state(state);
+    let app = Router::new()
+        .route("/", get(serve_html))
+        .route("/service/{id}", get(get_service))
+        .with_state(state);
 
     let addr = TcpListener::bind("127.0.0.1:5050")
         .await
