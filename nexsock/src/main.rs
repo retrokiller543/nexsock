@@ -1,9 +1,12 @@
 use crate::cli::Cli;
 use crate::commands::create_command;
-use anyhow::bail;
+use anyhow::{bail, Context};
 use clap::Parser;
 use nexsock_client::Client;
+use nexsock_config::NexsockConfig;
 use nexsock_protocol::commands::ServiceCommand;
+#[cfg(windows)]
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 mod cli;
 mod commands;
@@ -16,12 +19,33 @@ async fn main() -> anyhow::Result<()> {
     // Parse command line arguments
     let cli = Cli::parse();
 
-    // Connect to daemon
+    let config = NexsockConfig::new()?;
+
     #[cfg(unix)]
-    let mut client = Client::connect(cli.socket).await?;
+    let socket = if let Some(socket) = cli.socket {
+        socket
+    } else {
+        config
+            .socket()
+            .clone()
+            .try_unwrap_path()
+            .context("Expected `socket` to be a path to the socket file")?
+    };
 
     #[cfg(windows)]
-    let mut client = Client::connect(cli.address).await?;
+    let socket = if let Some(addr) = cli.address {
+        addr
+    } else {
+        let port = config
+            .socket()
+            .clone()
+            .try_unwrap_port()
+            .context("Expected `socket` to be a integer port number")?;
+
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port)
+    };
+
+    let mut client = Client::connect(socket).await?;
 
     let command = create_command(cli.command)?;
 

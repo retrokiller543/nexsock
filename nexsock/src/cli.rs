@@ -12,13 +12,13 @@ use std::path::PathBuf;
 pub struct Cli {
     /// Socket path to use to communicate with the daemon
     #[cfg(unix)]
-    #[arg(short, long, default_value = "/tmp/nexsockd.sock")]
-    pub(crate) socket: PathBuf,
+    #[arg(short, long)]
+    pub(crate) socket: Option<PathBuf>,
 
     /// Tcp address to use to communicate with the daemon
     #[cfg(windows)]
-    #[arg(short, long, default_value = "/tmp/nexsockd.sock")]
-    pub(crate) address: SocketAddr,
+    #[arg(short, long)]
+    pub(crate) address: Option<SocketAddr>,
 
     #[command(subcommand)]
     pub(crate) command: Commands,
