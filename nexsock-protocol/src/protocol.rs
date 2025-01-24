@@ -23,6 +23,7 @@ impl Protocol {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip(writer))]
     pub async fn write_command<W>(&mut self, writer: &mut W, command: Command) -> io::Result<()>
     where
         W: AsyncWrite + Unpin,
@@ -31,6 +32,7 @@ impl Protocol {
             .await
     }
 
+    #[tracing::instrument(level = "debug", skip(writer))]
     pub async fn write_command_with_payload<W, T: Encode + Debug>(
         &mut self,
         writer: &mut W,
@@ -46,6 +48,7 @@ impl Protocol {
             .await
     }
 
+    #[tracing::instrument(level = "debug", skip(writer))]
     async fn write_message<W, T: Encode + Debug>(
         &mut self,
         writer: &mut W,
@@ -91,6 +94,7 @@ impl Protocol {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip(reader))]
     pub async fn read_message<R>(
         &mut self,
         reader: &mut R,

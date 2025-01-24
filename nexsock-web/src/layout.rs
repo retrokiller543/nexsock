@@ -1,3 +1,4 @@
+use crate::components::mange_service::ServiceManagementScripts;
 use rust_html::{rhtml, Render, Template, Unescaped};
 
 fn page_style() -> Template {
@@ -46,6 +47,7 @@ impl<T: Render> Layout<T> {
 impl<T: Render> Render for Layout<T> {
     fn render(&self) -> Template {
         let style = page_style();
+        let scripts = ServiceManagementScripts;
         rhtml! {r#"
         <!DOCTYPE html>
         <html>
@@ -58,6 +60,7 @@ impl<T: Render> Render for Layout<T> {
                 <a href="/">Services</a>
             </nav>
             {self.0}
+            {scripts}
         </body>
         </html>
         "#}

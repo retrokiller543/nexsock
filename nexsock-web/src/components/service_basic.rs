@@ -1,6 +1,9 @@
+use crate::traits::RenderTemplate;
 use nexsock_protocol::commands::list_services::ServiceInfo;
 use rust_html::{rhtml, Render, Template};
+use serde::Serialize;
 
+#[derive(Debug, Serialize)]
 pub struct ServiceBasic(ServiceInfo);
 
 impl ServiceBasic {
@@ -17,6 +20,11 @@ impl ServiceBasic {
 
         services
     }
+}
+
+impl RenderTemplate for ServiceBasic {
+    const TEMPLATE_NAME: &'static str = "service_basic.html";
+    const VARIABLE_NAME: &'static str = "service";
 }
 
 impl Render for ServiceBasic {

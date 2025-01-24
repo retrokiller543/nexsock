@@ -1,0 +1,29 @@
+<div class="service">
+  <div>
+    <strong>{{ service.name }}</strong>
+    <span style="float: right">{{ service.state }}</span>
+  </div>
+  <div style="margin-top: 8px">
+    <div>Port: {{ service.port }}</div>
+    <div>Dependencies: {% if service.has_dependencies %}Yes{% else %}No{% endif %}</div>
+  </div>
+  <div class="service-controls">
+    <button class="button">
+      <a href="/service/{{ service.name }}">Details</a>
+    </button>
+    {% include "management.html" %}
+  </div>
+</div>
+
+<style>
+  .service-controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: center;
+  }
+
+  .service-controls .control-form {
+    margin-left: auto;
+  }
+</style>

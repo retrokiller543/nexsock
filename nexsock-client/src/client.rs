@@ -27,6 +27,7 @@ pub struct Client {
 }
 
 impl Client {
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn connect(
         #[cfg(unix)] socket_path: impl Into<PathBuf>,
         #[cfg(windows)] socket_addr: impl ToSocketAddrs,
@@ -57,6 +58,7 @@ impl Client {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn execute_command<C>(&mut self, command: C) -> Result<CommandPayload>
     where
         C: ServiceCommand,
@@ -80,6 +82,7 @@ impl Client {
         self.handle_response().await
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     async fn handle_response(&mut self) -> Result<CommandPayload> {
         let (header, payload) = self
             .protocol

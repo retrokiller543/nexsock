@@ -1,0 +1,9 @@
+<div class="service">
+    <div>
+        <strong>{{ dependency.name }}</strong>
+        <span style="float: right">ID: {{ dependency.id }}</span>
+    </div>
+    <div style="margin-top: 8px">
+        Tunnel: {% if dependency.tunnel_enabled %} Enabled {% else %} Disabled {% endif %}
+    </div>
+</div>

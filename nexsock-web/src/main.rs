@@ -1,38 +1,90 @@
 mod components;
 mod endpoints;
 mod layout;
+mod templates;
+mod traits;
 
-use crate::layout::Layout;
-use anyhow::{anyhow, Context};
-use axum::{extract::State, routing::get, Router};
+use anyhow::{bail, Context};
+use axum::body::Body;
+use axum::http::{header, HeaderValue, Request, Response, StatusCode};
+use axum::routing::post;
+use axum::{routing::get, Router};
 use components::service_basic::ServiceBasic;
-use directories::ProjectDirs;
-use endpoints::get_services::get_service;
+use endpoints::get_services::get_nexsock_service;
+use endpoints::index;
 use nexsock_client::Client;
+use nexsock_config::{NexsockConfig, SocketRef};
 use nexsock_protocol::commands::list_services::ListServicesCommand;
-use rust_html::{rhtml, Render, Template, TemplateGroup};
-use std::{path::PathBuf, sync::Arc};
-use tokio::net::TcpListener;
+use rust_embed::RustEmbed;
+use std::sync::Arc;
+use std::time::Duration;
 #[cfg(windows)]
 use tokio::net::TcpStream;
+use tokio::net::{TcpListener, ToSocketAddrs};
+use tosic_utils::logging::init_tracing;
+use tower_http::trace::TraceLayer;
+use tracing::{info, Span};
+
+#[derive(Clone, RustEmbed)]
+#[folder = "public"]
+struct Public;
+
+async fn static_handler(uri: axum::http::Uri) -> Response<Body> {
+    let path = uri.path().trim_start_matches('/');
+
+    match Public::get(path) {
+        Some(content) => {
+            let mime = mime_guess::from_path(path).first_or_octet_stream();
+
+            Response::builder()
+                .header(
+                    header::CONTENT_TYPE,
+                    HeaderValue::from_str(mime.as_ref()).unwrap(),
+                )
+                .body(Body::from(content.data.to_vec()))
+                .unwrap()
+        }
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::from("404 Not Found"))
+            .unwrap(),
+    }
+}
 
 struct AppState {
-    #[cfg(unix)]
-    socket_path: PathBuf,
-    #[cfg(windows)]
-    port_file: PathBuf,
+    config: NexsockConfig,
 }
 
-#[cfg(windows)]
-async fn get_daemon_port(port_file: &PathBuf) -> anyhow::Result<String> {
-    let port_str = fs::read_to_string(port_file)?;
-    let port = port_str.trim().parse::<u16>()?;
-    Ok(port)
+impl AppState {
+    async fn new() -> anyhow::Result<Self> {
+        let config = NexsockConfig::new()?;
+
+        Ok(Self { config })
+    }
 }
 
-async fn connect_to_daemon(state: &AppState) -> anyhow::Result<Vec<ServiceBasic>> {
-    let mut client = Client::connect(&state.socket_path).await?;
+#[allow(unused_variables)]
+async fn connect_to_client(socket_ref: &SocketRef) -> anyhow::Result<Client> {
+    let client = match socket_ref {
+        SocketRef::Port(port) => {
+            #[cfg(unix)]
+            bail!("When on Unix Tcp sockets are not available, please modify config to be a path to the socket file");
+            #[cfg(windows)]
+            Client::connect(format!("127.0.0.1:{port}")).await?
+        }
+        SocketRef::Path(path) => {
+            #[cfg(windows)]
+            bail!("Unix sockets are not available, please modify config to be a path to the port where the daemon is running");
+            #[cfg(unix)]
+            Client::connect(path).await?
+        }
+    };
 
+    Ok(client)
+}
+
+async fn list_services(state: &AppState) -> anyhow::Result<Vec<ServiceBasic>> {
+    let mut client = connect_to_client(state.config.socket()).await?;
     let res = client.execute_command(ListServicesCommand::new()).await?;
 
     if res.is_list_services() {
@@ -44,54 +96,74 @@ async fn connect_to_daemon(state: &AppState) -> anyhow::Result<Vec<ServiceBasic>
     }
 }
 
-async fn serve_html(State(state): State<Arc<AppState>>) -> Template {
-    let services = connect_to_daemon(&state)
-        .await
-        .unwrap()
-        .iter()
-        .map(|service| service.render())
-        .collect::<TemplateGroup>();
+#[inline]
+#[tracing::instrument]
+pub async fn app() -> anyhow::Result<Router> {
+    let state = Arc::new(AppState::new().await?);
 
-    let page = Layout::new(rhtml!(
-        r#"
-        <h1>Daemon Status</h1>
-        <div class="status">
-            {services}
-        </div>
-    "#
-    ));
-
-    page.render()
+    Ok(Router::new()
+        .route("/", get(index::index_html))
+        .route("/service/{id}", get(get_nexsock_service))
+        .route(
+            "/api/service/{service_id}/start",
+            post(crate::endpoints::api::start_service),
+        )
+        .route(
+            "/api/service/{service_id}/stop",
+            post(crate::endpoints::api::stop_service),
+        )
+        .fallback(static_handler)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &Request<_>| {
+                    tracing::info_span!(
+                        "http_request",
+                        method = %request.method(),
+                        uri = %request.uri(),
+                        version = ?request.version(),
+                    )
+                })
+                .on_request(|request: &Request<_>, _span: &Span| {
+                    info!("started {} {}", request.method(), request.uri());
+                })
+                .on_response(|response: &Response<_>, latency: Duration, _span: &Span| {
+                    info!(
+                        "finished {} {:?} with {} header in {:?}",
+                        response.status(),
+                        response.version(),
+                        response.headers().len(),
+                        latency,
+                    );
+                }),
+        )
+        .with_state(state))
 }
 
-fn get_project_dirs() -> Option<ProjectDirs> {
-    ProjectDirs::from("com", "your-org", "your-app")
+#[inline]
+#[tracing::instrument(skip_all)]
+pub async fn serve(app: Router, socket_addr: impl ToSocketAddrs) -> anyhow::Result<()> {
+    let socket = TcpListener::bind(socket_addr)
+        .await
+        .context("Failed to bind port")?;
+
+    info!("Listening on http://{}", socket.local_addr()?);
+
+    axum::serve(socket, app)
+        .await
+        .context("Failed to serve axum server")
+}
+
+#[inline]
+#[tracing::instrument]
+pub async fn serve_default() -> anyhow::Result<()> {
+    let app = app().await.context("Failed to construct the App")?;
+
+    serve(app, "0.0.0.0:5050").await
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let project_dirs =
-        get_project_dirs().ok_or(anyhow!("Failed to determine project directories"))?;
+    let _guard = init_tracing("nexsock-web.log")?;
 
-    let state = Arc::new(AppState {
-        #[cfg(unix)]
-        socket_path: PathBuf::from("/tmp/nexsockd.sock"), // Make configurable
-
-        #[cfg(windows)]
-        port_file: project_dirs.cache_dir().join("daemon-port"),
-    });
-
-    let app = Router::new()
-        .route("/", get(serve_html))
-        .route("/service/{id}", get(get_service))
-        .with_state(state);
-
-    let addr = TcpListener::bind("127.0.0.1:5050")
-        .await
-        .context("failed to bind port")?;
-    println!("Web interface available at http://{}", addr.local_addr()?);
-
-    axum::serve(addr, app).await?;
-
-    Ok(())
+    serve_default().await
 }

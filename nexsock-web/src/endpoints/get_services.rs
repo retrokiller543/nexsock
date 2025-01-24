@@ -1,12 +1,12 @@
 use crate::components::service_status::ServiceStatusView;
-use crate::layout::Layout;
-use crate::AppState;
+use crate::templates::TERA;
+use crate::traits::RenderTemplate;
+use crate::{connect_to_client, AppState};
 use anyhow::bail;
 use axum::extract::{Path, State};
-use nexsock_client::Client;
+use axum::response::Html;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use nexsock_protocol::commands::service_status::GetServiceStatus;
-use rust_html::{rhtml, Render, Template};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -14,7 +14,7 @@ async fn find_service(
     state: Arc<AppState>,
     service_ref: ServiceRef,
 ) -> anyhow::Result<ServiceStatusView> {
-    let mut client = Client::connect(&state.socket_path).await?;
+    let mut client = connect_to_client(state.config.socket()).await?;
 
     let res = client
         .execute_command(GetServiceStatus::new(service_ref))
@@ -30,23 +30,16 @@ async fn find_service(
 }
 
 //#[axum::debug_handler]
-pub async fn get_service(
+pub async fn get_nexsock_service(
     State(state): State<Arc<AppState>>,
     Path(service_ref): Path<String>,
-) -> Template {
+) -> Html<String> {
     let service_ref = ServiceRef::from_str(service_ref.as_str()).unwrap();
     let service = find_service(state.clone(), service_ref.clone())
         .await
         .unwrap();
 
-    let page = Layout::new(rhtml!(
-        r#"
-        <h1>Service Details</h1>
-        <div class="status">
-            {service}
-        </div>
-    "#
-    ));
+    let tera = TERA.read().unwrap().clone();
 
-    page.render()
+    Html(service.render(&tera, None).unwrap())
 }

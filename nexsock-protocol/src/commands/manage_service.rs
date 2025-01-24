@@ -1,6 +1,6 @@
 use crate::service_command;
 use bincode::{Decode, Encode};
-use derive_more::{From, TryFrom};
+use derive_more::{Display, From, TryFrom};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -48,6 +48,7 @@ pub struct StartServicePayload {
     Decode,
     TryFrom,
     From,
+    Display,
 )]
 pub enum ServiceRef {
     #[try_from(Option<i64>)]

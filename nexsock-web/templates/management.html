@@ -1,0 +1,43 @@
+<div class="service-controls">
+    {% if service.state == "Running" %}
+    <form action="/api/service/{{ service.name }}/stop" class="control-form" method="POST">
+        <button class="button" name="action" type="submit" value="stop">Stop Service</button>
+    </form>
+    {% else %}
+    <form action="/api/service/{{ service.name }}/start" class="control-form" method="POST">
+        <button class="button" name="action" type="submit" value="start">Start Service</button>
+    </form>
+    {% endif %}
+    <button
+            class="button button-danger"
+            onclick="if (confirm('Are you sure you want to remove {{ service.name | slugify }}? This action cannot be undone.')) {
+            document.getElementById('remove-form-{{ service.name | slugify }}').submit();
+        }"
+    >
+        Remove Service
+    </button>
+
+    <form action="/api/service/{{ service.name }}" id="remove-form-{{ service.name | slugify }}" method="DELETE" style="display: none;">
+    </form>
+</div>
+
+<style>
+    .service-controls {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .button-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .button-danger:hover {
+        background-color: #c82333;
+    }
+
+    .control-form {
+        display: inline;
+    }
+</style>

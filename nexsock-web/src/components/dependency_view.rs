@@ -1,6 +1,9 @@
+use crate::traits::RenderTemplate;
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
 use rust_html::{rhtml, Render, Template};
+use serde::Serialize;
 
+#[derive(Clone, Debug, Serialize)]
 pub struct DependencyView(DependencyInfo);
 
 impl DependencyView {
@@ -17,6 +20,11 @@ impl DependencyView {
 
         dependencies
     }
+}
+
+impl RenderTemplate for DependencyView {
+    const TEMPLATE_NAME: &'static str = "dependency.html";
+    const VARIABLE_NAME: &'static str = "dependency";
 }
 
 impl Render for DependencyView {
