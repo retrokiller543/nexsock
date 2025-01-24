@@ -1,43 +1,92 @@
 <div class="service-controls">
     {% if service.state == "Running" %}
-    <form action="/api/service/{{ service.name }}/stop" class="control-form" method="POST">
-        <button class="button" name="action" type="submit" value="stop">Stop Service</button>
-    </form>
+    <button class="button" onclick="controlService('{{ service.name }}', 'stop')">Stop Service</button>
     {% else %}
-    <form action="/api/service/{{ service.name }}/start" class="control-form" method="POST">
-        <button class="button" name="action" type="submit" value="start">Start Service</button>
-    </form>
+    <div class="start-container">
+        <div class="env-vars" id="env-vars">
+            <h4 class="env-title">Environment Variables</h4>
+            <div class="env-var-pair">
+                <input class="env-input" placeholder="Key" type="text">
+                <input class="env-input" placeholder="Value" type="text">
+                <button class="button button-remove" onclick="this.parentElement.remove()" type="button">×</button>
+            </div>
+        </div>
+        <div class="control-buttons">
+            <button class="button button-secondary" onclick="addEnvVar()" type="button">Add Variable</button>
+            <button class="button" onclick="controlService('{{ service.name }}', 'start')">Start Service</button>
+        </div>
+    </div>
     {% endif %}
-    <button
-            class="button button-danger"
-            onclick="if (confirm('Are you sure you want to remove {{ service.name | slugify }}? This action cannot be undone.')) {
-            document.getElementById('remove-form-{{ service.name | slugify }}').submit();
-        }"
-    >
+
+    <button class="button button-danger" onclick="confirmRemove('{{ service.name }}')">
         Remove Service
     </button>
-
-    <form action="/api/service/{{ service.name }}" id="remove-form-{{ service.name | slugify }}" method="DELETE" style="display: none;">
-    </form>
 </div>
 
 <style>
     .service-controls {
         display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .start-container {
+        background: #f8f9fa;
+        padding: 1.25rem;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    }
+
+    .env-vars {
+        min-width: 400px;
+    }
+
+    .env-title {
+        margin: 0 0 1rem 0;
+        color: #495057;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .env-var-pair {
+        margin: 0.75rem 0;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .env-input {
+        padding: 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+    }
+
+    .button-secondary {
+        background: #6c757d;
+    }
+
+    .button-remove {
+        padding: 4px 8px;
+        background: #e9ecef;
+        color: #495057;
+        font-size: 1.2rem;
+        line-height: 1;
+    }
+
+    .button-remove:hover {
+        background: #dee2e6;
     }
 
     .button-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .button-danger:hover {
-        background-color: #c82333;
-    }
-
-    .control-form {
-        display: inline;
+        background: #e74a3b;
     }
 </style>

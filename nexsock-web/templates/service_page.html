@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% endblock title %}
+{% block title %}{{ service.name }}{% endblock title %}
 {% block content %}
 <div class="service">
   <div>
@@ -11,8 +11,8 @@
     <div>Port: {{ service.port }}</div>
     <div>Repository: <a href="{{ service.repo_url }}">{{ service.repo_url }}</a></div>
     <div>Path: <a href="file://{{ service.repo_path }}">{{ service.repo_path }}</a></div>
-    {% if service.config %}
-    <div>Config ID: {{ service.config }}</div>
+    {% if service.config_id %}
+    <div>Config ID: {{ service.config_id }}</div>
     {% else %}
     <div>No config</div>
     {% endif %}
