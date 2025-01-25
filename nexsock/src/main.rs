@@ -1,4 +1,4 @@
-use crate::cli::Cli;
+use crate::cli::{Cli, Commands, ToolCommands};
 use crate::commands::create_command;
 use anyhow::{bail, Context};
 use clap::Parser;
@@ -7,9 +7,20 @@ use nexsock_config::NexsockConfig;
 use nexsock_protocol::commands::ServiceCommand;
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use tracing::warn;
 
 mod cli;
 mod commands;
+
+pub fn handle_tool_commands(command: ToolCommands) -> anyhow::Result<()> {
+    warn!("Downloading and managing nexsock tools is currently unsupported");
+    match command {
+        ToolCommands::Update { .. } => todo!(),
+        ToolCommands::Install { .. } => todo!(),
+        ToolCommands::List { .. } => todo!(),
+        ToolCommands::Uninstall { .. } => todo!(),
+    }
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -18,6 +29,15 @@ async fn main() -> anyhow::Result<()> {
 
     // Parse command line arguments
     let cli = Cli::parse();
+
+    if cli.command.is_tools() {
+        let command = cli.command;
+
+        return match command {
+            Commands::Tools { command } => handle_tool_commands(command),
+            _ => unreachable!("Bug in `derive_more` if we get here!"),
+        };
+    }
 
     let config = NexsockConfig::new()?;
 
