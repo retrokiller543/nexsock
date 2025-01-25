@@ -21,6 +21,7 @@ use crate::commands::manage_service::{
     RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand,
 };
 use crate::commands::service_status::{GetServiceStatus, ServiceStatus};
+use crate::service_command;
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinWrite};
 use derive_more::{From, Into, IsVariant, TryUnwrap, Unwrap};
@@ -76,11 +77,14 @@ pub enum Command {
     // System operations
     Shutdown = 40,
     GetSystemStatus = 41,
+    Ping = 42,
 
     // Response types
     Success = 0xFFF0,
     Error = 0xFFFF,
 }
+
+service_command!(pub struct PingCommand<_, ()> = Ping);
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, IsVariant, Unwrap, TryUnwrap, From)]
 #[unwrap(ref, ref_mut)]

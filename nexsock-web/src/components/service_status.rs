@@ -1,8 +1,9 @@
 use crate::traits::RenderTemplate;
+use derive_more::{AsMut, AsRef, Deref, DerefMut, From, Into};
 use nexsock_protocol::commands::service_status::ServiceStatus;
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, AsRef, AsMut, Deref, DerefMut, From, Into)]
 pub struct ServiceStatusView(ServiceStatus);
 
 impl ServiceStatusView {

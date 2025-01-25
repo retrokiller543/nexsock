@@ -10,7 +10,7 @@ pub struct Page {
 
 impl Page {
     pub fn new(title: String, content: impl RenderTemplate) -> Self {
-        let content = content.render(&TERA.read().unwrap().clone(), None).unwrap();
+        let content = content.render(&TERA, None).unwrap();
 
         Self { title, content }
     }

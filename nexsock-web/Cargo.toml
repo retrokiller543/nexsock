@@ -1,5 +1,6 @@
 [package]
 name = "nexsock-web"
+description = "A Web interface for managing services using `nexsock`"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -24,15 +25,17 @@ nexsock-client = { workspace = true }
 nexsock-config = { workspace = true }
 bincode = { workspace = true }
 axum = { version =  "0.8.1", features = ["macros"] }
-rust_html = { version = "1.1.6", features = ["axum"] }
 directories = "6.0.0"
 derive_more = { version =  "1.0.0", features = ["full"] }
 tera = "1.20.0"
 serde = { version = "1.0.217", features = ["derive"] }
-tower-http = { version = "0.6.2", features = ["fs", "trace", "tracing"] }
+tower-http = { version = "0.6.2", features = ["fs", "trace", "tracing", "compression-full"] }
 rust-embed = { version = "8.5.0", features = ["axum"] }
 mime_guess = "2.0.5"
 tosic-utils = { workspace = true }
+axum-response-cache = "0.2.0"
+futures = "0.3.31"
+deadpool = "0.12.1"
 
 
 [build-dependencies]

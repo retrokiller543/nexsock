@@ -7,6 +7,8 @@ pub trait RenderTemplate: Serialize {
     const TEMPLATE_NAME: &'static str;
     const VARIABLE_NAME: &'static str;
 
+    #[inline]
+    #[tracing::instrument(level = "trace", skip(self))]
     fn render(
         &self,
         renderer: &Tera,
@@ -19,11 +21,13 @@ pub trait RenderTemplate: Serialize {
         String::from_utf8(writer).context("failed to convert rendered template to UTF-8 string")
     }
 
+    #[inline]
+    #[tracing::instrument(level = "trace", skip(self, writer))]
     fn render_to(
         &self,
         renderer: &Tera,
         additional_context: Option<TemplateContext>,
-        write: impl Write,
+        writer: impl Write,
     ) -> anyhow::Result<()> {
         let mut context = TemplateContext::new();
         context.insert(Self::VARIABLE_NAME, self);
@@ -33,23 +37,25 @@ pub trait RenderTemplate: Serialize {
         }
 
         renderer
-            .render_to(Self::TEMPLATE_NAME, &context, write)
+            .render_to(Self::TEMPLATE_NAME, &context, writer)
             .context("failed to render template")
     }
 }
 
 impl<T: RenderTemplate> RenderTemplate for Vec<T> {
-    const TEMPLATE_NAME: &'static str = "collection.html";
-    const VARIABLE_NAME: &'static str = "items";
+    const TEMPLATE_NAME: &'static str = T::TEMPLATE_NAME;
+    const VARIABLE_NAME: &'static str = T::VARIABLE_NAME;
 
+    #[inline]
+    #[tracing::instrument(level = "trace", skip(self, writer))]
     fn render_to(
         &self,
         renderer: &Tera,
         additional_context: Option<TemplateContext>,
-        mut write: impl Write,
+        mut writer: impl Write,
     ) -> anyhow::Result<()> {
         for item in self {
-            item.render_to(renderer, additional_context.clone(), &mut write)?;
+            item.render_to(renderer, additional_context.clone(), &mut writer)?;
         }
 
         Ok(())

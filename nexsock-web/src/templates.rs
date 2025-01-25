@@ -1,5 +1,5 @@
-use rust_embed::RustEmbed;
-use std::sync::{LazyLock, RwLock};
+use crate::embedded::Templates;
+use std::sync::LazyLock;
 use tera::Tera;
 
 #[tracing::instrument]
@@ -16,8 +16,4 @@ fn load_templates() -> Tera {
     tera
 }
 
-pub static TERA: LazyLock<RwLock<Tera>> = LazyLock::new(|| RwLock::new(load_templates()));
-
-#[derive(RustEmbed)]
-#[folder = "templates/"]
-pub struct Templates;
+pub static TERA: LazyLock<Tera> = LazyLock::new(load_templates);

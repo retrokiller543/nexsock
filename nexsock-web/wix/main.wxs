@@ -69,6 +69,7 @@
 
         <Package Id='*'
             Keywords='Installer'
+            Description='A Web interface for managing services using `nexsock`'
             Manufacturer='Emil Schütt'
             InstallerVersion='450'
             Languages='1033'
