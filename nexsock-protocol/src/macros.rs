@@ -48,6 +48,19 @@ macro_rules! service_command {
                 self.0
             }
         }
+
+        impl From<$command> for <$command as $crate::traits::ServiceCommand>::Input {
+            fn from(command: $command) -> Self {
+                use $crate::traits::ServiceCommand;
+                command.into_payload()
+            }
+        }
+
+        impl From<$input> for $command {
+            fn from(input: $input) -> Self {
+                Self::new(input)
+            }
+        }
     };
 
     {
@@ -69,6 +82,13 @@ macro_rules! service_command {
             }
         }
 
+        impl From<$command> for <$command as $crate::traits::ServiceCommand>::Input {
+            fn from(command: $command) -> Self {
+                use $crate::traits::ServiceCommand;
+                command.into_payload()
+            }
+        }
+
         impl $crate::traits::ServiceCommand for $command {
             type Input = $input;
             type Output = $output;
@@ -78,6 +98,14 @@ macro_rules! service_command {
             fn into_payload(self) -> Self::Input {
                 Self::Input {
                     $($field: self.$field),*
+                }
+            }
+        }
+
+        impl From<$input> for $command {
+            fn from(input: $input) -> Self {
+                Self {
+                    $($field: input.$field),*
                 }
             }
         }

@@ -275,6 +275,7 @@ impl ServiceManagement for ServiceManager {
             .expect("Already checked for emptiness");
 
         let service_id = service.id.ok_or_else(|| anyhow!("Service has no ID"))?;
+        let config_id = service.config_id;
 
         // First stop if running
         match self.get_service_state(service_id).await {
@@ -284,8 +285,27 @@ impl ServiceManagement for ServiceManager {
             _ => {}
         }
 
+        // Get dependencies in one go and collect IDs immediately
+        let dependency_ids: Vec<_> = SERVICE_DEPENDENCY_REPOSITORY
+            .get_by_any_filter(equals("sd.service_id", Some(service_id)))
+            .await?
+            .into_iter()
+            .map(|dep| dep.id)
+            .collect();
+
+        if !dependency_ids.is_empty() {
+            SERVICE_DEPENDENCY_REPOSITORY
+                .delete_many(dependency_ids)
+                .await?;
+        }
+
         // Then remove from database
-        SERVICE_REPOSITORY.delete_by_id(service_id).await?;
+        SERVICE_RECORD_REPOSITORY.delete_by_id(service_id).await?;
+
+        // Handle config deletion if exists
+        if let Some(config_id) = config_id {
+            SERVICE_CONFIG_REPOSITORY.delete_by_id(config_id).await?;
+        }
 
         Ok(())
     }

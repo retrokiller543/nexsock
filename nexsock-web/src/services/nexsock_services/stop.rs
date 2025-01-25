@@ -3,6 +3,7 @@ use crate::state::AppState;
 use anyhow::anyhow;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StopServiceCommand};
 
+#[tracing::instrument(skip(state))]
 pub async fn stop_service_inner(state: &AppState, service_ref: ServiceRef) -> anyhow::Result<()> {
     let mut client = get_client(state).await?;
 

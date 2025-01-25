@@ -1,7 +1,7 @@
 use crate::services::nexsock_services::start;
 use crate::state::AppState;
 use axum::extract::{Path, State};
-use axum::response::{IntoResponse, Redirect};
+use axum::response::IntoResponse;
 use axum::Json;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::collections::HashMap;
@@ -14,9 +14,7 @@ pub(crate) async fn start_service(
 ) -> impl IntoResponse {
     let service_ref = ServiceRef::from_str(service_ref.as_str()).unwrap();
 
-    start::start_service_inner(state, service_ref.clone(), env_vars)
+    start::start_service_inner(state, service_ref, env_vars)
         .await
         .unwrap();
-
-    Redirect::to(format!("/service/{}", service_ref).as_str())
 }

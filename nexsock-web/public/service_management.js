@@ -41,13 +41,19 @@ function addEnvVar() {
 }
 
 async function confirmRemove(serviceName) {
+    if (serviceName.length === 0) {
+        throw new Error('Invalid Service name');
+    }
+
     if (confirm(`Are you sure you want to remove ${serviceName}? This action cannot be undone.`)) {
         try {
-            const response = await fetch(`/api/service/${serviceName}`, {
+            const endpoint = `/api/service/${serviceName}`;
+            console.info(endpoint)
+            const response = await fetch(endpoint, {
                 method: 'DELETE'
             });
             if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-            window.location.href = '/services';
+            window.location.href = '/';
         } catch (error) {
             console.error('Error:', error);
             alert('Failed to remove service');

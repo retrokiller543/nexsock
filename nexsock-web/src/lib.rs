@@ -11,7 +11,7 @@ use crate::endpoints::fallback::static_handler;
 use anyhow::Context;
 use axum::handler::Handler;
 use axum::http::{Request, Response};
-use axum::routing::post;
+use axum::routing::{delete, post};
 use axum::{routing::get, Router};
 use axum_response_cache::CacheLayer;
 use endpoints::get_services::get_nexsock_service;
@@ -37,6 +37,14 @@ pub async fn app() -> anyhow::Result<Router> {
     Ok(Router::new()
         .route("/", get(index::index_html))
         .route("/service/{id}", get(get_nexsock_service))
+        .route(
+            "/api/service/{service_id}",
+            delete(endpoints::api::service::delete::remove_service),
+        )
+        .route(
+            "/api/service",
+            post(endpoints::api::service::add::add_service_endpoint),
+        )
         .route(
             "/api/service/{service_id}/start",
             post(endpoints::api::service::start::start_service),
