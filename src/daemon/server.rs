@@ -23,7 +23,7 @@ impl DaemonServer {
         #[cfg(unix)]
         let daemon = Daemon::new(config.clone().into())?;
         #[cfg(windows)]
-        let daemon = Daemon::new(config).await?;
+        let daemon = Daemon::new(config.clone().into()).await?;
 
         let connections = Vec::new();
         let last_cleanup = Instant::now();

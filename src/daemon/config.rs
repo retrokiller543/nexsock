@@ -34,7 +34,9 @@ impl From<NexsockConfig> for DaemonConfig {
                     .try_unwrap_port()
                     .expect("Expected socket to be a integer referencing a port");
 
-                Self { socket_addr: port }
+                Self {
+                    socket_addr: format!("127.0.0.1:{}", port),
+                }
             }
             #[cfg(unix)]
             panic!("Some odd stuff has happened");
