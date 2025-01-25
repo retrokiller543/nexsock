@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use derive_more::{FromStr, IsVariant};
+use derive_more::{From, FromStr, IsVariant};
 use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::collections::HashMap;
@@ -12,19 +12,19 @@ use std::path::PathBuf;
 pub struct Cli {
     /// Socket path to use to communicate with the daemon
     #[cfg(unix)]
-    #[arg(short, long, default_value = "/tmp/nexsockd.sock")]
-    pub(crate) socket: PathBuf,
+    #[arg(short, long)]
+    pub(crate) socket: Option<PathBuf>,
 
     /// Tcp address to use to communicate with the daemon
     #[cfg(windows)]
-    #[arg(short, long, default_value = "/tmp/nexsockd.sock")]
-    pub(crate) address: SocketAddr,
+    #[arg(short, long)]
+    pub(crate) address: Option<SocketAddr>,
 
     #[command(subcommand)]
     pub(crate) command: Commands,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, IsVariant)]
 pub enum Commands {
     /// Start a service
     Start {
@@ -123,6 +123,12 @@ pub enum Commands {
     Git {
         #[command(subcommand)]
         command: GitCommands,
+    },
+
+    /// Manage nexsock tools
+    Tools {
+        #[command(subcommand)]
+        command: ToolCommands,
     },
 }
 
@@ -227,6 +233,84 @@ pub enum GitCommands {
         #[arg(value_parser = ServiceRef::from_str)]
         service: ServiceRef,
     },
+}
+
+#[derive(Subcommand)]
+pub enum ToolCommands {
+    /// Update nexsock tools
+    Update {
+        /// Specific tool to update (defaults to all if not specified)
+        #[arg(short, long)]
+        tool: Option<ToolType>,
+
+        /// Force update even if already up to date
+        #[arg(short, long)]
+        force: bool,
+
+        /// Download only without installing
+        #[arg(short, long)]
+        download_only: bool,
+
+        /// Skip checksum verification
+        #[arg(long)]
+        skip_verify: bool,
+    },
+
+    /// Install nexsock tools
+    Install {
+        /// Specific tool to install
+        tool: ToolType,
+
+        /// Version to install (defaults to latest)
+        #[arg(short, long)]
+        version: Option<String>,
+
+        /// Skip checksum verification
+        #[arg(long)]
+        skip_verify: bool,
+    },
+
+    /// List installed tools and their versions
+    List {
+        /// Show available versions
+        #[arg(short, long)]
+        show_available: bool,
+
+        /// Check for updates
+        #[arg(short, long)]
+        check_updates: bool,
+    },
+
+    /// Uninstall nexsock tools
+    Uninstall {
+        /// Specific tool to uninstall
+        tool: ToolType,
+
+        /// Keep configuration files
+        #[arg(short, long)]
+        keep_config: bool,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub enum ToolType {
+    /// Nexsock daemon
+    Daemon,
+
+    /// Nexsock web interface
+    Web,
+}
+
+impl FromStr for ToolType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "nexsockd" | "daemon" => Ok(ToolType::Daemon),
+            "nexsock-web" | "web" => Ok(ToolType::Web),
+            _ => Err(format!("Unknown tool type: `{s}`. Supported values are `nexsockd`, `daemon`, `nexsock-web` and `web`")),
+        }
+    }
 }
 
 impl From<GitCommands> for CheckoutCommand {

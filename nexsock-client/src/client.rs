@@ -1,7 +1,8 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use bincode::Encode;
+use deadpool::managed::{Manager, Metrics, RecycleResult};
 use nexsock_protocol::commands::error::ErrorPayload;
-use nexsock_protocol::commands::{Command, CommandPayload};
+use nexsock_protocol::commands::{Command, CommandPayload, PingCommand};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
 use nexsock_protocol::traits::ServiceCommand;
@@ -13,12 +14,66 @@ use tokio::io::{BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 #[cfg(windows)]
 use tokio::net::{TcpStream, ToSocketAddrs};
-use tracing::debug;
+use tracing::{debug, error};
 
+use nexsock_config::{NexsockConfig, SocketRef};
 #[cfg(unix)]
 use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
 #[cfg(unix)]
 use tokio::net::UnixStream;
+
+pub struct ClientManager {
+    config: NexsockConfig,
+}
+
+impl ClientManager {
+    pub fn new() -> Result<Self> {
+        let config = NexsockConfig::new()?;
+
+        Ok(Self { config })
+    }
+    pub fn from_config(config: NexsockConfig) -> Self {
+        Self { config }
+    }
+}
+
+impl Manager for ClientManager {
+    type Type = Client;
+    type Error = anyhow::Error;
+
+    #[tracing::instrument(level = "trace", skip(self))]
+    async fn create(&self) -> std::result::Result<Self::Type, Self::Error> {
+        Ok(match self.config.socket() {
+            SocketRef::Port(_port) => {
+                #[cfg(unix)]
+                bail!("When on Unix Tcp sockets are not available, please modify config to be a path to the socket file");
+                #[cfg(windows)]
+                Client::connect(format!("127.0.0.1:{_port}")).await?
+            }
+            SocketRef::Path(_path) => {
+                #[cfg(windows)]
+                bail!("Unix sockets are not available, please modify config to be a path to the port where the daemon is running");
+                #[cfg(unix)]
+                Client::connect(_path).await?
+            }
+        })
+    }
+
+    #[tracing::instrument(level = "trace", skip(self, client))]
+    async fn recycle(
+        &self,
+        client: &mut Self::Type,
+        _metrics: &Metrics,
+    ) -> RecycleResult<Self::Error> {
+        match client.execute_command(PingCommand::new()).await {
+            Ok(res) => {
+                debug!(response = ?res, "Pong received");
+                Ok(())
+            }
+            Err(_) => Err(anyhow!("Failed to recycle client").into()),
+        }
+    }
+}
 
 pub struct Client {
     reader: BufReader<OwnedReadHalf>,
@@ -27,6 +82,7 @@ pub struct Client {
 }
 
 impl Client {
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn connect(
         #[cfg(unix)] socket_path: impl Into<PathBuf>,
         #[cfg(windows)] socket_addr: impl ToSocketAddrs,
@@ -57,6 +113,7 @@ impl Client {
         })
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn execute_command<C>(&mut self, command: C) -> Result<CommandPayload>
     where
         C: ServiceCommand,
@@ -80,6 +137,7 @@ impl Client {
         self.handle_response().await
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     async fn handle_response(&mut self) -> Result<CommandPayload> {
         let (header, payload) = self
             .protocol
@@ -107,6 +165,8 @@ impl Client {
                     let error = Protocol::read_payload::<ErrorPayload>(&payload_data)
                         .context("Failed to decode error payload")?
                         .ok_or_else(|| anyhow::anyhow!("Expected error payload but got None"))?;
+
+                    error!("Got an error back from the daemon: {error:?}");
 
                     bail!("Server error {}: {}", error.code, error.message)
                 } else {

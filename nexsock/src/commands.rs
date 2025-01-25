@@ -101,5 +101,6 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             }
             GitCommands::Status { service } => Ok(GetRepoStatusCommand::new(service).into()),
         },
+        _ => Err(anyhow::anyhow!("invalid command")),
     }
 }

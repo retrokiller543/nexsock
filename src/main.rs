@@ -9,8 +9,8 @@ mod statics;
 mod test;
 pub mod traits;
 
-use crate::daemon::config::DaemonConfig;
 use crate::daemon::server::DaemonServer;
+use nexsock_config::NexsockConfig;
 use prelude::*;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx_utils::pool::{get_db_pool, initialize_db_pool};
@@ -49,9 +49,9 @@ async fn main() -> Result<()> {
     sqlx::migrate!().run(get_db_pool()).await?;
     info!("Migrations complete!");
 
-    let config = DaemonConfig::default();
+    let nexsock_config = NexsockConfig::new().expect("Failed to get config");
 
-    let server = DaemonServer::new(config).await?;
+    let mut server = DaemonServer::new(nexsock_config).await?;
 
     server.run().await?;
 

@@ -20,3 +20,17 @@ impl<T> FromDbResult<Vec<T>> for Option<T> {
         value.into_iter().next()
     }
 }
+
+pub(crate) trait VecExt<T> {
+    fn try_swap_remove(&mut self, index: usize) -> Option<T>;
+}
+
+impl<T> VecExt<T> for Vec<T> {
+    fn try_swap_remove(&mut self, index: usize) -> Option<T> {
+        if index < self.len() {
+            Some(self.swap_remove(index))
+        } else {
+            None
+        }
+    }
+}

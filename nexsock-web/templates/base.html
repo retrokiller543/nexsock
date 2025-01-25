@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% block head %}
+    <link href="/style.css" rel="stylesheet" />
+    <title>{% block title %}{% endblock title %} - My Webpage</title>
+    {% endblock head %}
+  </head>
+  <body>
+    <nav>
+      <a href="/">Services</a>
+    </nav>
+    <main id="content">{% block content %}{% endblock content %}</main>
+    <script src="/service_management.js"></script>
+  </body>
+</html>

@@ -10,6 +10,10 @@
       <sourceFolder url="file://$MODULE_DIR$/nexsock-protocol/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/nexsock/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/nexsock-client/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/nexsock-web/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/nexsock-config/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/nexsock-utils/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/nexsock/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />

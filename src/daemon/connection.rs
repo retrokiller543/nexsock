@@ -77,9 +77,9 @@ impl Connection {
             Ok(response) => {
                 if response.is_empty() {
                     self.send_success().await?;
+                } else {
+                    self.send_success_with_payload(&response).await?;
                 }
-
-                self.send_success_with_payload(&response).await?;
             }
             Err(e) => {
                 // Send error response
@@ -141,6 +141,7 @@ impl Connection {
             }
             Command::ListServices => {
                 let services = SERVICE_MANAGER.get_all().await?;
+
                 Ok(CommandPayload::ListServices(services))
             }
 
@@ -168,6 +169,7 @@ impl Connection {
 
             Command::Shutdown => Ok(CommandPayload::Empty),
             Command::GetSystemStatus => Ok(CommandPayload::Empty),
+            Command::Ping => Ok(CommandPayload::Empty),
 
             Command::Success => Ok(CommandPayload::Empty),
             Command::Error => Ok(CommandPayload::Empty),
