@@ -7,7 +7,6 @@ use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
 use nexsock_protocol::traits::ServiceCommand;
 use std::fmt::Debug;
-use std::future::Future;
 #[cfg(unix)]
 use std::path::PathBuf;
 use tokio::io::{BufReader, BufWriter};

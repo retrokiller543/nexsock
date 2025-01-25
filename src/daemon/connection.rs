@@ -7,7 +7,6 @@ use nexsock_protocol::commands::error::ErrorPayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
-use nexsock_utils::OneOrMany;
 use std::fmt::Debug;
 use std::io;
 use tokio::io::{BufReader, BufWriter};
@@ -174,95 +173,6 @@ impl Connection {
 
             Command::Success => Ok(CommandPayload::Empty),
             Command::Error => Ok(CommandPayload::Empty),
-
-            // Add other command handlers...
-            _ => Err(crate::error::Error::Io(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("Unsupported command: {:?}", command),
-            ))),
-        }
-    }
-
-    async fn handle_command_test(
-        &mut self,
-        command: Command,
-        payload: Option<Vec<u8>>,
-    ) -> crate::error::Result<OneOrMany<CommandPayload>> {
-        match command {
-            Command::StartService => {
-                let payload = Self::read_req_payload(payload)?;
-
-                SERVICE_MANAGER.start(&payload).await?;
-
-                Ok(CommandPayload::Empty.into())
-            }
-            Command::StopService => {
-                let payload = Self::read_req_payload(payload)?;
-
-                SERVICE_MANAGER.stop(&payload).await?;
-
-                Ok(CommandPayload::Empty.into())
-            }
-            Command::RestartService => {
-                let payload = Self::read_req_payload(payload)?;
-
-                SERVICE_MANAGER.restart(&payload).await?;
-
-                Ok(CommandPayload::Empty.into())
-            }
-            Command::GetServiceStatus => {
-                let payload = Self::read_req_payload(payload)?;
-
-                let status = SERVICE_MANAGER.get_status(&payload).await?;
-
-                Ok(CommandPayload::Status(status).into())
-            }
-            Command::AddService => {
-                let payload = Self::read_req_payload(payload)?;
-
-                SERVICE_MANAGER.add_service(&payload).await?;
-
-                Ok(CommandPayload::Empty.into())
-            }
-            Command::RemoveService => {
-                let payload = Self::read_req_payload(payload)?;
-
-                SERVICE_MANAGER.remove_service(&payload).await?;
-
-                Ok(CommandPayload::Empty.into())
-            }
-            Command::ListServices => {
-                let services = SERVICE_MANAGER.get_all().await?;
-                Ok(CommandPayload::ListServices(services).into())
-            }
-
-            Command::UpdateConfig => {
-                let payload = Self::read_req_payload(payload)?;
-
-                CONFIG_MANAGER.update_config(&payload).await?;
-
-                Ok(CommandPayload::Empty.into())
-            }
-            Command::GetConfig => {
-                let payload = Self::read_req_payload(payload)?;
-
-                let config = CONFIG_MANAGER.get_config(&payload).await?;
-
-                Ok(CommandPayload::ServiceConfig(config).into())
-            }
-
-            Command::AddDependency => Ok(CommandPayload::Empty.into()),
-            Command::RemoveDependency => Ok(CommandPayload::Empty.into()),
-            Command::ListDependencies => Ok(CommandPayload::Empty.into()),
-
-            Command::CheckoutBranch => Ok(CommandPayload::Empty.into()),
-            Command::GetRepoStatus => Ok(CommandPayload::Empty.into()),
-
-            Command::Shutdown => Ok(CommandPayload::Empty.into()),
-            Command::GetSystemStatus => Ok(CommandPayload::Empty.into()),
-
-            Command::Success => Ok(CommandPayload::Empty.into()),
-            Command::Error => Ok(CommandPayload::Empty.into()),
 
             // Add other command handlers...
             _ => Err(crate::error::Error::Io(io::Error::new(
