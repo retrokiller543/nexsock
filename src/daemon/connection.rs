@@ -1,6 +1,7 @@
 use crate::error;
-use crate::statics::{CONFIG_MANAGER, SERVICE_MANAGER};
+use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, SERVICE_MANAGER};
 use crate::traits::configuration_management::ConfigurationManagement;
+use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
 use nexsock_protocol::commands::error::ErrorPayload;
@@ -160,9 +161,27 @@ impl Connection {
                 Ok(CommandPayload::ServiceConfig(config))
             }
 
-            Command::AddDependency => Ok(CommandPayload::Empty),
-            Command::RemoveDependency => Ok(CommandPayload::Empty),
-            Command::ListDependencies => Ok(CommandPayload::Empty),
+            Command::AddDependency => {
+                let payload = Self::read_req_payload(payload)?;
+
+                DEPENDENCY_MANAGER.add_dependency(&payload).await?;
+
+                Ok(CommandPayload::Empty)
+            }
+            Command::RemoveDependency => {
+                let payload = Self::read_req_payload(payload)?;
+
+                DEPENDENCY_MANAGER.remove_dependency(&payload).await?;
+
+                Ok(CommandPayload::Empty)
+            }
+            Command::ListDependencies => {
+                let payload = Self::read_req_payload(payload)?;
+
+                let deps = DEPENDENCY_MANAGER.list_dependencies(&payload).await?;
+
+                Ok(CommandPayload::Dependencies(deps))
+            }
 
             Command::CheckoutBranch => Ok(CommandPayload::Empty),
             Command::GetRepoStatus => Ok(CommandPayload::Empty),
@@ -174,7 +193,6 @@ impl Connection {
             Command::Success => Ok(CommandPayload::Empty),
             Command::Error => Ok(CommandPayload::Empty),
 
-            // Add other command handlers...
             _ => Err(crate::error::Error::Io(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 format!("Unsupported command: {:?}", command),

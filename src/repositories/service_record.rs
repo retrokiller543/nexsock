@@ -1,8 +1,9 @@
 use crate::models::service_record::ServiceRecord;
+use anyhow::anyhow;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use sqlx::{query, query_as, QueryBuilder};
 use sqlx_utils::filter::equals;
-use sqlx_utils::traits::SqlFilter;
+use sqlx_utils::traits::{Repository, SqlFilter};
 use sqlx_utils::{repository, sql_filter, traits::Model};
 
 sql_filter! {
@@ -93,5 +94,45 @@ repository! {
         let res = self.get_by_any_filter(equals("id", Some(id))).await?;
 
         Ok(res.into_iter().next())
+    }
+}
+
+impl ServiceRecordRepository {
+    pub async fn get_by_name(&self, name: &str) -> sqlx_utils::Result<Option<ServiceRecord>> {
+        let service_records = self.get_by_any_filter(equals("name", Some(name))).await?;
+
+        Ok(service_records.into_iter().next())
+    }
+
+    pub async fn get_by_service_ref(
+        &self,
+        service_ref: impl Into<&ServiceRef>,
+    ) -> sqlx_utils::Result<Option<ServiceRecord>> {
+        let service_ref = service_ref.into();
+
+        match service_ref {
+            ServiceRef::Id(id) => self.get_by_id(*id).await,
+            ServiceRef::Name(name) => self.get_by_name(name).await,
+        }
+    }
+
+    pub async fn extract_valid_id_from_ref(service_ref: &ServiceRef) -> crate::Result<i64> {
+        Ok(match service_ref {
+            ServiceRef::Id(id) => *id,
+            ServiceRef::Name(name) => {
+                let service_records = SERVICE_RECORD_REPOSITORY
+                    .get_by_any_filter(equals("name", name.into()))
+                    .await?;
+                let service_record = service_records.first();
+
+                if let Some(service_record) = service_record {
+                    service_record
+                        .id
+                        .expect("Every service record should have an id")
+                } else {
+                    return Err(anyhow!("No service with the name `{}`", name).into());
+                }
+            }
+        })
     }
 }

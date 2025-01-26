@@ -1,5 +1,6 @@
 mod config_manager;
 mod daemon;
+mod dependency_manager;
 pub mod error;
 mod models;
 pub mod prelude;

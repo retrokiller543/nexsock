@@ -15,21 +15,21 @@ impl ConfigurationManagement for ConfigManager {
             service,
             filename,
             format,
-            run_command: content,
+            run_command,
         } = payload;
 
         let filter: ServiceRecordFilter = service.into();
 
-        let service = SERVICE_RECORD_REPOSITORY
+        let _service = SERVICE_RECORD_REPOSITORY
             .get_by_any_filter(filter)
             .await?
             .into_iter()
             .next()
             .ok_or_else(|| anyhow!("No service found"))?;
 
-        let mut config = ServiceConfig::new(filename.to_owned(), *format, Some(content.to_owned()));
+        let config = ServiceConfig::new(filename.to_owned(), *format, Some(run_command.to_owned()));
 
-        config.id = service.id;
+        //config.id = service.id;
 
         SERVICE_CONFIG_REPOSITORY.save(&config).await?;
 
