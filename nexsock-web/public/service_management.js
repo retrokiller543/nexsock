@@ -33,9 +33,9 @@ function addEnvVar() {
     const pair = document.createElement('div');
     pair.className = 'env-var-pair';
     pair.innerHTML = `
-            <input type="text" class="env-input" placeholder="Key">
-            <input type="text" class="env-input" placeholder="Value">
-            <button type="button" class="button button-remove" onclick="this.parentElement.remove()">×</button>
+            <input type="text" class="form-input" placeholder="Key">
+            <input type="text" class="form-input" placeholder="Value">
+            <button type="button" class="button button-icon" onclick="this.parentElement.remove()">×</button>
         `;
     container.appendChild(pair);
 }
@@ -58,5 +58,26 @@ async function confirmRemove(serviceName) {
             console.error('Error:', error);
             alert('Failed to remove service');
         }
+    }
+}
+
+function toggleManagement(serviceName) {
+    const managementDiv = document.getElementById(`management-${serviceName}`);
+    const isHidden = managementDiv.style.display === 'none';
+
+    // Hide all management sections first
+    /*document.querySelectorAll('.service-card-management').forEach(div => {
+        div.style.display = 'none';
+    });
+
+    document.querySelectorAll('.dependency-management').forEach(div => {
+        div.style.display = 'none';
+    });*/
+
+    // Show the clicked one if it was hidden
+    if (isHidden) {
+        managementDiv.style.display = 'block';
+    } else {
+        managementDiv.style.display = 'none';
     }
 }

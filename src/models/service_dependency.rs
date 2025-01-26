@@ -38,6 +38,7 @@ impl From<ServiceDependency> for DependencyInfo {
             id: value.service_id,
             name: value.name,
             tunnel_enabled: value.tunnel_enabled,
+            state: value.status,
         }
     }
 }

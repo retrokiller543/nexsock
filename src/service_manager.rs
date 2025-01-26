@@ -8,6 +8,7 @@ use crate::repositories::service_dependency::SERVICE_DEPENDENCY_REPOSITORY;
 use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
 use crate::traits::service_management::ServiceManagement;
 use anyhow::{anyhow, Context};
+use futures::executor::block_on;
 use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
@@ -328,7 +329,16 @@ impl ServiceManagement for ServiceManager {
 
         let deps = SERVICE_DEPENDENCY_REPOSITORY
             .get_by_any_filter(equals("sd.service_id", Some(service_id)))
-            .await?;
+            .await?
+            .into_iter()
+            .map(|mut dep| {
+                let state = block_on(self.get_service_state(dep.service_id));
+
+                dep.status = state;
+
+                dep
+            })
+            .collect::<Vec<_>>();
 
         // Get current state
         let state = self.get_service_state(service_id).await;

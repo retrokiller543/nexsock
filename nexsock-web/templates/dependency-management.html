@@ -1,6 +1,6 @@
 <div class="management-section">
-    {% if service.state == "Running" %}
-    <button class="button button-warning" onclick="controlService('{{ service.name }}', 'stop')">
+    {% if dependency.state == "Running" %}
+    <button class="button button-warning" onclick="controlService('{{ dependency.name }}', 'stop')">
         Stop Service
     </button>
     {% else %}
@@ -18,18 +18,11 @@
                 <button class="button button-secondary" onclick="addEnvVar()" type="button">
                     Add Variable
                 </button>
-                <button class="button button-primary" onclick="controlService('{{ service.name }}', 'start')">
+                <button class="button button-primary" onclick="controlService('{{ dependency.name }}', 'start')">
                     Start Service
                 </button>
             </div>
         </div>
     </div>
     {% endif %}
-
-    <div class="danger-zone">
-        <h4 class="section-subtitle">Danger Zone</h4>
-        <button class="button button-danger" onclick="confirmRemove('{{ service.name }}')">
-            Remove Service
-        </button>
-    </div>
 </div>
