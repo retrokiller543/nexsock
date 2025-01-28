@@ -1,5 +1,5 @@
 use crate::daemon::Daemon;
-use crate::error;
+use crate::error::Result;
 use crate::statics::SERVICE_MANAGER;
 use crate::traits::VecExt;
 use nexsock_config::NexsockConfig;
@@ -19,7 +19,7 @@ pub struct DaemonServer {
 }
 
 impl DaemonServer {
-    pub async fn new(config: NexsockConfig) -> error::Result<Self> {
+    pub async fn new(config: NexsockConfig) -> Result<Self> {
         #[cfg(unix)]
         let daemon = Daemon::new(config.clone().into())?;
         #[cfg(windows)]
@@ -62,7 +62,7 @@ impl DaemonServer {
     }
 
     #[inline]
-    async fn shutdown(&mut self) -> error::Result<()> {
+    pub(crate) async fn shutdown(&mut self) -> Result<()> {
         self.complete_connections().await?;
         self.config.save()?;
         self.daemon.clone().shutdown().await?;
@@ -70,7 +70,7 @@ impl DaemonServer {
         Ok(())
     }
 
-    async fn complete_connections(&mut self) -> error::Result<()> {
+    async fn complete_connections(&mut self) -> Result<()> {
         let connections = std::mem::take(&mut self.connections);
 
         info!("Clearing all connections");
@@ -83,7 +83,7 @@ impl DaemonServer {
         Ok(())
     }
 
-    pub async fn run(&mut self) -> error::Result<()> {
+    pub async fn run(&mut self) -> Result<()> {
         loop {
             tokio::select! {
                 conn = self.daemon.accept() => {
@@ -99,6 +99,7 @@ impl DaemonServer {
 
                             if self.last_cleanup.elapsed() >= self.cleanup_interval {
                                 self.cleanup_completed_connections().await;
+                                SERVICE_MANAGER.clean_old().await?;
                                 self.last_cleanup = Instant::now();
                             }
                         }

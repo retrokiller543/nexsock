@@ -13,15 +13,19 @@ use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
+use port_selector::is_free_tcp;
 use sqlx_utils::filter::equals;
 use sqlx_utils::traits::Repository;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::process::{Child, Command};
 use tokio::sync::broadcast;
 use tokio::sync::RwLock;
-use tracing::{debug, warn};
+use tokio::time::sleep;
+use tracing::{info, warn};
 
 // Track running processes and their states
 #[derive(Debug)]
@@ -66,7 +70,7 @@ impl Default for ServiceManager {
 
 impl ServiceManager {
     pub(crate) async fn kill_all(&self) -> crate::error::Result<()> {
-        debug!("Terminating all child processes");
+        info!("Terminating all child processes");
         let mut ids = Vec::new();
 
         {
@@ -81,7 +85,100 @@ impl ServiceManager {
             self.kill_service_process(id).await?
         }
 
-        debug!("Terminated all child processes");
+        info!("Terminated all child processes, waiting for 5 seconds before shutting down");
+        sleep(Duration::from_secs(5)).await;
+
+        Ok(())
+    }
+
+    async fn cleanup_process(
+        &self,
+        service_id: i64,
+        mut process: ServiceProcess,
+    ) -> crate::error::Result<()> {
+        // First try graceful termination
+        if let Err(e) = process.process.kill().await {
+            warn!(
+                "Failed to kill process {}: {}. Forcing cleanup...",
+                service_id, e
+            );
+            // Even if kill fails, try to clean up process resources
+            if let Err(e) = process.process.start_kill() {
+                warn!("Failed to force kill process {}: {}", service_id, e);
+            }
+        }
+
+        // Wait for the process to fully terminate
+        match tokio::time::timeout(Duration::from_secs(5), process.process.wait()).await {
+            Ok(Ok(_)) => Ok(()),
+            Ok(Err(e)) => {
+                warn!(
+                    "Error waiting for process {} to terminate: {}",
+                    service_id, e
+                );
+                Ok(()) // Continue with cleanup even if wait fails
+            }
+            Err(_) => {
+                warn!("Timeout waiting for process {} to terminate", service_id);
+                Ok(()) // Continue with cleanup after timeout
+            }
+        }
+    }
+
+    // Modify kill_service_process to use the new cleanup method
+    async fn kill_service_process(&self, service_id: i64) -> crate::error::Result<()> {
+        let mut services = self.running_services.write().await;
+
+        if let Some(process) = services.remove(&service_id) {
+            // Even if cleanup fails, we've already removed from running_services
+            if let Err(e) = self.cleanup_process(service_id, process).await {
+                warn!("Error during process cleanup for {}: {}", service_id, e);
+            }
+        }
+
+        Ok(())
+    }
+
+    // Enhance clean_old to handle more edge cases
+    pub(crate) async fn clean_old(&self) -> crate::error::Result<()> {
+        let mut services = self.running_services.write().await;
+        let mut to_remove = Vec::new();
+
+        for (service_id, process) in services.iter_mut() {
+            // Check both status and process health
+            let should_remove = match process.check_status().await {
+                Ok(ServiceState::Failed) => true,
+                Ok(ServiceState::Starting) => {
+                    // If process has been in Starting state too long, consider it failed
+                    // You'd need to add a timestamp to ServiceProcess to implement this properly
+                    false // TODO: Implement startup timeout check
+                }
+                Ok(ServiceState::Running) => false,
+                Ok(_) => {
+                    // Additional health check - verify process is still responding
+                    if let Ok(Some(_)) = process.process.try_wait() {
+                        // Process has terminated but wasn't marked as failed
+                        true
+                    } else {
+                        false
+                    }
+                }
+                Err(_) => true, // Any error checking status means we should clean up
+            };
+
+            if should_remove {
+                to_remove.push(*service_id);
+            }
+        }
+
+        // Cleanup all identified processes
+        for service_id in to_remove {
+            if let Some(process) = services.remove(&service_id) {
+                if let Err(e) = self.cleanup_process(service_id, process).await {
+                    warn!("Failed to cleanup process {}: {}", service_id, e);
+                }
+            }
+        }
 
         Ok(())
     }
@@ -94,7 +191,11 @@ impl ServiceManager {
         env_vars: HashMap<String, String>,
     ) -> crate::error::Result<()> {
         let mut command = Command::new("sh");
-        command.arg("-c").arg(run_command).current_dir(path);
+        command
+            .arg("-c")
+            .arg(run_command)
+            .current_dir(path)
+            .kill_on_drop(true);
 
         // Add environment variables
         for (key, value) in &env_vars {
@@ -118,22 +219,6 @@ impl ServiceManager {
         Ok(())
     }
 
-    async fn kill_service_process(&self, service_id: i64) -> crate::error::Result<()> {
-        let mut services = self.running_services.write().await;
-
-        if let Some(mut process) = services.remove(&service_id) {
-            process
-                .process
-                .kill()
-                .await
-                .with_context(|| format!("Failed to kill service process {}", service_id))?;
-        } else {
-            warn!("No Service running with that id")
-        }
-
-        Ok(())
-    }
-
     async fn get_service_state(&self, service_id: i64) -> ServiceState {
         let mut services = self.running_services.write().await;
 
@@ -146,7 +231,17 @@ impl ServiceManager {
                 }
             }
         } else {
-            ServiceState::Stopped
+            let service = match SERVICE_RECORD_REPOSITORY.get_by_id(service_id).await {
+                Ok(service) => service,
+                Err(_) => return ServiceState::Stopped,
+            }
+            .unwrap();
+
+            if is_free_tcp(service.port as u16) {
+                ServiceState::Stopped
+            } else {
+                ServiceState::Running
+            }
         }
     }
 }
@@ -169,6 +264,10 @@ impl ServiceManagement for ServiceManager {
             .expect("Already checked for emptiness");
 
         let service_id = service.id.ok_or_else(|| anyhow!("Service has no ID"))?;
+
+        if !is_free_tcp(service.port as u16) {
+            return Err(anyhow!("Port is already in use").into());
+        }
 
         // Check current state
         if matches!(
@@ -221,10 +320,8 @@ impl ServiceManagement for ServiceManager {
 
     #[tracing::instrument]
     async fn restart(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
-        // First stop the service
         self.stop(&payload.service.clone()).await?;
 
-        // Then start it again
         self.start(payload).await?;
 
         Ok(())
@@ -355,7 +452,6 @@ impl ServiceManagement for ServiceManager {
     async fn get_all(&self) -> crate::error::Result<ListServicesResponse> {
         let services = SERVICE_REPOSITORY.get_all().await?;
 
-        // Update states based on running processes
         let mut response_services = Vec::new();
 
         for service in services {
