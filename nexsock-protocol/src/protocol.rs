@@ -115,15 +115,15 @@ impl Protocol {
         }
 
         // Read the rest of the header
-        let mut header_bytes = vec![0u8; std::mem::size_of::<MessageHeader>() - 2]; // Subtract magic bytes
+        let mut header_bytes = vec![0u8; size_of::<MessageHeader>() - 2]; // Subtract magic bytes
         reader.read_exact(&mut header_bytes).await?;
 
         // Combine magic bytes and header
-        let mut full_header = Vec::with_capacity(std::mem::size_of::<MessageHeader>());
+        let mut full_header = Vec::with_capacity(size_of::<MessageHeader>());
         full_header.extend_from_slice(&magic);
         full_header.extend_from_slice(&header_bytes);
 
-        let header: MessageHeader = BinRead::read(&mut std::io::Cursor::new(full_header))
+        let header: MessageHeader = BinRead::read(&mut io::Cursor::new(full_header))
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
         // Read payload if present

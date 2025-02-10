@@ -96,7 +96,7 @@ impl Connection {
         &mut self,
         command: Command,
         payload: Option<Vec<u8>>,
-    ) -> crate::error::Result<CommandPayload> {
+    ) -> error::Result<CommandPayload> {
         match command {
             Command::StartService => {
                 let payload = Self::read_req_payload(payload)?;
@@ -193,14 +193,14 @@ impl Connection {
             Command::Success => Ok(CommandPayload::Empty),
             Command::Error => Ok(CommandPayload::Empty),
 
-            _ => Err(crate::error::Error::Io(io::Error::new(
+            _ => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 format!("Unsupported command: {:?}", command),
             ))),
         }
     }
 
-    fn read_req_payload<T: Decode>(payload: Option<Vec<u8>>) -> crate::error::Result<T> {
+    fn read_req_payload<T: Decode>(payload: Option<Vec<u8>>) -> error::Result<T> {
         let payload = if let Some(payload) = payload {
             payload
         } else {
