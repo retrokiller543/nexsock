@@ -3,7 +3,13 @@ use sqlx::{query, query_as, QueryBuilder};
 use sqlx_utils::filter::equals;
 use sqlx_utils::traits::SqlFilter;
 use sqlx_utils::types::Query;
-use sqlx_utils::{repository, traits::Model};
+use sqlx_utils::{repository, sql_filter, traits::Model};
+
+sql_filter! {
+    pub struct ServiceDependencyFilter {
+        SELECT * FROM service_dependencies WHERE ?service_id = i64 AND ?dependant_service_id = i64
+    }
+}
 
 repository! {
     pub ServiceDependencyRepository<ServiceDependency>;

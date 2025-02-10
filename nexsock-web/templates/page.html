@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% block title %}{{ page.title }}{% endblock title %}
 {% block content %}
-{{ page.content | safe }}
+<div hx-get="/services" hx-swap="outerHTML" hx-trigger="load">Loading page...</div>
 {% endblock content %}

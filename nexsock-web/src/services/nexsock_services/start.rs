@@ -4,6 +4,7 @@ use anyhow::anyhow;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServiceCommand};
 use std::collections::HashMap;
 
+/// Starts a service with a set of environment variables
 #[tracing::instrument(skip(state))]
 pub async fn start_service_inner(
     state: &AppState,

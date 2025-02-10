@@ -1,0 +1,62 @@
+graph TB
+    subgraph "Browser"
+        UI[Web Interface]
+        WS[WebSocket Client]
+    end
+
+    subgraph "Axum Web Server"
+        API[REST API]
+        WSH[WebSocket Handler]
+        CC[Client Crate]
+        LB[Log Buffer]
+    end
+
+    subgraph "Daemon Service"
+        DS[Daemon Server]
+        SM[Service Manager]
+        LP[Log Processor]
+        subgraph "Per Service"
+            SP[Service Process]
+            STD[stdout Handler]
+            ERR[stderr Handler]
+        end
+    end
+
+    subgraph "Storage"
+        FS[Log Files]
+        DB[(SQLite DB)]
+    end
+
+%% User Interface Interactions
+    UI -->|HTTP Requests| API
+    UI -->|WebSocket Connection| WSH
+    WS -->|Log Stream| WSH
+
+%% API Server Interactions
+    API -->|Commands| CC
+    CC -->|Unix Socket Protocol| DS
+    WSH -->|Subscribe| LB
+    LB -->|Log Updates| WSH
+
+%% Daemon Service Interactions
+    DS -->|Manage| SM
+    SM -->|Spawn| SP
+    SP -->|Capture| STD
+    SP -->|Capture| ERR
+    STD -->|Forward| LP
+    ERR -->|Forward| LP
+
+%% Log Processing
+    LP -->|Write| FS
+    LP -->|Index| DB
+    LP -->|Broadcast| LB
+
+    classDef browser fill:#f9f,stroke:#333,stroke-width:2px
+    classDef webserver fill:#bbf,stroke:#333,stroke-width:2px
+    classDef daemon fill:#bfb,stroke:#333,stroke-width:2px
+    classDef storage fill:#fbb,stroke:#333,stroke-width:2px
+
+    class UI,WS browser
+    class API,WSH,CC,LB webserver
+    class DS,SM,LP,SP,STD,ERR daemon
+    class FS,DB storage

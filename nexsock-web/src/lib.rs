@@ -2,11 +2,13 @@ mod components;
 mod daemon_client;
 mod embedded;
 mod endpoints;
+mod error;
 mod services;
 mod state;
 pub(crate) mod templates;
 mod traits;
 
+use crate::endpoints::api::service::get::get_services;
 use crate::endpoints::fallback::static_handler;
 use anyhow::Context;
 use axum::handler::Handler;
@@ -23,6 +25,8 @@ use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{info, Span};
 
+type Result<T, E = error::ServiceError> = std::result::Result<T, E>;
+
 #[inline]
 #[tracing::instrument]
 pub async fn app() -> anyhow::Result<Router> {
@@ -36,21 +40,22 @@ pub async fn app() -> anyhow::Result<Router> {
 
     Ok(Router::new()
         .route("/", get(index::index_html))
-        .route("/service/{id}", get(get_nexsock_service))
+        .route("/services", get(get_services))
+        .route("/services/{id}", get(get_nexsock_service))
         .route(
-            "/api/service/{service_id}",
+            "/api/services/{service_id}",
             delete(endpoints::api::service::delete::remove_service),
         )
         .route(
-            "/api/service",
+            "/services",
             post(endpoints::api::service::add::add_service_endpoint),
         )
         .route(
-            "/api/service/{service_id}/start",
+            "/services/{service_id}/start",
             post(endpoints::api::service::start::start_service),
         )
         .route(
-            "/api/service/{service_id}/stop",
+            "/services/{service_id}/stop",
             post(endpoints::api::service::stop::stop_service),
         )
         .fallback(static_handler.layer(cache))

@@ -1,18 +1,14 @@
-use crate::templates::TERA;
 use crate::traits::RenderTemplate;
 use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Page {
     title: String,
-    content: String,
 }
 
 impl Page {
-    pub fn new(title: String, content: impl RenderTemplate) -> Self {
-        let content = content.render(&TERA, None).unwrap();
-
-        Self { title, content }
+    pub fn new(title: String) -> Self {
+        Self { title }
     }
 }
 

@@ -1,9 +1,24 @@
-<div class="service">
-    <div>
-        <strong>{{ dependency.name }}</strong>
-        <span style="float: right">ID: {{ dependency.id }}</span>
+<div class="service dependency-card">
+    <div class="service-header">
+        <div class="dependency-title">
+            <strong class="service-name">{{ dependency.name }}</strong>
+            <span class="service-id">ID: {{ dependency.id }}</span>
+        </div>
+        <button aria-label="Toggle Management" class="button button-icon" onclick="toggleManagement('{{ dependency.name }}')">
+            ⚙️
+        </button>
     </div>
-    <div style="margin-top: 8px">
-        Tunnel: {% if dependency.tunnel_enabled %} Enabled {% else %} Disabled {% endif %}
+
+    <div class="service-info">
+        <div class="status-group">
+            <div class="status-badge status-{% if dependency.tunnel_enabled %}enabled{% else %}disabled{% endif %}">
+                Tunnel: {% if dependency.tunnel_enabled %}Enabled{% else %}Disabled{% endif %}
+            </div>
+            <div class="status-badge status-{{ dependency.state | lower }}">{{ dependency.state }}</div>
+        </div>
+    </div>
+
+    <div class="dependency-management" id="management-{{ dependency.name }}" style="display: none">
+        {% include "dependency-management.html" %}
     </div>
 </div>

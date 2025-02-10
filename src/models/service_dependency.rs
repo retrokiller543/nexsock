@@ -20,12 +20,25 @@ pub struct ServiceDependency {
     pub status: ServiceState,
 }
 
+impl ServiceDependency {
+    pub fn new(parent_service_id: i64, service_id: i64, tunnel_enabled: bool) -> Self {
+        Self {
+            id: -1,
+            parent_service_id,
+            service_id,
+            tunnel_enabled,
+            ..Default::default()
+        }
+    }
+}
+
 impl From<ServiceDependency> for DependencyInfo {
     fn from(value: ServiceDependency) -> Self {
         Self {
             id: value.service_id,
             name: value.name,
             tunnel_enabled: value.tunnel_enabled,
+            state: value.status,
         }
     }
 }

@@ -8,8 +8,8 @@ pub trait GitService {
     fn repository_path(&self) -> &Path;
     fn repository_url(&self) -> String;
 
-    #[tracing::instrument(skip(self))]
     #[inline]
+    #[tracing::instrument(skip(self))]
     fn clone_repo(&self) -> crate::error::Result<Repository> {
         let res = Command::new("git")
             .args([
@@ -27,8 +27,8 @@ pub trait GitService {
         }
     }
 
-    #[tracing::instrument(skip(self))]
     #[inline]
+    #[tracing::instrument(skip(self))]
     fn open(&self) -> crate::error::Result<Repository> {
         Repository::open(self.repository_path()).map_err(Into::into)
     }

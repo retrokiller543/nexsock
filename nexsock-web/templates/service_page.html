@@ -1,31 +1,32 @@
-{% extends "base.html" %}
-{% block title %}{{ service.name }}{% endblock title %}
-{% block content %}
 <div class="service">
-  <div>
-    <strong>{{ service.name }}</strong>
-    <span style="float: right">ID: {{ service.id }}</span>
+  <div class="service-header">
+    <h1 class="service-name">{{ service.name }}</h1>
+    <span class="service-id">ID: {{ service.id }}</span>
   </div>
-  <div style="margin-top: 8px">
-    <div>State: {{ service.state }}</div>
+
+  <div class="service-info">
+    <div>Status: <span class="status-badge status-{{ service.state | lower }}">{{ service.state }}</span></div>
     <div>Port: {{ service.port }}</div>
-    <div>Repository: <a href="{{ service.repo_url }}">{{ service.repo_url }}</a></div>
-    <div>Path: <a href="file://{{ service.repo_path }}">{{ service.repo_path }}</a></div>
+    <div>Repository: <a class="link" href="{{ service.repo_url }}">{{ service.repo_url }}</a></div>
+    <div>Path: <a class="link" href="file://{{ service.repo_path }}">{{ service.repo_path }}</a></div>
     {% if service.config_id %}
     <div>Config ID: {{ service.config_id }}</div>
     {% else %}
-    <div>No config</div>
+    <div class="text-secondary">No config</div>
     {% endif %}
   </div>
-  <div style="margin-top: 16px">
-    <h4>Dependencies</h4>
-    {% for dependency in service.dependencies %}
+
+  <section class="service-section">
+    <h2>Dependencies</h2>
+    <div class="dependencies-list">
+      {% for dependency in service.dependencies %}
       {% include "dependency.html" %}
-    {% endfor %}
-  </div>
-  <div style="margin-top: 16px">
-    <h4>Management</h4>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="service-section">
+    <h2>Management</h2>
     {% include "management.html" %}
-  </div>
+  </section>
 </div>
-{% endblock content %}

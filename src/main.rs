@@ -1,5 +1,6 @@
 mod config_manager;
 mod daemon;
+mod dependency_manager;
 pub mod error;
 mod models;
 pub mod prelude;
@@ -17,7 +18,7 @@ use sqlx_utils::pool::{get_db_pool, initialize_db_pool};
 use sqlx_utils::types::*;
 use std::time::Duration;
 use tosic_utils::logging::init_tracing;
-use tracing::info;
+use tracing::{error, info};
 
 #[inline]
 async fn db_pool() -> Result<Pool> {
@@ -53,7 +54,13 @@ async fn main() -> Result<()> {
 
     let mut server = DaemonServer::new(nexsock_config).await?;
 
-    server.run().await?;
+    match server.run().await {
+        Ok(_) => info!("Server completed successfully!"),
+        Err(err) => {
+            error!(error = %err, "Failed to run server");
+            server.shutdown().await?;
+        }
+    }
 
     Ok(())
 }

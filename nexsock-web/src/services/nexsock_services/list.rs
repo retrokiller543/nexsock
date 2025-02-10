@@ -4,6 +4,7 @@ use crate::state::AppState;
 use nexsock_protocol::commands::list_services::ListServicesCommand;
 use tracing::error;
 
+/// Lists all managed services.
 #[tracing::instrument(skip(state))]
 pub async fn list_services(state: &AppState) -> anyhow::Result<Vec<ServiceBasic>> {
     let mut client = get_client(state).await?;

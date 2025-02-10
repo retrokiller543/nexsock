@@ -1,3 +1,4 @@
+use crate::commands::service_status::ServiceState;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
@@ -19,4 +20,5 @@ pub struct DependencyInfo {
     pub id: i64,
     pub name: String,
     pub tunnel_enabled: bool,
+    pub state: ServiceState,
 }

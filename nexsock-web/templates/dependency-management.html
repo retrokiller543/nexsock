@@ -1,0 +1,28 @@
+<div class="management-section">
+    {% if dependency.state == "Running" %}
+    <button class="button button-warning" onclick="controlService('{{ dependency.name }}', 'stop')">
+        Stop Service
+    </button>
+    {% else %}
+    <div class="env-section">
+        <div class="env-container">
+            <h4 class="section-subtitle">Environment Variables</h4>
+            <div class="env-list" id="env-vars">
+                <div class="env-var-pair">
+                    <input class="form-input" placeholder="Key" type="text">
+                    <input class="form-input" placeholder="Value" type="text">
+                    <button class="button button-icon" onclick="this.parentElement.remove()" type="button">×</button>
+                </div>
+            </div>
+            <div class="env-actions">
+                <button class="button button-secondary" onclick="addEnvVar()" type="button">
+                    Add Variable
+                </button>
+                <button class="button button-primary" onclick="controlService('{{ dependency.name }}', 'start')">
+                    Start Service
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>

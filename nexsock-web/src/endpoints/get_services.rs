@@ -10,11 +10,9 @@ use std::str::FromStr;
 pub async fn get_nexsock_service(
     State(ref state): State<AppState>,
     Path(service_ref): Path<String>,
-) -> Html<String> {
-    let service_ref = ServiceRef::from_str(service_ref.as_str()).unwrap();
-    let service = find::find_service(state, service_ref.clone())
-        .await
-        .unwrap();
+) -> crate::Result<Html<String>> {
+    let service_ref = ServiceRef::from_str(service_ref.as_str())?;
+    let service = find::find_service(state, service_ref.clone()).await?;
 
-    Html(service.render(&TERA, None).unwrap())
+    Ok(Html(service.render(&TERA, None)?))
 }
