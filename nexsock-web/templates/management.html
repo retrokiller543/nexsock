@@ -1,24 +1,44 @@
 <div class="management-section">
     {% if service.state == "Running" %}
-    <button class="button button-warning" onclick="controlService('{{ service.name }}', 'stop')">
+    <button class="button button-warning"
+            hx-on::after-request="refreshView(this)"
+            hx-post="/services/{{ service.name }}/stop"
+            hx-swap="outerHTML"
+            hx-target="closest .management-section"
+            hx-trigger="click">
         Stop Service
     </button>
     {% else %}
     <div class="env-section">
         <div class="env-container">
             <h4 class="section-subtitle">Environment Variables</h4>
-            <div class="env-list" id="env-vars">
+            <div class="env-list" id="env-vars-{{ service.name }}">
                 <div class="env-var-pair">
-                    <input class="form-input" placeholder="Key" type="text">
-                    <input class="form-input" placeholder="Value" type="text">
-                    <button class="button button-icon" onclick="this.parentElement.remove()" type="button">×</button>
+                    <input class="form-input" name="env_key" placeholder="Key" type="text">
+                    <input class="form-input" name="env_value" placeholder="Value" type="text">
+                    <button class="button button-icon"
+                            hx-swap="outerHTML"
+                            hx-target="closest .env-var-pair"
+                            hx-trigger="click"
+                            type="button">×</button>
                 </div>
             </div>
             <div class="env-actions">
-                <button class="button button-secondary" onclick="addEnvVar()" type="button">
+                <button class="button button-secondary"
+                        hx-get="/api/templates/env-var-pair"
+                        hx-swap="beforeend"
+                        hx-target="#env-vars-{{ service.name }}"
+                        hx-trigger="click"
+                        type="button">
                     Add Variable
-                </button>
-                <button class="button button-primary" onclick="controlService('{{ service.name }}', 'start')">
+                </button> <!--TODO: Make this function-->
+                <button class="button button-primary"
+                        hx-include="#env-vars-{{ service.name }} input"
+                        hx-on::after-request="refreshView(this)"
+                        hx-post="/services/{{ service.name }}/start"
+                        hx-swap="outerHTML"
+                        hx-target="closest .management-section"
+                        hx-trigger="click">
                     Start Service
                 </button>
             </div>
@@ -28,7 +48,13 @@
 
     <div class="danger-zone">
         <h4 class="section-subtitle">Danger Zone</h4>
-        <button class="button button-danger" onclick="confirmRemove('{{ service.name }}')">
+        <button class="button button-danger"
+                hx-confirm="Are you sure you want to remove {{ service.name }}? This action cannot be undone."
+                hx-delete="/api/services/{{ service.name }}"
+                hx-on::after-request="refreshView(this)"
+                hx-swap="outerHTML"
+                hx-target="closest .management-section"
+                hx-trigger="click">
             Remove Service
         </button>
     </div>

@@ -2,7 +2,7 @@ use crate::services::nexsock_services::start;
 use crate::state::AppState;
 use axum::extract::{Path, State};
 use axum::response::IntoResponse;
-use axum::Json;
+use axum::Form;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -10,7 +10,7 @@ use std::str::FromStr;
 pub(crate) async fn start_service(
     State(ref state): State<AppState>,
     Path(service_ref): Path<String>,
-    Json(env_vars): Json<HashMap<String, String>>,
+    Form(env_vars): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let service_ref = ServiceRef::from_str(service_ref.as_str()).unwrap();
 

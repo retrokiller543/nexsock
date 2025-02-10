@@ -5,17 +5,17 @@
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <link href="/style.css" rel="stylesheet">
-  <title>{% block title %}{% endblock title %} - Service Management</title>
+  <title>Service Management</title>
   {% endblock head %}
+  <script src="/dependencies/htmx.js"></script>
 </head>
 <body>
 <header>
-  <nav class="navbar">
+  <nav class="navbar" hx-boost="true">
     <div class="nav-content">
       <a class="nav-logo" href="/">Service Management</a>
       <div class="nav-links">
         <a class="nav-item" href="/">Services</a>
-        <a class="nav-item" href="/configs">Configs</a>
       </div>
     </div>
   </nav>
@@ -32,7 +32,9 @@
   </div>
   {% endif %}
 
-  {% block content %}{% endblock content %}
+  <section class="content" id="page-content">
+    {% block content %}{% endblock content %}
+  </section>
 </main>
 
 <footer class="footer">

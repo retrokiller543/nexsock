@@ -15,7 +15,7 @@
     </div>
 
     <div class="service-card-actions">
-      <a class="button button-secondary" href="/service/{{ service.name }}">Details</a>
+      <button class="button button-secondary" hx-get="/services/{{ service.name }}" hx-push-url="true" hx-swap="innerHTML" hx-target="#page-content">Details</button>
       <button aria-label="Toggle Management" class="button button-icon" onclick="toggleManagement('{{ service.name }}')">
         ⚙️
       </button>

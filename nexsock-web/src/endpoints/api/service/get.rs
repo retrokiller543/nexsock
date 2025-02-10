@@ -1,4 +1,3 @@
-use crate::components::page::Page;
 use crate::services::nexsock_services::list::list_services;
 use crate::state::AppState;
 use crate::templates::TERA;
@@ -6,10 +5,12 @@ use crate::traits::RenderTemplate;
 use axum::extract::State;
 use axum::response::Html;
 
-pub async fn index_html(State(ref state): State<AppState>) -> Html<String> {
+pub async fn get_services(State(ref state): State<AppState>) -> Html<Vec<u8>> {
     let services = list_services(state).await.unwrap();
 
-    let page = Page::new("Home".to_string());
+    let mut buff = Vec::new();
 
-    Html(page.render(&TERA, None).unwrap())
+    services.render_to(&TERA, None, &mut buff).unwrap();
+
+    Html(buff)
 }
