@@ -9,7 +9,6 @@ use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_RE
 use crate::traits::service_management::ServiceManagement;
 use anyhow::{anyhow, Context};
 use command_group::{AsyncCommandGroup, AsyncGroupChild};
-use futures::executor::block_on;
 use futures::future::join_all;
 use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
