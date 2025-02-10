@@ -31,19 +31,38 @@ async function controlService(serviceName, action) {
 /**
  * Adds a new input pair for environment variables to the DOM.
  *
- * This function creates a new div element containing two text input fields for a key and a value, 
- * along with a button that removes the pair when clicked. The new environment variable pair is 
+ * This function creates a new div element containing two text input fields for a key and a value,
+ * along with a button that removes the pair when clicked. The new environment variable pair is
  * appended to the container element with the ID 'env-vars'.
  */
 function addEnvVar() {
     const container = document.getElementById('env-vars');
+    if (!container) {
+        console.error('Environment variables container not found');
+        return;
+    }
     const pair = document.createElement('div');
     pair.className = 'env-var-pair';
-    pair.innerHTML = `
-            <input type="text" class="form-input" placeholder="Key">
-            <input type="text" class="form-input" placeholder="Value">
-            <button type="button" class="button button-icon" onclick="this.parentElement.remove()">×</button>
-        `;
+
+    const keyInput = document.createElement('input');
+    keyInput.type = 'text';
+    keyInput.className = 'form-input';
+    keyInput.placeholder = 'Key';
+
+    const valueInput = document.createElement('input');
+    valueInput.type = 'text';
+    valueInput.className = 'form-input';
+    valueInput.placeholder = 'Value';
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'button button-icon';
+    removeButton.textContent = '×';
+    removeButton.onclick = function() { this.parentElement.remove(); };
+
+    pair.appendChild(keyInput);
+    pair.appendChild(valueInput);
+    pair.appendChild(removeButton);
     container.appendChild(pair);
 }
 
