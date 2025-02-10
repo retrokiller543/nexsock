@@ -5,6 +5,7 @@ use anyhow::bail;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use nexsock_protocol::commands::service_status::GetServiceStatus;
 
+/// Gets more detailed information about the service.
 #[tracing::instrument(skip(state))]
 pub async fn find_service(
     state: &AppState,

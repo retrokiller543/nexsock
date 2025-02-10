@@ -2,6 +2,7 @@ use crate::daemon_client::get_client;
 use crate::state::AppState;
 use nexsock_protocol::commands::add_service::{AddServiceCommand, AddServicePayload};
 
+/// Adds a new service to be managed
 #[tracing::instrument(skip(state))]
 pub async fn add_service(
     state: &AppState,
