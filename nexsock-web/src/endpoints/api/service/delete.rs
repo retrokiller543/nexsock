@@ -9,13 +9,15 @@ use tracing::error;
 pub async fn remove_service(
     State(ref state): State<AppState>,
     Path(service_ref): Path<String>,
-) -> impl IntoResponse {
-    let service_ref = ServiceRef::from_str(service_ref.as_str()).unwrap();
+) -> crate::Result<impl IntoResponse> {
+    let service_ref = ServiceRef::from_str(service_ref.as_str())?;
 
     match remove_service_inner(state, service_ref).await {
         Ok(_) => (),
         Err(err) => {
             error!(error = %err, "Error removing service");
         }
-    }
+    };
+
+    Ok(())
 }

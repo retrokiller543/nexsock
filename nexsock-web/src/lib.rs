@@ -2,6 +2,7 @@ mod components;
 mod daemon_client;
 mod embedded;
 mod endpoints;
+mod error;
 mod services;
 mod state;
 pub(crate) mod templates;
@@ -23,6 +24,8 @@ use tokio::net::{TcpListener, ToSocketAddrs};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{info, Span};
+
+type Result<T, E = error::ServiceError> = std::result::Result<T, E>;
 
 #[inline]
 #[tracing::instrument]

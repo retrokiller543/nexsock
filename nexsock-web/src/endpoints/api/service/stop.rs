@@ -8,8 +8,10 @@ use std::str::FromStr;
 pub(crate) async fn stop_service(
     State(ref state): State<AppState>,
     Path(service_ref): Path<String>,
-) -> impl IntoResponse {
-    let service_ref = ServiceRef::from_str(service_ref.as_str()).unwrap();
+) -> crate::Result<impl IntoResponse> {
+    let service_ref = ServiceRef::from_str(service_ref.as_str())?;
 
-    stop::stop_service_inner(state, service_ref).await.unwrap();
+    stop::stop_service_inner(state, service_ref).await?;
+
+    Ok(())
 }
