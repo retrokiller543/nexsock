@@ -29,8 +29,6 @@ impl ConfigurationManagement for ConfigManager {
 
         let config = ServiceConfig::new(filename.to_owned(), *format, Some(run_command.to_owned()));
 
-        //config.id = service.id;
-
         SERVICE_CONFIG_REPOSITORY.save(&config).await?;
 
         Ok(())

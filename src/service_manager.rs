@@ -10,6 +10,7 @@ use crate::traits::service_management::ServiceManagement;
 use anyhow::{anyhow, Context};
 use command_group::{AsyncCommandGroup, AsyncGroupChild};
 use futures::executor::block_on;
+use futures::future::join_all;
 use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
@@ -457,18 +458,20 @@ impl ServiceManagement for ServiceManager {
 
         let service_id = service.id.ok_or_else(|| anyhow!("Service has no ID"))?;
 
-        let deps = SERVICE_DEPENDENCY_REPOSITORY
+        let deps_fut = SERVICE_DEPENDENCY_REPOSITORY
             .get_by_any_filter(equals("sd.service_id", Some(service_id)))
             .await?
             .into_iter()
-            .map(|mut dep| {
-                let state = block_on(self.get_service_state(dep.service_id));
+            .map(|mut dep| async {
+                let state = self.get_service_state(dep.service_id).await;
 
                 dep.status = state;
 
                 dep
             })
             .collect::<Vec<_>>();
+
+        let deps = join_all(deps_fut).await;
 
         // Get current state
         let state = self.get_service_state(service_id).await;
