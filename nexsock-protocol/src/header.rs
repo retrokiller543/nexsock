@@ -1,8 +1,11 @@
 use crate::commands::Command;
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinResult, BinWrite};
+#[cfg(feature = "savefile")]
+use savefile::prelude::Savefile;
 use std::io::{Read, Seek, Write};
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode)]
 pub struct MessageFlags(u16);
 
@@ -68,6 +71,7 @@ impl BinWrite for MessageFlags {
     }
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(Debug, BinRead, BinWrite, Encode, Decode)]
 #[brw(magic = b"NEX\0", big)] // Magic bytes to identify our protocol
 pub struct MessageHeader {

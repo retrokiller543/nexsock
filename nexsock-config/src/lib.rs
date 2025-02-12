@@ -58,7 +58,14 @@ use derive_more::{
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 use thiserror::Error;
+
+pub static PROJECT_DIRECTORIES: LazyLock<ProjectDirs> = LazyLock::new(|| {
+    ProjectDirs::from("com", "tosic", "nexsock")
+        .ok_or(NexsockConfigError::ProjectDirs)
+        .expect("Failed to obtain project directories")
+});
 
 #[derive(Error, Debug)]
 pub enum NexsockConfigError {
@@ -112,10 +119,7 @@ impl NexsockConfig {
     }
 
     pub fn from_file(path: Option<&Path>) -> Result<Self, NexsockConfigError> {
-        let project_dirs =
-            ProjectDirs::from("com", "tosic", "nexsock").ok_or(NexsockConfigError::ProjectDirs)?;
-
-        let config_path = path.unwrap_or_else(|| project_dirs.config_dir());
+        let config_path = path.unwrap_or_else(|| PROJECT_DIRECTORIES.config_dir());
 
         // Ensure config directory exists
         std::fs::create_dir_all(config_path).map_err(|e| {

@@ -1,5 +1,5 @@
 [workspace]
-members = ['.', 'nexsock', "nexsock-client", "nexsock-config", "nexsock-protocol", "nexsock-utils", "nexsock-web"]
+members = ['.', 'nexsock', "nexsock-abi", "nexsock-client", "nexsock-config", "nexsock-example-plugin", "nexsock-plugins", "nexsock-protocol", "nexsock-utils", "nexsock-web"]
 
 [workspace.package]
 version = "1.0.0-6"
@@ -26,6 +26,8 @@ license = false
 eula = false
 
 [workspace.dependencies]
+nexsock-abi = { path = "nexsock-abi" }
+nexsock-plugins = { path = "nexsock-plugins" }
 nexsock-protocol = { path = "nexsock-protocol" }
 nexsock-client = { path = "nexsock-client" }
 nexsock-config = { path = "nexsock-config" }
@@ -34,6 +36,9 @@ sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-t
 sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
 bincode = { version = "2.0.0-rc.3" }
 tosic-utils = { version = "0.2.3", features = ["env", "dotenv", "tracing"], registry = "gitea" }
+savefile = { version = "0.18.5", features = ["derive", "serde"] }
+savefile-derive = { version = "0.18.5" }
+savefile-abi = { version = "0.18.5" }
 
 [dependencies]
 sqlx-utils = { workspace = true }
@@ -57,6 +62,8 @@ anyhow = "1.0.95"
 derive_more = {version = "1.0.0", features = ["full"]}
 port-selector = "0.1.6"
 command-group = { version = "5.0.1", features = ["tokio", "with-tokio", "async-trait"] }
+nexsock-abi.workspace = true
+nexsock-plugins.workspace = true
 
 [build-dependencies]
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }

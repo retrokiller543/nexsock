@@ -25,6 +25,8 @@ use crate::service_command;
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinWrite};
 use derive_more::{From, Into, IsVariant, TryUnwrap, Unwrap};
+#[cfg(feature = "savefile")]
+use savefile::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[macro_export]
@@ -48,9 +50,11 @@ macro_rules! try_from {
     };
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(Debug, BinRead, BinWrite, Clone, Copy, Encode, Decode)]
 #[brw(repr(u16), big)]
 #[non_exhaustive]
+#[repr(u16)]
 pub enum Command {
     // Service management
     StartService = 1,
@@ -86,10 +90,12 @@ pub enum Command {
 
 service_command!(pub struct PingCommand<_, ()> = Ping);
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, IsVariant, Unwrap, TryUnwrap, From)]
 #[unwrap(ref, ref_mut)]
 #[try_unwrap(ref, ref_mut)]
 #[non_exhaustive]
+#[repr(u16)]
 pub enum CommandPayload {
     Status(ServiceStatus),
     ListServices(ListServicesResponse),

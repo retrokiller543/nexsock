@@ -1,0 +1,15 @@
+[package]
+name = "nexsock-example-plugin"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+nexsock-abi.workspace = true
+savefile-abi.workspace = true

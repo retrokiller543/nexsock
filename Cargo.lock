@@ -143,6 +143,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d902e3d592a523def97af8f317b08ce16b7ab854c1985a0c671e6f15cebc236"
 
 [[package]]
+name = "arrayvec"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+
+[[package]]
 name = "async-compression"
 version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -389,6 +395,36 @@ dependencies = [
  "quote",
  "syn 1.0.109",
 ]
+
+[[package]]
+name = "bit-set"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0700ddab506f33b20a03b13996eccd309a48e5ff77d0d95926aa0210fb4e95f1"
+dependencies = [
+ "bit-vec 0.6.3",
+]
+
+[[package]]
+name = "bit-set"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08807e080ed7f9d5433fa9b275196cfc35414f66a0c79d864dc51a0d825231a3"
+dependencies = [
+ "bit-vec 0.8.0",
+]
+
+[[package]]
+name = "bit-vec"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
+
+[[package]]
+name = "bit-vec"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e764a1d40d510daf35e07be9eb06e75770908c27d411ee6c92109c9840eaaf7"
 
 [[package]]
 name = "bitflags"
@@ -1647,6 +1683,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "libloading"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
+dependencies = [
+ "cfg-if",
+ "windows-targets 0.52.6",
+]
+
+[[package]]
 name = "libm"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1765,6 +1811,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
+name = "memoffset"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1818,6 +1873,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "nexsock-abi"
+version = "1.0.0-6"
+dependencies = [
+ "nexsock-protocol",
+ "savefile",
+ "savefile-abi",
+ "savefile-derive",
+]
+
+[[package]]
 name = "nexsock-client"
 version = "1.0.0-6"
 dependencies = [
@@ -1845,6 +1910,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "nexsock-example-plugin"
+version = "1.0.0-6"
+dependencies = [
+ "nexsock-abi",
+ "savefile-abi",
+]
+
+[[package]]
+name = "nexsock-plugins"
+version = "1.0.0-6"
+dependencies = [
+ "anyhow",
+ "nexsock-config",
+ "savefile",
+ "savefile-abi",
+ "tosic-utils",
+]
+
+[[package]]
 name = "nexsock-protocol"
 version = "1.0.0-6"
 dependencies = [
@@ -1853,6 +1937,7 @@ dependencies = [
  "binrw",
  "derive_more",
  "paste",
+ "savefile",
  "serde",
  "sqlx",
  "thiserror 2.0.11",
@@ -1907,7 +1992,9 @@ dependencies = [
  "derive_more",
  "futures",
  "git2",
+ "nexsock-abi",
  "nexsock-config",
+ "nexsock-plugins",
  "nexsock-protocol",
  "nexsock-utils",
  "paste",
@@ -2343,6 +2430,7 @@ dependencies = [
  "proc-macro-error-attr2",
  "proc-macro2",
  "quote",
+ "syn 2.0.96",
 ]
 
 [[package]]
@@ -2542,6 +2630,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
 
 [[package]]
+name = "rustc_version"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
+dependencies = [
+ "semver",
+]
+
+[[package]]
 name = "rustix"
 version = "0.38.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2576,10 +2673,63 @@ dependencies = [
 ]
 
 [[package]]
+name = "savefile"
+version = "0.18.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9f7b44316ef847a45b8346864c1ccc065e694bd3c041ff60953f5e0a3221acb"
+dependencies = [
+ "arrayvec",
+ "bit-set 0.5.3",
+ "bit-set 0.8.0",
+ "bit-vec 0.6.3",
+ "bit-vec 0.8.0",
+ "byteorder",
+ "indexmap",
+ "memoffset",
+ "parking_lot",
+ "rustc_version",
+ "savefile-derive",
+ "serde",
+ "smallvec",
+]
+
+[[package]]
+name = "savefile-abi"
+version = "0.18.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "338642e3e995f12d9cc50adc903864b11b7b37a66567f9477bb04a8acc03d59e"
+dependencies = [
+ "byteorder",
+ "bytes",
+ "libloading",
+ "rustc_version",
+ "savefile",
+ "savefile-derive",
+]
+
+[[package]]
+name = "savefile-derive"
+version = "0.18.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45900852661d1f7b288211dd848c7d65f6c3b501e298280f8e6e31205d01cf2c"
+dependencies = [
+ "proc-macro-error2",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.96",
+]
+
+[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "semver"
+version = "1.0.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f79dfe2d285b0488816f30e700a7438c5a73d816b5b7d3ac72fbc48b0d185e03"
 
 [[package]]
 name = "serde"

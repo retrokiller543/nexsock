@@ -1,9 +1,11 @@
 use crate::error;
-use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, SERVICE_MANAGER};
+use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
 use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
+use nexsock_abi::PreHook;
+use nexsock_plugins::external_native_plugins;
 use nexsock_protocol::commands::error::ErrorPayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
@@ -97,9 +99,19 @@ impl Connection {
         command: Command,
         payload: Option<Vec<u8>>,
     ) -> error::Result<CommandPayload> {
+        let pre_hooks = &PRE_HOOKS;
+
+        pre_hooks.iter().for_each(|(_, plugin)| {
+            plugin.pre_command(&command);
+        });
+
         match command {
             Command::StartService => {
                 let payload = Self::read_req_payload(payload)?;
+
+                pre_hooks.iter().for_each(|(_, plugin)| {
+                    plugin.pre_start_command(&payload);
+                });
 
                 SERVICE_MANAGER.start(&payload).await?;
 
