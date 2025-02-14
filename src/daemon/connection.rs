@@ -5,13 +5,15 @@ use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
 use nexsock_abi::PreHook;
-use nexsock_plugins::external_native_plugins;
+use nexsock_plugins::lua::manager::LuaPluginManager;
 use nexsock_protocol::commands::error::ErrorPayload;
+use nexsock_protocol::commands::extra::ExtraCommandPayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
 use std::fmt::Debug;
 use std::io;
+use std::sync::Arc;
 use tokio::io::{BufReader, BufWriter};
 #[cfg(windows)]
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -21,16 +23,22 @@ use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::TcpStream;
 #[cfg(unix)]
 use tokio::net::UnixStream;
+use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 
 pub struct Connection {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
     protocol: Protocol,
+    lua_plugin_manager: Arc<Mutex<LuaPluginManager>>,
 }
 
 impl Connection {
-    pub fn new(#[cfg(unix)] stream: UnixStream, #[cfg(windows)] stream: TcpStream) -> Self {
+    pub fn new(
+        #[cfg(unix)] stream: UnixStream,
+        #[cfg(windows)] stream: TcpStream,
+        lua_plugin_manager: Arc<Mutex<LuaPluginManager>>,
+    ) -> Self {
         // Split the stream into reader and writer
         let (read_half, write_half) = stream.into_split();
         let reader = BufReader::new(read_half);
@@ -41,6 +49,7 @@ impl Connection {
             reader,
             writer,
             protocol,
+            lua_plugin_manager,
         }
     }
 
@@ -201,6 +210,25 @@ impl Connection {
             Command::Shutdown => Ok(CommandPayload::Empty),
             Command::GetSystemStatus => Ok(CommandPayload::Empty),
             Command::Ping => Ok(CommandPayload::Empty),
+
+            Command::Extra => {
+                let _payload: ExtraCommandPayload = Self::read_req_payload(payload)?;
+
+                let manager = self.lua_plugin_manager.lock().await;
+
+                for path in manager.discovered.values() {
+                    match manager.call_function(path.to_path_buf(), "handle_command", vec![]) {
+                        Ok(response) => {
+                            info!(path = ?path, response = ?response, "Received response from script")
+                        }
+                        Err(error) => {
+                            error!(path = ?path, error = %error, "Error running script")
+                        }
+                    };
+                }
+
+                Ok(CommandPayload::Empty)
+            }
 
             Command::Success => Ok(CommandPayload::Empty),
             Command::Error => Ok(CommandPayload::Empty),

@@ -11,6 +11,6 @@ repository.workspace = true
 directories = "6.0.0"
 config = "0.15.6"
 serde = { version = "1.0.217", features = ["derive"] }
-derive_more = { version = "1.0.0", features = ["full"] }
+derive_more.workspace = true
 thiserror = "2.0.11"
 toml = "0.8.19"

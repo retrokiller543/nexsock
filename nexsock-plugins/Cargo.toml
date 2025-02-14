@@ -9,7 +9,16 @@ repository.workspace = true
 
 [dependencies]
 anyhow = "1.0.95"
-savefile.workspace = true
-savefile-abi.workspace = true
+savefile = { workspace = true, optional = true }
+savefile-abi = { workspace = true, optional = true }
 tosic-utils.workspace = true
 nexsock-config.workspace = true
+mlua = { workspace = true, optional = true }
+derive_more.workspace = true
+tokio = { version = "1.43.0", features = ["full"] }
+tracing.workspace = true
+
+[features]
+default = []
+native = ["dep:savefile", "dep:savefile-abi"]
+lua = ["dep:mlua"]

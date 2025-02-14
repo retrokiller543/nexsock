@@ -26,7 +26,7 @@ nexsock-config = { workspace = true }
 bincode = { workspace = true }
 axum = { version =  "0.8.1", features = ["macros"] }
 directories = "6.0.0"
-derive_more = { version =  "1.0.0", features = ["full"] }
+derive_more.workspace = true
 tera = "1.20.0"
 serde = { version = "1.0.217", features = ["derive"] }
 tower-http = { version = "0.6.2", features = ["fs", "trace", "tracing", "compression-full"] }

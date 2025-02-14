@@ -9,5 +9,5 @@ repository.workspace = true
 
 [dependencies]
 bincode = { workspace = true }
-derive_more = { version = "1.0.0", features = ["full"] }
+derive_more.workspace = true
 serde = { version = "1.0.217", features = ["derive"] }

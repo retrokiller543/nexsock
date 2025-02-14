@@ -1,56 +1,3 @@
-/*#![allow(dead_code)]
-
-use std::path::{Path, PathBuf};
-use config::{Config, File, FileFormat, Value, ValueKind};
-use directories::ProjectDirs;
-use serde::{Deserialize, Serialize};
-
-pub struct NexsockConfig {
-    config: Config
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum SocketRef {
-    Port(u16),
-    Path(PathBuf)
-}
-
-impl From<SocketRef> for Value {
-    fn from(value: SocketRef) -> Self {
-        match value {
-            SocketRef::Port(port) => Self::new(None, ValueKind::U64(port as u64)),
-            SocketRef::Path(path) => Self::new(None, ValueKind::String(path.to_str().expect("Failed to construct string").to_string()))
-        }
-    }
-}
-
-impl Default for NexsockConfig {
-    fn default() -> Self {
-        let project_dir = ProjectDirs::from("com", "tosic", "nexsock").unwrap();
-
-        let toml_config = File::new(project_dir.config_dir().to_str().expect("failed to get config directory"), FileFormat::Toml);
-
-        let mut config_builder = Config::builder().add_source(toml_config);
-
-        #[cfg(unix)]
-        { config_builder = config_builder.set_default("socket", SocketRef::Path("/tmp/nexsockd.sock".into())).unwrap(); }
-        #[cfg(windows)]
-        { config_builder = config_builder.set_default("socket", SocketRef::Port(50505)).unwrap(); }
-
-        let config = config_builder.build().unwrap();
-
-        Self {
-            config
-        }
-    }
-}
-
-impl NexsockConfig {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}*/
-
 use config::{Config, File, Value, ValueKind};
 use derive_more::{
     AsMut, AsRef, Deref, DerefMut, From, Into, IsVariant, TryFrom, TryInto, TryUnwrap, Unwrap,
@@ -60,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use thiserror::Error;
+
+type ConfigResult<T, E = NexsockConfigError> = Result<T, E>;
 
 pub static PROJECT_DIRECTORIES: LazyLock<ProjectDirs> = LazyLock::new(|| {
     ProjectDirs::from("com", "tosic", "nexsock")
@@ -88,7 +37,7 @@ pub enum SocketRef {
     Path(PathBuf),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Into)]
 pub struct AppConfig {
     pub socket: SocketRef,
 }
@@ -114,11 +63,11 @@ pub struct NexsockConfig {
 }
 
 impl NexsockConfig {
-    pub fn new() -> Result<Self, NexsockConfigError> {
+    pub fn new() -> ConfigResult<Self> {
         Self::from_file(None)
     }
 
-    pub fn from_file(path: Option<&Path>) -> Result<Self, NexsockConfigError> {
+    pub fn from_file(path: Option<&Path>) -> ConfigResult<Self> {
         let config_path = path.unwrap_or_else(|| PROJECT_DIRECTORIES.config_dir());
 
         // Ensure config directory exists
@@ -151,7 +100,7 @@ impl NexsockConfig {
         Ok(Self { inner, config })
     }
 
-    pub fn save(&self) -> Result<(), NexsockConfigError> {
+    pub fn save(&self) -> ConfigResult<()> {
         let project_dirs =
             ProjectDirs::from("com", "tosic", "nexsock").ok_or(NexsockConfigError::ProjectDirs)?;
 

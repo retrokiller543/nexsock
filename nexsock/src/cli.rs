@@ -1,11 +1,12 @@
 use clap::{Parser, Subcommand};
-use derive_more::{From, FromStr, IsVariant};
+use derive_more::IsVariant;
 use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::collections::HashMap;
 #[cfg(windows)]
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

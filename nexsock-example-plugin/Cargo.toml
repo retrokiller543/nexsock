@@ -13,3 +13,5 @@ crate-type = ["cdylib"]
 [dependencies]
 nexsock-abi.workspace = true
 savefile-abi.workspace = true
+tracing.workspace = true
+tosic-utils.workspace = true

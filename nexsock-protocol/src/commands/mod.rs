@@ -3,6 +3,7 @@ pub mod config;
 pub mod dependency;
 pub mod dependency_info;
 pub mod error;
+pub mod extra;
 pub mod git;
 pub mod list_services;
 pub mod manage_service;
@@ -24,7 +25,7 @@ use crate::commands::service_status::{GetServiceStatus, ServiceStatus};
 use crate::service_command;
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinWrite};
-use derive_more::{From, Into, IsVariant, TryUnwrap, Unwrap};
+use derive_more::{From, IsVariant, TryUnwrap, Unwrap};
 #[cfg(feature = "savefile")]
 use savefile::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -82,6 +83,9 @@ pub enum Command {
     Shutdown = 40,
     GetSystemStatus = 41,
     Ping = 42,
+
+    // Extra commands that needs to be handled by a plugin
+    Extra = 0xFF00,
 
     // Response types
     Success = 0xFFF0,

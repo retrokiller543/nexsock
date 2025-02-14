@@ -1,40 +1,66 @@
+use anyhow::Context;
 use nexsock_config::PROJECT_DIRECTORIES;
-use savefile_abi::{AbiConnection, AbiExportable};
-use std::collections::HashMap;
+use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::sync::LazyLock;
+use tosic_utils::logging::info;
 
-pub static PLUGINS_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
+#[cfg(feature = "lua")]
+pub mod lua;
+#[cfg(feature = "native")]
+pub mod native;
+
+/// The parent plugins directory used by Nexsock
+///
+/// It will ensure that the provided plugins directory adheres to the expected structure Nexsock expects
+pub static PLUGINS_DIR: LazyLock<PathBuf> =
+    LazyLock::new(|| get_plugins_dir().expect("Failed to get plugins dir."));
+
+fn get_plugins_dir() -> anyhow::Result<PathBuf> {
     let dir = std::env::var("PLUGINS_DIR").unwrap_or_else(|_| {
         let config_dir = PROJECT_DIRECTORIES.config_dir();
 
         config_dir.join("plugins").display().to_string()
     });
 
-    dir.into()
-});
+    let dir_path = PathBuf::from(&dir);
 
-pub fn external_native_plugins<T: AbiExportable + ?Sized + 'static>(
-) -> anyhow::Result<HashMap<PathBuf, AbiConnection<T>>> {
-    let mut connections = HashMap::new();
-
-    for entry in std::fs::read_dir(&*PLUGINS_DIR)? {
-        let entry = entry?;
-        let path = entry.path();
-
-        match path.extension() {
-            Some(extension) if extension == "so" || extension == "dll" || extension == "dylib" => {
-                let connection =
-                    match AbiConnection::<T>::load_shared_library(path.to_str().unwrap()) {
-                        Ok(connection) => connection,
-                        _ => continue,
-                    };
-
-                connections.insert(path, connection);
-            }
-            _ => {}
-        }
+    if !dir_path.exists() {
+        info!(directory = dir, "Creating plugin directory");
+        create_dir_all(&dir).context(format!("Failed to construct plugins directory '{dir}'"))?;
     }
 
-    Ok(connections)
+    #[cfg(feature = "native")]
+    let native_dir = dir_path.join("native");
+
+    #[cfg(feature = "lua")]
+    let lua_dir = dir_path.join("lua");
+
+    #[cfg(feature = "native")]
+    if !native_dir.exists() {
+        info!(
+            directory = native_dir.display().to_string(),
+            "Creating plugin directory"
+        );
+        create_dir_all(&native_dir).context(format!(
+            "Failed to construct plugins directory '{}'",
+            native_dir.display()
+        ))?;
+    }
+
+    #[cfg(feature = "lua")]
+    if !lua_dir.exists() {
+        info!(
+            directory = lua_dir.display().to_string(),
+            "Creating plugin directory"
+        );
+        create_dir_all(&native_dir).context(format!(
+            "Failed to construct plugins directory '{}'",
+            lua_dir.display()
+        ))?;
+    }
+
+    Ok(dir_path)
 }
+
+pub type PluginResult<T, E = anyhow::Error> = anyhow::Result<T, E>;

@@ -35,10 +35,13 @@ nexsock-utils = { path = "nexsock-utils" }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
 bincode = { version = "2.0.0-rc.3" }
-tosic-utils = { version = "0.2.3", features = ["env", "dotenv", "tracing"], registry = "gitea" }
+tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], registry = "gitea" }
 savefile = { version = "0.18.5", features = ["derive", "serde"] }
 savefile-derive = { version = "0.18.5" }
 savefile-abi = { version = "0.18.5" }
+tracing = { version = "0.1.41", features = ["log"] }
+mlua = { version = "0.10.3", features = ["anyhow", "vendored", "lua54", "async"] }
+derive_more = { version = "2.0.1", features = ["full"] }
 
 [dependencies]
 sqlx-utils = { workspace = true }
@@ -46,7 +49,7 @@ sqlx = { workspace = true }
 tokio = { version = "1.43", features = ["full"] }
 thiserror = "2.0.11"
 tempfile = "3.15.0"
-tracing = { version = "0.1.41", features = ["log"] }
+tracing.workspace = true
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-core = "0.1.33"
 tosic-utils = { workspace = true }
@@ -59,11 +62,10 @@ nexsock-config = { workspace = true }
 nexsock-utils = { workspace = true }
 bincode = { workspace = true }
 anyhow = "1.0.95"
-derive_more = {version = "1.0.0", features = ["full"]}
 port-selector = "0.1.6"
 command-group = { version = "5.0.1", features = ["tokio", "with-tokio", "async-trait"] }
 nexsock-abi.workspace = true
-nexsock-plugins.workspace = true
+nexsock-plugins = { workspace = true, features = ["native", "lua"] }
 
 [build-dependencies]
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
