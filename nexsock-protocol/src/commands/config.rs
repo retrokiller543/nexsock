@@ -2,6 +2,8 @@ use crate::commands::manage_service::ServiceRef;
 use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
+#[cfg(feature = "savefile")]
+use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
 
@@ -18,6 +20,7 @@ service_command! {
     }
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Default,
@@ -41,6 +44,7 @@ pub struct ServiceConfigPayload {
 
 try_from!(ServiceConfig => ServiceConfigPayload);
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Copy,
@@ -58,6 +62,7 @@ try_from!(ServiceConfig => ServiceConfigPayload);
     Decode,
 )]
 #[serde(rename_all = "lowercase")]
+#[repr(u8)]
 pub enum ConfigFormat {
     #[default]
     Env,

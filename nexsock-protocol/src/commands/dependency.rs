@@ -3,6 +3,8 @@ use crate::commands::manage_service::ServiceRef;
 use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
+#[cfg(feature = "savefile")]
+use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
 
 service_command! {
@@ -65,6 +67,7 @@ pub struct RemoveDependencyPayload {
     pub dependent_service: ServiceRef,
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Default,

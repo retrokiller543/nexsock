@@ -3,6 +3,7 @@ macro_rules! service_command {
     {
         $vis:vis struct $command:ident<_, $output:ty> = $item:ident
     } => {
+        // #[cfg_attr(feature = "savefile", derive(::savefile::prelude::Savefile))]
         $vis struct $command;
 
         impl ::std::default::Default for $command {
@@ -30,6 +31,7 @@ macro_rules! service_command {
     {
         $vis:vis struct $command:ident<$input:ident, $output:ty> = $item:ident
     } => {
+        // #[cfg_attr(feature = "savefile", derive(::savefile::prelude::Savefile))]
         $vis struct $command($input);
 
         impl $command {
@@ -68,6 +70,7 @@ macro_rules! service_command {
             $($field_vis:vis $field:ident: $field_ty:ty),* $(,)?
         }
     } => {
+        // #[cfg_attr(feature = "savefile", derive(::savefile::prelude::Savefile))]
         $vis struct $command {
             $($field_vis $field: $field_ty),*
         }

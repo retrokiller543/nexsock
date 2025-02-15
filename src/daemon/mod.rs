@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use anyhow::Context;
 #[cfg(unix)]
 use std::fs;
 use std::sync::Arc;
@@ -12,6 +13,7 @@ use tracing::{debug, info};
 
 use config::DaemonConfig;
 use connection::Connection;
+use nexsock_plugins::lua::manager::LuaPluginManager;
 
 pub mod config;
 pub mod connection;
@@ -25,11 +27,12 @@ pub struct Daemon {
     listener: Arc<UnixListener>,
     #[allow(dead_code)]
     config: DaemonConfig,
+    lua_plugin_manager: Arc<LuaPluginManager>,
 }
 
 impl Daemon {
     #[cfg(unix)]
-    pub fn new(config: DaemonConfig) -> Result<Self> {
+    pub async fn new(config: DaemonConfig) -> Result<Self> {
         // Ensure old socket is cleaned up
         if config.socket_path.exists() {
             debug!("Removing old socket file");
@@ -39,7 +42,21 @@ impl Daemon {
         let listener = Arc::new(UnixListener::bind(&config.socket_path)?);
         info!("Bound to {:?}", config.socket_path);
 
-        Ok(Self { listener, config })
+        let lua_plugin_manager =
+            LuaPluginManager::new().context("failed to load the plugin manager")?;
+
+        lua_plugin_manager
+            .load_plugins()
+            .await
+            .context("failed to load plugins")?;
+
+        let lua_plugin_manager = Arc::new(lua_plugin_manager);
+
+        Ok(Self {
+            listener,
+            config,
+            lua_plugin_manager,
+        })
     }
 
     #[cfg(windows)]
@@ -55,14 +72,26 @@ impl Daemon {
         let listener = Arc::new(TcpListener::bind(&addr).await?);
         info!("Bound to {:?}", listener.local_addr()?);
 
-        Ok(Self { listener, config })
+        let mut lua_plugin_manager =
+            LuaPluginManager::new().context("failed to load the plugin manager")?;
+        lua_plugin_manager
+            .load_plugins()
+            .context("failed to load plugins")?;
+
+        let lua_plugin_manager = Arc::new(Mutex::new(lua_plugin_manager));
+
+        Ok(Self {
+            listener,
+            config,
+            lua_plugin_manager,
+        })
     }
 
     // Separate method just for accepting connections
     pub async fn accept(&self) -> Result<Connection> {
         let (stream, _) = self.listener.accept().await?;
         debug!("Accepted new connection");
-        Ok(Connection::new(stream))
+        Ok(Connection::new(stream, self.lua_plugin_manager.clone()))
     }
 
     // Clean shutdown logic separated

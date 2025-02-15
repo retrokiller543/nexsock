@@ -1,0 +1,27 @@
+[package]
+name = "nexsock-plugins"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow = "1.0.95"
+savefile = { workspace = true, optional = true }
+savefile-abi = { workspace = true, optional = true }
+tosic-utils.workspace = true
+nexsock-config.workspace = true
+mlua = { workspace = true, optional = true }
+derive_more.workspace = true
+tokio = { version = "1.43.0", features = ["full"] }
+tracing.workspace = true
+futures-util = "0.3.31"
+futures = "0.3.31"
+parking_lot = "0.12.3"
+
+[features]
+default = []
+native = ["dep:savefile", "dep:savefile-abi"]
+lua = ["dep:mlua"]

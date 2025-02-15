@@ -1,15 +1,19 @@
 use crate::error;
-use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, SERVICE_MANAGER};
+use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
 use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
+use nexsock_abi::PreHook;
+use nexsock_plugins::lua::manager::LuaPluginManager;
 use nexsock_protocol::commands::error::ErrorPayload;
+use nexsock_protocol::commands::extra::ExtraCommandPayload;
 use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
 use std::fmt::Debug;
 use std::io;
+use std::sync::Arc;
 use tokio::io::{BufReader, BufWriter};
 #[cfg(windows)]
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -25,10 +29,15 @@ pub struct Connection {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
     protocol: Protocol,
+    lua_plugin_manager: Arc<LuaPluginManager>,
 }
 
 impl Connection {
-    pub fn new(#[cfg(unix)] stream: UnixStream, #[cfg(windows)] stream: TcpStream) -> Self {
+    pub fn new(
+        #[cfg(unix)] stream: UnixStream,
+        #[cfg(windows)] stream: TcpStream,
+        lua_plugin_manager: Arc<LuaPluginManager>,
+    ) -> Self {
         // Split the stream into reader and writer
         let (read_half, write_half) = stream.into_split();
         let reader = BufReader::new(read_half);
@@ -39,6 +48,7 @@ impl Connection {
             reader,
             writer,
             protocol,
+            lua_plugin_manager,
         }
     }
 
@@ -92,14 +102,25 @@ impl Connection {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, payload))]
     async fn handle_command(
         &mut self,
         command: Command,
         payload: Option<Vec<u8>>,
     ) -> error::Result<CommandPayload> {
+        let pre_hooks = &PRE_HOOKS;
+
+        pre_hooks.iter().for_each(|(_, plugin)| {
+            plugin.pre_command(&command);
+        });
+
         match command {
             Command::StartService => {
                 let payload = Self::read_req_payload(payload)?;
+
+                pre_hooks.iter().for_each(|(_, plugin)| {
+                    plugin.pre_start_command(&payload);
+                });
 
                 SERVICE_MANAGER.start(&payload).await?;
 
@@ -189,6 +210,27 @@ impl Connection {
             Command::Shutdown => Ok(CommandPayload::Empty),
             Command::GetSystemStatus => Ok(CommandPayload::Empty),
             Command::Ping => Ok(CommandPayload::Empty),
+
+            Command::Extra => {
+                let _payload: ExtraCommandPayload = Self::read_req_payload(payload)?;
+
+                let results = self
+                    .lua_plugin_manager
+                    .call_function_on_all("handle_command", vec![])?;
+
+                for (path, result) in results {
+                    match result {
+                        Ok(response) => {
+                            info!(path = ?path, response = ?response, "Received response from script")
+                        }
+                        Err(error) => {
+                            error!(path = ?path, error = %error, "Error running script")
+                        }
+                    };
+                }
+
+                Ok(CommandPayload::Empty)
+            }
 
             Command::Success => Ok(CommandPayload::Empty),
             Command::Error => Ok(CommandPayload::Empty),
