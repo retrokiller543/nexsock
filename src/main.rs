@@ -41,7 +41,7 @@ async fn db_pool() -> Result<Pool> {
         .await?)
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let logging_path = PROJECT_DIRECTORIES.data_dir().join("logs");
 

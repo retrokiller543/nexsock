@@ -1994,8 +1994,11 @@ version = "1.0.0-6"
 dependencies = [
  "anyhow",
  "derive_more",
+ "futures",
+ "futures-util",
  "mlua",
  "nexsock-config",
+ "parking_lot",
  "savefile",
  "savefile-abi",
  "tokio",

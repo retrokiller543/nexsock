@@ -7,7 +7,6 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 #[cfg(unix)]
 use tokio::net::UnixListener;
-use tokio::sync::Mutex;
 #[cfg(windows)]
 use tracing::error;
 use tracing::{debug, info};
@@ -28,12 +27,12 @@ pub struct Daemon {
     listener: Arc<UnixListener>,
     #[allow(dead_code)]
     config: DaemonConfig,
-    lua_plugin_manager: Arc<Mutex<LuaPluginManager>>,
+    lua_plugin_manager: Arc<LuaPluginManager>,
 }
 
 impl Daemon {
     #[cfg(unix)]
-    pub fn new(config: DaemonConfig) -> Result<Self> {
+    pub async fn new(config: DaemonConfig) -> Result<Self> {
         // Ensure old socket is cleaned up
         if config.socket_path.exists() {
             debug!("Removing old socket file");
@@ -43,13 +42,15 @@ impl Daemon {
         let listener = Arc::new(UnixListener::bind(&config.socket_path)?);
         info!("Bound to {:?}", config.socket_path);
 
-        let mut lua_plugin_manager =
+        let lua_plugin_manager =
             LuaPluginManager::new().context("failed to load the plugin manager")?;
+
         lua_plugin_manager
             .load_plugins()
+            .await
             .context("failed to load plugins")?;
 
-        let lua_plugin_manager = Arc::new(Mutex::new(lua_plugin_manager));
+        let lua_plugin_manager = Arc::new(lua_plugin_manager);
 
         Ok(Self {
             listener,
@@ -77,7 +78,7 @@ impl Daemon {
             .load_plugins()
             .context("failed to load plugins")?;
 
-        let lua_plugin_manager = Arc::new(lua_plugin_manager);
+        let lua_plugin_manager = Arc::new(Mutex::new(lua_plugin_manager));
 
         Ok(Self {
             listener,

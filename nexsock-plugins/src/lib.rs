@@ -54,7 +54,7 @@ fn get_plugins_dir() -> anyhow::Result<PathBuf> {
             directory = lua_dir.display().to_string(),
             "Creating plugin directory"
         );
-        create_dir_all(&native_dir).context(format!(
+        create_dir_all(&lua_dir).context(format!(
             "Failed to construct plugins directory '{}'",
             lua_dir.display()
         ))?;

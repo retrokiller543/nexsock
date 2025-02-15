@@ -23,21 +23,20 @@ use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::TcpStream;
 #[cfg(unix)]
 use tokio::net::UnixStream;
-use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 
 pub struct Connection {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
     protocol: Protocol,
-    lua_plugin_manager: Arc<Mutex<LuaPluginManager>>,
+    lua_plugin_manager: Arc<LuaPluginManager>,
 }
 
 impl Connection {
     pub fn new(
         #[cfg(unix)] stream: UnixStream,
         #[cfg(windows)] stream: TcpStream,
-        lua_plugin_manager: Arc<Mutex<LuaPluginManager>>,
+        lua_plugin_manager: Arc<LuaPluginManager>,
     ) -> Self {
         // Split the stream into reader and writer
         let (read_half, write_half) = stream.into_split();
@@ -103,6 +102,7 @@ impl Connection {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, payload))]
     async fn handle_command(
         &mut self,
         command: Command,
@@ -214,10 +214,12 @@ impl Connection {
             Command::Extra => {
                 let _payload: ExtraCommandPayload = Self::read_req_payload(payload)?;
 
-                let manager = self.lua_plugin_manager.lock().await;
+                let results = self
+                    .lua_plugin_manager
+                    .call_function_on_all("handle_command", vec![])?;
 
-                for path in manager.discovered.values() {
-                    match manager.call_function(path.to_path_buf(), "handle_command", vec![]) {
+                for (path, result) in results {
+                    match result {
                         Ok(response) => {
                             info!(path = ?path, response = ?response, "Received response from script")
                         }

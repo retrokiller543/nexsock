@@ -20,9 +20,6 @@ pub struct DaemonServer {
 
 impl DaemonServer {
     pub async fn new(config: NexsockConfig) -> Result<Self> {
-        #[cfg(unix)]
-        let daemon = Daemon::new(config.clone().into())?;
-        #[cfg(windows)]
         let daemon = Daemon::new(config.clone().into()).await?;
 
         let connections = Vec::new();

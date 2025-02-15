@@ -3,7 +3,6 @@ use mlua::{ExternalError, Lua, MultiValue, Value};
 use std::path::PathBuf;
 
 pub mod manager;
-mod runner;
 
 pub enum LuaMessage {
     LoadScript(PathBuf),
