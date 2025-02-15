@@ -1,6 +1,8 @@
 use crate::service_command;
 use bincode::{Decode, Encode};
 use derive_more::{Display, From, TryFrom};
+#[cfg(feature = "savefile")]
+use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -27,6 +29,7 @@ service_command! {
     pub struct RemoveServiceCommand<ServiceRef, ()> = RemoveService
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
 pub struct StartServicePayload {
     #[serde(flatten)]
@@ -34,6 +37,7 @@ pub struct StartServicePayload {
     pub env_vars: HashMap<String, String>,
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Debug,
@@ -50,6 +54,7 @@ pub struct StartServicePayload {
     From,
     Display,
 )]
+#[repr(u8)]
 pub enum ServiceRef {
     #[try_from(Option<i64>)]
     Id(i64),
