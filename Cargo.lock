@@ -2067,6 +2067,7 @@ version = "1.0.0-6"
 dependencies = [
  "anyhow",
  "bincode",
+ "cfg-if",
  "command-group",
  "futures",
  "git2",

@@ -14,34 +14,25 @@ use nexsock_protocol::protocol::Protocol;
 use std::fmt::Debug;
 use std::io;
 use std::sync::Arc;
-use tokio::io::{BufReader, BufWriter};
-#[cfg(windows)]
-use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-#[cfg(unix)]
-use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
-#[cfg(windows)]
-use tokio::net::TcpStream;
-#[cfg(unix)]
-use tokio::net::UnixStream;
+use tokio::io::{AsyncRead, AsyncWrite, BufReader, BufWriter};
 use tracing::{debug, info, warn};
 
-pub struct Connection {
-    reader: BufReader<OwnedReadHalf>,
-    writer: BufWriter<OwnedWriteHalf>,
+pub struct Connection<R, W> {
+    reader: BufReader<R>,
+    writer: BufWriter<W>,
     protocol: Protocol,
     lua_plugin_manager: Arc<LuaPluginManager>,
 }
 
-impl Connection {
-    pub fn new(
-        #[cfg(unix)] stream: UnixStream,
-        #[cfg(windows)] stream: TcpStream,
-        lua_plugin_manager: Arc<LuaPluginManager>,
-    ) -> Self {
-        // Split the stream into reader and writer
-        let (read_half, write_half) = stream.into_split();
-        let reader = BufReader::new(read_half);
-        let writer = BufWriter::new(write_half);
+impl<R, W> Connection<R, W>
+where
+    R: AsyncRead + Unpin,
+    W: AsyncWrite + Unpin,
+{
+    pub fn new(reader: R, writer: W, lua_plugin_manager: Arc<LuaPluginManager>) -> Self {
+        //let (read_half, write_half) = stream.into_split();
+        let reader = BufReader::new(reader);
+        let writer = BufWriter::new(writer);
         let protocol = Protocol::default();
 
         Self {

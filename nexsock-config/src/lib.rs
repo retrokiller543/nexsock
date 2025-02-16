@@ -1,3 +1,5 @@
+pub mod traits;
+
 use config::{Config, File, Value, ValueKind};
 use derive_more::{
     AsMut, AsRef, Deref, DerefMut, From, Into, IsVariant, TryFrom, TryInto, TryUnwrap, Unwrap,
@@ -8,7 +10,7 @@ use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use thiserror::Error;
 
-type ConfigResult<T, E = NexsockConfigError> = Result<T, E>;
+pub type ConfigResult<T, E = NexsockConfigError> = Result<T, E>;
 
 pub static PROJECT_DIRECTORIES: LazyLock<ProjectDirs> = LazyLock::new(|| {
     ProjectDirs::from("com", "tosic", "nexsock")
