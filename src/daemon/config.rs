@@ -1,5 +1,20 @@
 use nexsock_config::{NexsockConfig, SocketRef};
 
+/// Configuration structure for the Nexsock daemon.
+///
+/// This structure holds the configuration parameters needed to initialize and run
+/// the daemon, including socket configuration for client connections.
+///
+/// # Examples
+///
+/// ```rust
+/// use nexsockd::prelude::DaemonConfig;
+/// use nexsock_config::SocketRef;
+///
+/// let config = DaemonConfig {
+///     socket: SocketRef::Port(50505),
+/// };
+/// ```
 #[derive(Debug, Clone)]
 pub struct DaemonConfig {
     pub(crate) socket: SocketRef,

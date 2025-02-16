@@ -1,5 +1,5 @@
 mod config_manager;
-mod daemon;
+pub mod daemon;
 mod dependency_manager;
 pub mod error;
 mod models;
@@ -22,6 +22,7 @@ use std::time::Duration;
 use tosic_utils::logging::init_tracing_layered;
 use tracing::{error, info};
 
+/// Default Database pool used for data storage
 #[inline]
 async fn db_pool() -> Result<Pool> {
     let database_path = &*DATABASE_PATH;
@@ -41,8 +42,8 @@ async fn db_pool() -> Result<Pool> {
         .await?)
 }
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<()> {
+/// Runs the default server implementation alongside the migrations.
+pub async fn run_daemon() -> Result<()> {
     let logging_path = PROJECT_DIRECTORIES.data_dir().join("logs");
 
     let _guard = init_tracing_layered(Some((logging_path, "nexsockd.log")))?;

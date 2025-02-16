@@ -10,6 +10,8 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use tracing::info;
 
+/// Database path used for the program execution, at the moment only SQLite is supported, but in theory
+/// any SQL database could be used
 pub static DATABASE_PATH: LazyLock<PathBuf> =
     LazyLock::new(|| get_database_path().expect("Unable to get database path"));
 
@@ -40,6 +42,7 @@ pub static SERVICE_MANAGER: LazyLock<ServiceManager> = LazyLock::new(ServiceMana
 pub static CONFIG_MANAGER: LazyLock<ConfigManager> = LazyLock::new(|| ConfigManager);
 pub static DEPENDENCY_MANAGER: LazyLock<DependencyManager> = LazyLock::new(|| DependencyManager);
 
+/// Pre-hook plugins
 pub static PRE_HOOKS: LazyLock<PreHooks> = LazyLock::new(|| {
     block_on(external_native_plugins()).expect("Failed to load external native plugins")
 });

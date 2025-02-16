@@ -4,6 +4,7 @@ use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
+use cfg_if::cfg_if;
 use nexsock_abi::PreHook;
 use nexsock_plugins::lua::manager::LuaPluginManager;
 use nexsock_protocol::commands::error::ErrorPayload;
@@ -17,6 +18,24 @@ use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncWrite, BufReader, BufWriter};
 use tracing::{debug, info, warn};
 
+cfg_if! {
+    if #[cfg(unix)] {
+        use tokio::net::{UnixStream as Stream, unix::{OwnedReadHalf, OwnedWriteHalf}};
+    } else if #[cfg(windows)] {
+        use tokio::net::{TcpStream as Stream, tcp::{OwnedReadHalf, OwnedWriteHalf}};
+    }
+}
+/// Client connection handler.
+///
+/// Manages individual client connections, handling:
+/// * Command processing
+/// * Protocol communication
+/// * Plugin execution
+///
+/// # Type Parameters
+///
+/// * `R` - The read half of the connection implementing [`AsyncRead`]
+/// * `W` - The write half of the connection implementing [`AsyncWrite`]
 pub struct Connection<R, W> {
     reader: BufReader<R>,
     writer: BufWriter<W>,
@@ -24,15 +43,12 @@ pub struct Connection<R, W> {
     lua_plugin_manager: Arc<LuaPluginManager>,
 }
 
-impl<R, W> Connection<R, W>
-where
-    R: AsyncRead + Unpin,
-    W: AsyncWrite + Unpin,
-{
-    pub fn new(reader: R, writer: W, lua_plugin_manager: Arc<LuaPluginManager>) -> Self {
-        //let (read_half, write_half) = stream.into_split();
-        let reader = BufReader::new(reader);
-        let writer = BufWriter::new(writer);
+impl Connection<OwnedReadHalf, OwnedWriteHalf> {
+    pub fn new(stream: Stream, lua_plugin_manager: Arc<LuaPluginManager>) -> Self {
+        let (reader, writer) = stream.into_split();
+
+        let reader = BufReader::with_capacity(32 * 1024, reader);
+        let writer = BufWriter::with_capacity(32 * 1024, writer);
         let protocol = Protocol::default();
 
         Self {
@@ -42,7 +58,29 @@ where
             lua_plugin_manager,
         }
     }
+}
 
+impl<R, W> Connection<R, W>
+where
+    R: AsyncRead + Unpin,
+    W: AsyncWrite + Unpin,
+{
+    /// Handles the client connection.
+    ///
+    /// Processes client requests until the connection is closed or an error occurs.
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`Result<()>`](crate::Result) which is:
+    /// * `Ok(())` - Connection handled successfully
+    /// * `Err(error::Error)` - If a fatal error occurs
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// * Protocol errors occur
+    /// * Command handling fails
+    /// * I/O errors occur
     pub async fn handle(&mut self) -> error::Result<()> {
         info!("handling request");
 
