@@ -25,4 +25,4 @@ nexsock-client = { workspace = true }
 nexsock-config = { workspace = true }
 bincode = { workspace = true }
 clap = { version = "4.5.26", features = ["derive"] }
-derive_more = { version = "1.0.0", features = ["full"] }
+derive_more.workspace = true

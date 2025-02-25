@@ -3,8 +3,11 @@ use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use derive_more::AsRef;
+#[cfg(feature = "savefile")]
+use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Default,
@@ -38,6 +41,7 @@ impl<T: Into<ServiceInfo>> FromIterator<T> for ListServicesResponse {
     }
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Default,

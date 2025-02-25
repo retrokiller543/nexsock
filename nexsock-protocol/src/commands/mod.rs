@@ -3,6 +3,7 @@ pub mod config;
 pub mod dependency;
 pub mod dependency_info;
 pub mod error;
+pub mod extra;
 pub mod git;
 pub mod list_services;
 pub mod manage_service;
@@ -24,7 +25,9 @@ use crate::commands::service_status::{GetServiceStatus, ServiceStatus};
 use crate::service_command;
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinWrite};
-use derive_more::{From, Into, IsVariant, TryUnwrap, Unwrap};
+use derive_more::{From, IsVariant, TryUnwrap, Unwrap};
+#[cfg(feature = "savefile")]
+use savefile::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[macro_export]
@@ -48,9 +51,11 @@ macro_rules! try_from {
     };
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(Debug, BinRead, BinWrite, Clone, Copy, Encode, Decode)]
 #[brw(repr(u16), big)]
 #[non_exhaustive]
+#[repr(u16)]
 pub enum Command {
     // Service management
     StartService = 1,
@@ -79,6 +84,9 @@ pub enum Command {
     GetSystemStatus = 41,
     Ping = 42,
 
+    // Extra commands that needs to be handled by a plugin
+    Extra = 0xFF00,
+
     // Response types
     Success = 0xFFF0,
     Error = 0xFFFF,
@@ -86,10 +94,12 @@ pub enum Command {
 
 service_command!(pub struct PingCommand<_, ()> = Ping);
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, IsVariant, Unwrap, TryUnwrap, From)]
 #[unwrap(ref, ref_mut)]
 #[try_unwrap(ref, ref_mut)]
 #[non_exhaustive]
+#[repr(u16)]
 pub enum CommandPayload {
     Status(ServiceStatus),
     ListServices(ListServicesResponse),

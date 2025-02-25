@@ -4,6 +4,8 @@ use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
 use derive_more::Display;
+#[cfg(feature = "savefile")]
+use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
 
@@ -11,6 +13,7 @@ service_command! {
     pub struct GetServiceStatus<ServiceRef, ServiceStatus> = GetServiceStatus
 }
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Default,
@@ -39,6 +42,7 @@ pub struct ServiceStatus {
 
 try_from!(Status => ServiceStatus);
 
+#[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Copy,

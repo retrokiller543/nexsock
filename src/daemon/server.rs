@@ -9,6 +9,25 @@ use tokio::task::JoinHandle;
 use tokio::time::Instant;
 use tracing::{error, info};
 
+/// Server implementation for the Nexsock daemon.
+///
+/// The `DaemonServer` provides high-level server functionality including:
+/// * Connection management
+/// * Periodic cleanup of completed connections
+/// * Graceful shutdown handling
+///
+/// # Examples
+///
+/// ```rust
+/// use nexsockd::prelude::DaemonServer;
+/// use nexsock_config::{ NexsockConfig, ConfigResult };
+///
+/// async fn run_server() -> ConfigResult<()> {
+///     let config = NexsockConfig::new()?;
+///     let mut server = DaemonServer::new(config).await?;
+///     server.run().await
+/// }
+/// ```
 #[derive(Debug)]
 pub struct DaemonServer {
     daemon: Daemon,
@@ -19,16 +38,35 @@ pub struct DaemonServer {
 }
 
 impl DaemonServer {
+    /// Creates a new daemon server instance.
+    ///
+    /// Initializes the server with the provided configuration and sets up:
+    /// * The underlying daemon
+    /// * Connection tracking
+    /// * Cleanup scheduling
+    ///
+    /// # Arguments
+    ///
+    /// * `config:` [`NexsockConfig`] - The Nexsock configuration for the server
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`Result<DaemonServer>`](crate::Result) which is:
+    /// * `Ok(DaemonServer)` - Successfully initialized server
+    /// * `Err(error::Error)` - If initialization fails
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// * Daemon initialization fails
+    /// * Configuration validation fails
     pub async fn new(config: NexsockConfig) -> Result<Self> {
-        #[cfg(unix)]
-        let daemon = Daemon::new(config.clone().into())?;
-        #[cfg(windows)]
         let daemon = Daemon::new(config.clone().into()).await?;
 
         let connections = Vec::new();
         let last_cleanup = Instant::now();
 
-        let cleanup_interval = Duration::from_secs(300);
+        let cleanup_interval = Duration::from_secs(config.server().cleanup_interval);
 
         Ok(Self {
             daemon,
@@ -48,7 +86,7 @@ impl DaemonServer {
                 if let Some(handle) = self.connections.try_swap_remove(i) {
                     cleaned += 1;
                     if let Err(e) = handle.await {
-                        error!("Connection handler error: {}", e);
+                        error!(error = ?e, "Connection handler error");
                     }
                 } else {
                     error!("Failed to remove the connection")
@@ -62,7 +100,7 @@ impl DaemonServer {
     }
 
     #[inline]
-    pub(crate) async fn shutdown(&mut self) -> Result<()> {
+    pub async fn shutdown(&mut self) -> Result<()> {
         self.complete_connections().await?;
         self.config.save()?;
         self.daemon.clone().shutdown().await?;
@@ -76,13 +114,35 @@ impl DaemonServer {
         info!("Clearing all connections");
         for handle in connections {
             if let Err(e) = handle.await {
-                error!("Connection handler error during shutdown: {}", e);
+                error!(error = ?e, "Connection handler error during shutdown");
             }
         }
 
         Ok(())
     }
 
+    /// Runs the daemon server.
+    ///
+    /// This is the main server loop that:
+    /// * Accepts new connections
+    /// * Spawns connection handlers
+    /// * Performs periodic cleanup
+    /// * Handles shutdown signals
+    ///
+    /// The server will run until it receives a shutdown signal (Ctrl+C).
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`Result<()>`](crate::Result) which is:
+    /// * `Ok(())` - Server shut down successfully
+    /// * `Err(error::Error)` - If a fatal error occurs during operation
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// * Connection acceptance fails critically
+    /// * Shutdown operations fail
+    /// * Service management operations fail
     pub async fn run(&mut self) -> Result<()> {
         loop {
             tokio::select! {
@@ -91,7 +151,7 @@ impl DaemonServer {
                         Ok(mut connection) => {
                             let handle = tokio::spawn(async move {
                                 if let Err(e) = connection.handle().await {
-                                    error!("Connection error: {}", e);
+                                    error!(error = ?e, "Connection error");
                                 }
                             });
 
@@ -103,7 +163,7 @@ impl DaemonServer {
                                 self.last_cleanup = Instant::now();
                             }
                         }
-                        Err(e) => error!("Accept error: {}", e),
+                        Err(e) => error!(error = ?e, "Accept error"),
                     }
                 }
                 _ = ctrl_c() => {

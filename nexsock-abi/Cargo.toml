@@ -1,5 +1,5 @@
 [package]
-name = "nexsock-utils"
+name = "nexsock-abi"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -8,6 +8,7 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-bincode = { workspace = true }
-derive_more.workspace = true
-serde = { version = "1.0.217", features = ["derive"] }
+savefile.workspace = true
+savefile-derive.workspace = true
+savefile-abi.workspace = true
+nexsock-protocol = { workspace = true, features = ["savefile"] }

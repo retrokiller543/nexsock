@@ -22,6 +22,7 @@ use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
 #[cfg(unix)]
 use tokio::net::UnixStream;
 
+#[derive(Debug)]
 pub struct ClientManager {
     config: NexsockConfig,
 }
@@ -75,6 +76,7 @@ impl Manager for ClientManager {
     }
 }
 
+#[derive(Debug)]
 pub struct Client {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
