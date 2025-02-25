@@ -1926,7 +1926,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1943,7 +1943,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-abi"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "nexsock-protocol",
  "savefile",
@@ -1953,7 +1953,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-client"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1968,7 +1968,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-config"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "config",
  "derive_more",
@@ -1981,7 +1981,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-example-plugin"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "nexsock-abi",
  "savefile-abi",
@@ -1991,7 +1991,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-plugins"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -2009,7 +2009,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-protocol"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2028,7 +2028,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-utils"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "bincode",
  "derive_more",
@@ -2037,7 +2037,7 @@ dependencies = [
 
 [[package]]
 name = "nexsock-web"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "anyhow",
  "axum 0.8.1",
@@ -2064,7 +2064,7 @@ dependencies = [
 
 [[package]]
 name = "nexsockd"
-version = "1.0.0-6"
+version = "1.0.0-7"
 dependencies = [
  "anyhow",
  "bincode",
