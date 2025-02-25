@@ -17,6 +17,7 @@
       <sourceFolder url="file://$MODULE_DIR$/nexsock-abi/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/nexsock-example-plugin/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/nexsock-plugins/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/nexsock-tui/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/nexsock/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />

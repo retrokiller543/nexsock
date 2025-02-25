@@ -19,6 +19,7 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx_utils::pool::{get_db_pool, initialize_db_pool};
 use sqlx_utils::types::*;
 use std::time::Duration;
+use tokio::time::timeout;
 use tosic_utils::logging::init_tracing_layered;
 use tracing::{error, info};
 
@@ -68,4 +69,11 @@ pub async fn run_daemon() -> Result<()> {
     }
 
     Ok(())
+}
+
+pub async fn timed_run_daemon(duration: Duration) -> Result<()> {
+    match timeout(duration, run_daemon()).await {
+        Ok(res) => res,
+        Err(_) => Ok(()),
+    }
 }

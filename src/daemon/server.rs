@@ -20,10 +20,10 @@ use tracing::{error, info};
 ///
 /// ```rust
 /// use nexsockd::prelude::DaemonServer;
-/// use nexsock_config::NexsockConfig;
+/// use nexsock_config::{ NexsockConfig, ConfigResult };
 ///
-/// async fn run_server() -> Result<()> {
-///     let config = NexsockConfig::default();
+/// async fn run_server() -> ConfigResult<()> {
+///     let config = NexsockConfig::new()?;
 ///     let mut server = DaemonServer::new(config).await?;
 ///     server.run().await
 /// }
@@ -66,7 +66,7 @@ impl DaemonServer {
         let connections = Vec::new();
         let last_cleanup = Instant::now();
 
-        let cleanup_interval = Duration::from_secs(300);
+        let cleanup_interval = Duration::from_secs(config.server().cleanup_interval);
 
         Ok(Self {
             daemon,
@@ -86,7 +86,7 @@ impl DaemonServer {
                 if let Some(handle) = self.connections.try_swap_remove(i) {
                     cleaned += 1;
                     if let Err(e) = handle.await {
-                        error!("Connection handler error: {}", e);
+                        error!(error = ?e, "Connection handler error");
                     }
                 } else {
                     error!("Failed to remove the connection")
@@ -114,7 +114,7 @@ impl DaemonServer {
         info!("Clearing all connections");
         for handle in connections {
             if let Err(e) = handle.await {
-                error!("Connection handler error during shutdown: {}", e);
+                error!(error = ?e, "Connection handler error during shutdown");
             }
         }
 
@@ -151,7 +151,7 @@ impl DaemonServer {
                         Ok(mut connection) => {
                             let handle = tokio::spawn(async move {
                                 if let Err(e) = connection.handle().await {
-                                    error!("Connection error: {}", e);
+                                    error!(error = ?e, "Connection error");
                                 }
                             });
 
@@ -163,7 +163,7 @@ impl DaemonServer {
                                 self.last_cleanup = Instant::now();
                             }
                         }
-                        Err(e) => error!("Accept error: {}", e),
+                        Err(e) => error!(error = ?e, "Accept error"),
                     }
                 }
                 _ = ctrl_c() => {

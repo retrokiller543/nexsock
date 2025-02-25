@@ -1,6 +1,6 @@
 pub mod traits;
 
-use config::{Config, File, Value, ValueKind};
+use config::{Config, File, Map, Value, ValueKind};
 use derive_more::{
     AsMut, AsRef, Deref, DerefMut, From, Into, IsVariant, TryFrom, TryInto, TryUnwrap, Unwrap,
 };
@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use thiserror::Error;
+use tracing::{error, info};
 
 pub type ConfigResult<T, E = NexsockConfigError> = Result<T, E>;
 
@@ -39,9 +40,35 @@ pub enum SocketRef {
     Path(PathBuf),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Into)]
+#[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
+pub struct ServerConfig {
+    pub cleanup_interval: u64,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            cleanup_interval: 300,
+        }
+    }
+}
+
+impl From<ServerConfig> for Value {
+    fn from(val: ServerConfig) -> Self {
+        Self::new(
+            None,
+            ValueKind::Table(Map::from_iter(vec![(
+                "cleanup_interval".to_string(),
+                val.cleanup_interval.into(),
+            )])),
+        )
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
 pub struct AppConfig {
     pub socket: SocketRef,
+    pub server: ServerConfig,
 }
 
 impl Default for AppConfig {
@@ -52,6 +79,7 @@ impl Default for AppConfig {
             } else {
                 SocketRef::Port(50505)
             },
+            server: Default::default(),
         }
     }
 }
@@ -72,22 +100,20 @@ impl NexsockConfig {
     pub fn from_file(path: Option<&Path>) -> ConfigResult<Self> {
         let config_path = path.unwrap_or_else(|| PROJECT_DIRECTORIES.config_dir());
 
-        // Ensure config directory exists
         std::fs::create_dir_all(config_path).map_err(|e| {
             NexsockConfigError::InvalidPath(format!("Failed to create config directory: {}", e))
         })?;
 
         let config_file = config_path.join("config.toml");
 
-        // Start with default values
+        info!("Using config file: {:?}", config_file);
+
         let defaults: AppConfig = AppConfig::default();
 
-        // Build configuration
         let builder = Config::builder()
-            // Load defaults first
-            .set_default("socket", defaults.socket)?;
+            .set_default("socket", defaults.socket)?
+            .set_default("server", defaults.server)?;
 
-        // If config file exists, load it
         let builder = if config_file.exists() {
             builder.add_source(File::from(config_file))
         } else {
@@ -96,7 +122,6 @@ impl NexsockConfig {
 
         let config = builder.build()?;
 
-        // Deserialize into our strongly-typed config
         let inner: AppConfig = config.clone().try_deserialize()?;
 
         Ok(Self { inner, config })
@@ -108,15 +133,18 @@ impl NexsockConfig {
 
         let config_path = project_dirs.config_dir();
         std::fs::create_dir_all(config_path).map_err(|e| {
+            error!(error = %e, "Failed to create config directory");
             NexsockConfigError::InvalidPath(format!("Failed to create config directory: {}", e))
         })?;
 
         let config_file = config_path.join("config.toml");
         let toml = toml::to_string_pretty(&self.inner).map_err(|e| {
+            error!(error = %e, "Failed to serialize config");
             NexsockConfigError::InvalidPath(format!("Failed to serialize config: {}", e))
         })?;
 
         std::fs::write(&config_file, toml).map_err(|e| {
+            error!(error = %e, "Failed to write config");
             NexsockConfigError::InvalidPath(format!("Failed to write config file: {}", e))
         })?;
 
@@ -126,6 +154,10 @@ impl NexsockConfig {
     // Getter methods
     pub fn socket(&self) -> &SocketRef {
         &self.inner.socket
+    }
+
+    pub fn server(&self) -> &ServerConfig {
+        &self.inner.server
     }
 }
 

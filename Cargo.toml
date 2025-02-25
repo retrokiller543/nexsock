@@ -67,6 +67,7 @@ command-group = { version = "5.0.1", features = ["tokio", "with-tokio", "async-t
 nexsock-abi.workspace = true
 nexsock-plugins = { workspace = true, features = ["native", "lua"] }
 cfg-if = "1.0.0"
+clap = { version = "4.5.31", features = ["derive"] }
 
 [build-dependencies]
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
