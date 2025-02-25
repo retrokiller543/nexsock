@@ -11,7 +11,6 @@ use std::sync::Arc;
 use tracing::{debug, info};
 
 use nexsock_config::traits::SocketBind;
-use nexsock_config::SocketRef;
 use nexsock_plugins::lua::manager::LuaPluginManager;
 
 cfg_if! {
@@ -19,6 +18,7 @@ cfg_if! {
         use std::fs;
         use tokio::net::UnixListener as Listener;
         use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
+        use nexsock_config::SocketRef;
     } else if #[cfg(windows)] {
         use tokio::net::TcpListener as Listener;
         use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -63,6 +63,7 @@ pub use server::*;
 #[derive(Debug, Clone)]
 pub struct Daemon {
     listener: Arc<Listener>,
+    #[allow(dead_code)]
     config: DaemonConfig,
     lua_plugin_manager: Arc<LuaPluginManager>,
 }
