@@ -136,7 +136,7 @@ impl SerializableLuaValue {
     pub fn into_args(values: Vec<Self>, lua: &Lua) -> mlua::Result<MultiValue> {
         let mut multi = MultiValue::new();
         for value in values {
-            multi.push_front(value.to_lua_value(lua)?);
+            multi.push_back(value.to_lua_value(lua)?);
         }
         Ok(multi)
     }
