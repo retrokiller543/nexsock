@@ -24,7 +24,12 @@ paste = "1.0.15"
 savefile = { workspace = true, optional = true }
 mlua = { workspace = true, optional = true }
 
+[dependencies.sea-orm]
+workspace = true
+optional = true
+
 [features]
 default = []
 savefile = ["dep:savefile"]
 mlua = ["dep:mlua"]
+sea-orm = ["dep:sea-orm"]

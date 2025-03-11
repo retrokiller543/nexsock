@@ -1,5 +1,6 @@
 pub mod traits;
 
+use std::env::temp_dir;
 use config::{Config, File, Map, Value, ValueKind};
 use derive_more::{
     AsMut, AsRef, Deref, DerefMut, From, Into, IsVariant, TryFrom, TryInto, TryUnwrap, Unwrap,
@@ -8,6 +9,7 @@ use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
+use anyhow::Context;
 use thiserror::Error;
 use tracing::{error, info};
 
@@ -18,6 +20,37 @@ pub static PROJECT_DIRECTORIES: LazyLock<ProjectDirs> = LazyLock::new(|| {
         .ok_or(NexsockConfigError::ProjectDirs)
         .expect("Failed to obtain project directories")
 });
+
+#[cfg(feature = "static-config")]
+pub static NEXSOCK_CONFIG: LazyLock<NexsockConfig> = LazyLock::new(|| NexsockConfig::new().expect("Failed to obtain nexsock config"));
+
+/// Database path used for the program execution, at the moment only SQLite is supported, but in theory
+/// any SQL database could be used
+pub static DATABASE_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| get_database_path().expect("Unable to get database path"));
+
+fn get_database_path() -> anyhow::Result<PathBuf> {
+    let path = std::env::var("DATABASE_PATH")
+        .map(Into::into)
+        .unwrap_or_else(|_| {
+            let data_dir = PROJECT_DIRECTORIES.data_dir();
+
+            data_dir.join("db/state.db")
+        });
+
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            info!(
+                directory = path.display().to_string(),
+                "Creating database directory"
+            );
+            std::fs::create_dir_all(parent)
+                .context(format!("Failed to create directory '{}'", path.display()))?
+        }
+    }
+
+    Ok(path)
+}
 
 #[derive(Error, Debug)]
 pub enum NexsockConfigError {
@@ -66,20 +99,47 @@ impl From<ServerConfig> for Value {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
+pub struct DatabaseConfig {
+    pub path: PathBuf
+}
+
+impl From<DatabaseConfig> for Value {
+    fn from(val: DatabaseConfig) -> Self {
+        Self::new(
+            None,
+            ValueKind::Table(Map::from_iter(vec![(
+                "path".to_string(),
+                val.path.display().to_string().into(),
+            )])),
+        )
+    }
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            path: get_database_path().expect("Unable to get database path"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
 pub struct AppConfig {
     pub socket: SocketRef,
     pub server: ServerConfig,
+    pub database: DatabaseConfig,
 }
 
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
             socket: if cfg!(unix) {
-                SocketRef::Path("/tmp/nexsockd.sock".into())
+                SocketRef::Path(temp_dir().join("nexsock.sock"))
             } else {
                 SocketRef::Port(50505)
             },
             server: Default::default(),
+            database: Default::default(),
         }
     }
 }
@@ -89,6 +149,9 @@ pub struct NexsockConfig {
     #[deref(ignore)]
     #[deref_mut(ignore)]
     inner: AppConfig,
+    #[deref(ignore)]
+    #[deref_mut(ignore)]
+    config_dir: PathBuf,
     config: Config,
 }
 
@@ -112,7 +175,8 @@ impl NexsockConfig {
 
         let builder = Config::builder()
             .set_default("socket", defaults.socket)?
-            .set_default("server", defaults.server)?;
+            .set_default("server", defaults.server)?
+            .set_default("database", defaults.database)?;
 
         let builder = if config_file.exists() {
             builder.add_source(File::from(config_file))
@@ -124,7 +188,7 @@ impl NexsockConfig {
 
         let inner: AppConfig = config.clone().try_deserialize()?;
 
-        Ok(Self { inner, config })
+        Ok(Self { inner, config, config_dir: config_path.to_path_buf() })
     }
 
     pub fn save(&self) -> ConfigResult<()> {
@@ -158,6 +222,14 @@ impl NexsockConfig {
 
     pub fn server(&self) -> &ServerConfig {
         &self.inner.server
+    }
+    
+    pub fn database(&self) -> &DatabaseConfig {
+        &self.inner.database
+    }
+    
+    pub fn config_dir(&self) -> &Path {
+        &self.config_dir
     }
 }
 
