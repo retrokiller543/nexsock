@@ -70,7 +70,7 @@ try_from!(ServiceConfig => ServiceConfigPayload);
     Type,
     Encode,
     Decode,
-    Display
+    Display,
 )]
 #[serde(rename_all = "lowercase")]
 #[repr(u8)]
@@ -104,13 +104,11 @@ impl From<Option<String>> for ConfigFormat {
 impl ValueType for ConfigFormat {
     fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
         match v {
-            Value::String(Some(x)) => {
-                match x.as_str() {
-                    "Env" => Ok(Self::Env),
-                    "Properties" => Ok(Self::Properties),
-                    _ => Err(ValueTypeErr),
-                }
-            }
+            Value::String(Some(x)) => match x.as_str() {
+                "Env" => Ok(Self::Env),
+                "Properties" => Ok(Self::Properties),
+                _ => Err(ValueTypeErr),
+            },
             _ => Err(ValueTypeErr),
         }
     }
@@ -143,7 +141,9 @@ impl TryGetable for ConfigFormat {
         match val.as_str() {
             "Env" => Ok(Self::Env),
             "Properties" => Ok(Self::Properties),
-            val => Err(TryGetError::DbErr(DbErr::Custom(format!("`{val}` is not a valid config format")))),
+            val => Err(TryGetError::DbErr(DbErr::Custom(format!(
+                "`{val}` is not a valid config format"
+            )))),
         }
     }
 }

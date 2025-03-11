@@ -1,14 +1,17 @@
-use anyhow::anyhow;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Set, TransactionTrait};
-use tracing::debug;
+use crate::get_db_connection;
 use crate::models::prelude::*;
+use anyhow::anyhow;
 use nexsock_protocol::commands::dependency::ListDependenciesResponse;
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
-use crate::get_db_connection;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
+    QueryTrait, RelationTrait, Set, TransactionTrait,
+};
+use tracing::debug;
 
 #[derive(Debug)]
 pub struct ServiceDependencyRepository<'a> {
-    connection: &'a DatabaseConnection
+    connection: &'a DatabaseConnection,
 }
 
 impl<'a> ServiceDependencyRepository<'a> {
@@ -20,7 +23,7 @@ impl<'a> ServiceDependencyRepository<'a> {
 impl ServiceDependencyRepository<'static> {
     pub fn new_from_static() -> Self {
         let connection = get_db_connection();
-        
+
         Self { connection }
     }
 }
@@ -29,27 +32,41 @@ impl ServiceDependencyRepository<'_> {
     pub async fn get_by_id(&self, id: i64) -> anyhow::Result<Option<ServiceDependency>> {
         let db = self.connection;
         let dependency = ServiceDependencyEntity::find_by_id(id)
-            .join(sea_orm::JoinType::LeftJoin, ServiceDependencyRelation::DependentService.def())
+            .join(
+                sea_orm::JoinType::LeftJoin,
+                ServiceDependencyRelation::DependentService.def(),
+            )
             .one(db)
             .await?;
         Ok(dependency)
     }
 
-    pub async fn get_by_service_id(&self, service_id: i64) -> anyhow::Result<Vec<JoinedDependency>> {
+    pub async fn get_by_service_id(
+        &self,
+        service_id: i64,
+    ) -> anyhow::Result<Vec<JoinedDependency>> {
         let db = self.connection;
         let dependencies = ServiceDependencyEntity::find()
             .filter(ServiceDependencyColumn::ServiceId.eq(service_id))
-            .join(sea_orm::JoinType::LeftJoin, ServiceDependencyRelation::DependentService.def())
+            .join(
+                sea_orm::JoinType::LeftJoin,
+                ServiceDependencyRelation::DependentService.def(),
+            )
             .column_as(ServiceColumn::Name, "name")
             .column_as(ServiceColumn::RepoUrl, "repo_url")
             .column_as(ServiceColumn::Port, "port")
             .column_as(ServiceColumn::RepoPath, "repo_path")
             .column_as(ServiceColumn::Status, "status");
 
-        let sql = dependencies.build(sea_orm::DatabaseBackend::Sqlite).to_string();
+        let sql = dependencies
+            .build(sea_orm::DatabaseBackend::Sqlite)
+            .to_string();
         debug!(%sql);
 
-        let dependencies = dependencies.into_model::<JoinedDependency>().all(db).await?;
+        let dependencies = dependencies
+            .into_model::<JoinedDependency>()
+            .all(db)
+            .await?;
 
         Ok(dependencies)
     }
@@ -86,7 +103,9 @@ impl ServiceDependencyRepository<'_> {
     pub async fn delete_by_id(&self, id: i64) -> anyhow::Result<()> {
         let db = self.connection;
 
-        let dependency = self.get_by_id(id).await?
+        let dependency = self
+            .get_by_id(id)
+            .await?
             .ok_or_else(|| anyhow!("Service dependency not found with id: {}", id))?;
 
         let model: ServiceDependencyActiveModel = dependency.into();
@@ -102,9 +121,7 @@ impl ServiceDependencyRepository<'_> {
         let txn = db.begin().await?;
 
         for id in ids {
-            ServiceDependencyEntity::delete_by_id(id)
-                .exec(&txn)
-                .await?;
+            ServiceDependencyEntity::delete_by_id(id).exec(&txn).await?;
         }
 
         // Commit the transaction
@@ -114,9 +131,13 @@ impl ServiceDependencyRepository<'_> {
     }
 
     // Get service dependencies with joined service info
-    pub async fn get_dependencies_with_service_info(&self, service_id: i64) -> anyhow::Result<Vec<DependencyInfo>> {
+    pub async fn get_dependencies_with_service_info(
+        &self,
+        service_id: i64,
+    ) -> anyhow::Result<Vec<DependencyInfo>> {
         // Custom SQL query to join with service table
-        let dependencies = self.get_by_service_id(service_id)
+        let dependencies = self
+            .get_by_service_id(service_id)
             .await?
             .into_iter()
             .map(Into::into)
@@ -125,7 +146,11 @@ impl ServiceDependencyRepository<'_> {
         Ok(dependencies)
     }
 
-    pub async fn get_dependencies_response(&self, service_id: i64, service_name: String) -> anyhow::Result<ListDependenciesResponse> {
+    pub async fn get_dependencies_response(
+        &self,
+        service_id: i64,
+        service_name: String,
+    ) -> anyhow::Result<ListDependenciesResponse> {
         let dependencies = self.get_dependencies_with_service_info(service_id).await?;
 
         Ok(ListDependenciesResponse {

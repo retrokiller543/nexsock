@@ -1,15 +1,15 @@
 pub mod traits;
 
-use std::env::temp_dir;
+use anyhow::Context;
 use config::{Config, File, Map, Value, ValueKind};
 use derive_more::{
     AsMut, AsRef, Deref, DerefMut, From, Into, IsVariant, TryFrom, TryInto, TryUnwrap, Unwrap,
 };
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
+use std::env::temp_dir;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
-use anyhow::Context;
 use thiserror::Error;
 use tracing::{error, info};
 
@@ -22,7 +22,8 @@ pub static PROJECT_DIRECTORIES: LazyLock<ProjectDirs> = LazyLock::new(|| {
 });
 
 #[cfg(feature = "static-config")]
-pub static NEXSOCK_CONFIG: LazyLock<NexsockConfig> = LazyLock::new(|| NexsockConfig::new().expect("Failed to obtain nexsock config"));
+pub static NEXSOCK_CONFIG: LazyLock<NexsockConfig> =
+    LazyLock::new(|| NexsockConfig::new().expect("Failed to obtain nexsock config"));
 
 /// Database path used for the program execution, at the moment only SQLite is supported, but in theory
 /// any SQL database could be used
@@ -100,7 +101,7 @@ impl From<ServerConfig> for Value {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
 pub struct DatabaseConfig {
-    pub path: PathBuf
+    pub path: PathBuf,
 }
 
 impl From<DatabaseConfig> for Value {
@@ -188,7 +189,11 @@ impl NexsockConfig {
 
         let inner: AppConfig = config.clone().try_deserialize()?;
 
-        Ok(Self { inner, config, config_dir: config_path.to_path_buf() })
+        Ok(Self {
+            inner,
+            config,
+            config_dir: config_path.to_path_buf(),
+        })
     }
 
     pub fn save(&self) -> ConfigResult<()> {
@@ -223,11 +228,11 @@ impl NexsockConfig {
     pub fn server(&self) -> &ServerConfig {
         &self.inner.server
     }
-    
+
     pub fn database(&self) -> &DatabaseConfig {
         &self.inner.database
     }
-    
+
     pub fn config_dir(&self) -> &Path {
         &self.config_dir
     }

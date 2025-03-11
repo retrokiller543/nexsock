@@ -1,7 +1,7 @@
-use crate::{daemon::Daemon, traits::process_manager::ProcessManager};
 use crate::error::Result;
-use crate::statics::{NEW_SERVICE_MANAGER, SERVICE_MANAGER};
+use crate::statics::NEW_SERVICE_MANAGER;
 use crate::traits::VecExt;
+use crate::{daemon::Daemon, traits::process_manager::ProcessManager};
 use nexsock_config::NexsockConfig;
 use std::time::Duration;
 use tokio::signal::ctrl_c;

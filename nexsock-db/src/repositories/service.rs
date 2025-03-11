@@ -1,15 +1,14 @@
 use crate::get_db_connection;
 use crate::models::prelude::*;
-use anyhow::{anyhow, bail, Context};
-use nexsock_protocol::commands::dependency_info::DependencyInfo;
+use anyhow::{anyhow, bail};
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use nexsock_protocol::commands::service_status::ServiceStatus;
+use sea_orm::PaginatorTrait;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, ModelTrait,
-    QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Set,
+    QueryFilter, QuerySelect, RelationTrait, Set,
 };
-use sea_orm::{PaginatorTrait, Related};
 
 #[derive(Debug)]
 pub struct ServiceRepository<'a> {
@@ -59,7 +58,7 @@ impl ServiceRepository<'_> {
             Ok(DetailedServiceRecord {
                 service: service.service,
                 config: service.config,
-                dependencies: dependencies,
+                dependencies,
             })
         } else {
             bail!("No Service found with ID `{}`", id)

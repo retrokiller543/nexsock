@@ -1,12 +1,6 @@
-use crate::repositories::service::SERVICE_REPOSITORY;
-use crate::repositories::service_config::SERVICE_CONFIG_REPOSITORY;
-use crate::repositories::service_dependency::SERVICE_DEPENDENCY_REPOSITORY;
-use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
 use crate::traits::process_manager::{FullProcessManager, ProcessManager};
 use crate::traits::service_management::ServiceManagement;
-use anyhow::{anyhow, Context};
-use command_group::{AsyncCommandGroup, AsyncGroupChild};
-use futures::future::join_all;
+use anyhow::anyhow;
 use nexsock_db::prelude::{
     Service, ServiceConfig, ServiceConfigRepository, ServiceDependencyRepository, ServiceRepository,
 };
@@ -15,18 +9,12 @@ use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
 use port_selector::is_free_tcp;
-use sqlx_utils::filter::equals;
 use sqlx_utils::traits::Repository;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::path::Path;
 use std::sync::{Arc, LazyLock};
-use std::time::Duration;
-use tokio::process::Command;
 use tokio::sync::broadcast;
 use tokio::sync::RwLock;
-use tokio::time::sleep;
-use tracing::{info, warn};
 
 use super::ServiceProcess;
 

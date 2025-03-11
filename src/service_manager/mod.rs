@@ -10,8 +10,8 @@ use crate::repositories::service_dependency::SERVICE_DEPENDENCY_REPOSITORY;
 use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
 use crate::traits::process_manager::{FullProcessManager, ProcessManager};
 use crate::traits::service_management::ServiceManagement;
-use anyhow::{anyhow, Context};
-use command_group::{AsyncCommandGroup, AsyncGroupChild};
+use anyhow::anyhow;
+use command_group::AsyncGroupChild;
 use futures::future::join_all;
 use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
@@ -22,14 +22,10 @@ use sqlx_utils::filter::equals;
 use sqlx_utils::traits::Repository;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::path::Path;
 use std::sync::Arc;
-use std::time::Duration;
-use tokio::process::Command;
 use tokio::sync::broadcast;
 use tokio::sync::RwLock;
-use tokio::time::sleep;
-use tracing::{info, warn};
+use tracing::warn;
 
 // Track running processes and their states
 #[derive(Debug)]

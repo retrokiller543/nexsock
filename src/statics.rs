@@ -1,4 +1,6 @@
+use crate::config_manager::new::ConfigManager2;
 use crate::config_manager::ConfigManager;
+use crate::dependency_manager::new::DependencyManager2;
 use crate::dependency_manager::DependencyManager;
 use crate::service_manager::new::ServiceManager2;
 use crate::service_manager::ServiceManager;
@@ -10,8 +12,6 @@ use nexsock_plugins::native::external_native_plugins;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 use tracing::info;
-use crate::config_manager::new::ConfigManager2;
-use crate::dependency_manager::new::DependencyManager2;
 
 /// Database path used for the program execution, at the moment only SQLite is supported, but in theory
 /// any SQL database could be used

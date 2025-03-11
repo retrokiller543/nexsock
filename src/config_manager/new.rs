@@ -1,10 +1,10 @@
-use std::sync::LazyLock;
+use crate::prelude::*;
+use crate::traits::configuration_management::ConfigurationManagement;
 use anyhow::anyhow;
 use nexsock_db::prelude::*;
 use nexsock_protocol::commands::config::ServiceConfigPayload;
 use nexsock_protocol::commands::manage_service::ServiceRef;
-use crate::prelude::*;
-use crate::traits::configuration_management::ConfigurationManagement;
+use std::sync::LazyLock;
 
 pub struct ConfigManager2 {
     service_repository: ServiceRepository<'static>,
@@ -15,13 +15,13 @@ impl ConfigManager2 {
     pub fn new() -> Self {
         let service_repository = ServiceRepository::new_from_static();
         let config_repository = ServiceConfigRepository::new_from_static();
-        
+
         Self {
             service_repository,
             config_repository,
         }
-    }    
-    
+    }
+
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Self::new)
     }
@@ -36,12 +36,18 @@ impl ConfigurationManagement for ConfigManager2 {
             run_command,
         } = payload;
 
-        let mut service_model = self.service_repository.get_by_service_ref(service).await?
+        let mut service_model = self
+            .service_repository
+            .get_by_service_ref(service)
+            .await?
             .ok_or_else(|| anyhow!("No service found"))?;
 
         let mut config = if let Some(config_id) = service_model.config_id {
             // Update existing config
-            let mut existing = self.config_repository.get_by_id(config_id).await?
+            let mut existing = self
+                .config_repository
+                .get_by_id(config_id)
+                .await?
                 .ok_or_else(|| anyhow!("Service config not found"))?;
 
             existing.filename = filename.clone();
@@ -51,11 +57,7 @@ impl ConfigurationManagement for ConfigManager2 {
             existing
         } else {
             // Create new config
-            ServiceConfig::new(
-                filename.clone(),
-                *format,
-                Some(run_command.clone())
-            )
+            ServiceConfig::new(filename.clone(), *format, Some(run_command.clone()))
         };
 
         // Save the config
@@ -71,13 +73,20 @@ impl ConfigurationManagement for ConfigManager2 {
     }
 
     async fn get_config(&self, payload: &ServiceRef) -> crate::error::Result<ServiceConfigPayload> {
-        let service_model = self.service_repository.get_by_service_ref(payload).await?
+        let service_model = self
+            .service_repository
+            .get_by_service_ref(payload)
+            .await?
             .ok_or_else(|| anyhow!("No service found"))?;
 
-        let config_id = service_model.config_id
+        let config_id = service_model
+            .config_id
             .ok_or_else(|| anyhow!("Service has no configuration"))?;
 
-        let config = self.config_repository.get_by_id(config_id).await?
+        let config = self
+            .config_repository
+            .get_by_id(config_id)
+            .await?
             .ok_or_else(|| anyhow!("Service config was not found"))?;
 
         Ok(config.to_payload(payload.clone()))

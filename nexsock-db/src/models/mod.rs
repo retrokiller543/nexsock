@@ -4,6 +4,6 @@ pub mod prelude;
 
 mod service;
 mod service_config;
-mod service_dependency;
 mod service_dep;
+mod service_dependency;
 mod service_record;
