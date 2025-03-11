@@ -1,5 +1,5 @@
 [workspace]
-members = ['.', 'nexsock', "nexsock-abi", "nexsock-client", "nexsock-config", "nexsock-example-plugin", "nexsock-plugins", "nexsock-protocol", "nexsock-utils", "nexsock-web"]
+members = ['.', 'nexsock', "nexsock-abi", "nexsock-client", "nexsock-config", "nexsock-db", "nexsock-example-plugin", "nexsock-plugins", "nexsock-protocol", "nexsock-utils", "nexsock-web"]
 
 [workspace.package]
 version = "1.0.0-7"
@@ -32,6 +32,7 @@ nexsock-protocol = { path = "nexsock-protocol" }
 nexsock-client = { path = "nexsock-client" }
 nexsock-config = { path = "nexsock-config" }
 nexsock-utils = { path = "nexsock-utils" }
+nexsock-db = { path = "nexsock-db" }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
 bincode = { version = "2.0.0-rc.3" }
@@ -42,6 +43,12 @@ savefile-abi = { version = "0.18.5" }
 tracing = { version = "0.1.41", features = ["log"] }
 mlua = { version = "0.10.3", features = ["anyhow", "vendored", "lua54", "async"] }
 derive_more = { version = "2.0.1", features = ["full"] }
+sea-orm = { version = "1.1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+    "with-chrono"
+]}
 
 [dependencies]
 sqlx-utils = { workspace = true }

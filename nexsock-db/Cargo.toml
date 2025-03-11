@@ -1,0 +1,20 @@
+[package]
+name = "nexsock-db"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+sea-orm.workspace = true
+sqlx.workspace = true
+tracing.workspace = true
+
+nexsock-config = { workspace = true, features = ["static-config"] }
+nexsock-protocol = { workspace = true, features = ["sea-orm"] }
+derive_more.workspace = true
+
+tokio = { version = "1.43", features = ["full"] }
+anyhow = "1.0.97"
