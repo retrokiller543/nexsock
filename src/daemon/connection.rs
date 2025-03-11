@@ -1,5 +1,5 @@
 use crate::error;
-use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, NEW_CONFIG_MANAGER, NEW_DEPENDENCY_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
+use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, NEW_CONFIG_MANAGER, NEW_DEPENDENCY_MANAGER, NEW_SERVICE_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
 use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
@@ -151,47 +151,47 @@ where
                     plugin.pre_start_command(&payload);
                 });
 
-                SERVICE_MANAGER.start(&payload).await?;
+                NEW_SERVICE_MANAGER.start(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::StopService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                SERVICE_MANAGER.stop(&payload).await?;
+                NEW_SERVICE_MANAGER.stop(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::RestartService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                SERVICE_MANAGER.restart(&payload).await?;
+                NEW_SERVICE_MANAGER.restart(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::GetServiceStatus => {
                 let payload = Self::read_req_payload(payload)?;
 
-                let status = SERVICE_MANAGER.get_status(&payload).await?;
+                let status = NEW_SERVICE_MANAGER.get_status(&payload).await?;
 
                 Ok(CommandPayload::Status(status))
             }
             Command::AddService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                SERVICE_MANAGER.add_service(&payload).await?;
+                NEW_SERVICE_MANAGER.add_service(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::RemoveService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                SERVICE_MANAGER.remove_service(&payload).await?;
+                NEW_SERVICE_MANAGER.remove_service(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::ListServices => {
-                let services = SERVICE_MANAGER.get_all().await?;
+                let services = NEW_SERVICE_MANAGER.get_all().await?;
 
                 Ok(CommandPayload::ListServices(services))
             }

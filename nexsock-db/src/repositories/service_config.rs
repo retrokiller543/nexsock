@@ -3,6 +3,7 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, Qu
 use crate::get_db_connection;
 use crate::models::prelude::{ServiceConfig, ServiceConfigActiveModel, ServiceConfigEntity};
 
+#[derive(Debug)]
 pub struct ServiceConfigRepository<'a> {
     connection: &'a DatabaseConnection
 }

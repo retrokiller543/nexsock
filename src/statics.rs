@@ -1,5 +1,6 @@
 use crate::config_manager::ConfigManager;
 use crate::dependency_manager::DependencyManager;
+use crate::service_manager::new::ServiceManager2;
 use crate::service_manager::ServiceManager;
 use anyhow::Context;
 use futures::executor::block_on;
@@ -41,6 +42,7 @@ fn get_database_path() -> anyhow::Result<PathBuf> {
 }
 
 pub static SERVICE_MANAGER: LazyLock<ServiceManager> = LazyLock::new(ServiceManager::default);
+pub static NEW_SERVICE_MANAGER: LazyLock<ServiceManager2> = ServiceManager2::new_const();
 pub static CONFIG_MANAGER: LazyLock<ConfigManager> = LazyLock::new(|| ConfigManager);
 pub static NEW_CONFIG_MANAGER: LazyLock<ConfigManager2> = ConfigManager2::new_const();
 pub static DEPENDENCY_MANAGER: LazyLock<DependencyManager> = LazyLock::new(|| DependencyManager);

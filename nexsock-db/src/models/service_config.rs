@@ -2,8 +2,9 @@ use sea_orm::entity::prelude::*;
 use nexsock_protocol::commands::config::ConfigFormat;
 use crate::models::prelude::{Service, ServiceEntity};
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, DerivePartialModel, Eq)]
 #[sea_orm(table_name = "service_config")]
+#[sea_orm(entity = "Entity")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i64,

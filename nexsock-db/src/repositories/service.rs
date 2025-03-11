@@ -1,17 +1,19 @@
-use sea_orm::PaginatorTrait;
-use anyhow::{anyhow, Context};
-use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter, QuerySelect,
-    QueryOrder, RelationTrait, Set, ActiveModelTrait, QueryTrait, JoinType
-};
+use crate::get_db_connection;
+use crate::models::prelude::*;
+use anyhow::{anyhow, bail, Context};
+use nexsock_protocol::commands::dependency_info::DependencyInfo;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use nexsock_protocol::commands::service_status::ServiceStatus;
-use crate::models::prelude::*;
-use crate::get_db_connection;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, ModelTrait,
+    QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Set,
+};
+use sea_orm::{PaginatorTrait, Related};
 
+#[derive(Debug)]
 pub struct ServiceRepository<'a> {
-    connection: &'a DatabaseConnection
+    connection: &'a DatabaseConnection,
 }
 
 impl<'a> ServiceRepository<'a> {
@@ -23,25 +25,56 @@ impl<'a> ServiceRepository<'a> {
 impl ServiceRepository<'static> {
     pub fn new_from_static() -> Self {
         let connection = get_db_connection();
-        
+
         Self { connection }
     }
 }
 
 impl ServiceRepository<'_> {
+    pub async fn get_detailed(&self, id: i64) -> anyhow::Result<DetailedServiceRecord> {
+        let db = self.connection;
+
+        let service = ServiceEntity::find_by_id(id)
+            .join(JoinType::LeftJoin, ServiceRelation::ServiceConfig.def())
+            .into_partial_model::<ServiceRecord>()
+            .one(db)
+            .await?;
+
+        if let Some(service) = service {
+            let dependencies = ServiceDependencyEntity::find()
+                .filter(ServiceDependencyColumn::ServiceId.eq(id))
+                .join(
+                    sea_orm::JoinType::LeftJoin,
+                    ServiceDependencyRelation::DependentService.def(),
+                )
+                .column_as(ServiceColumn::Name, "name")
+                .column_as(ServiceColumn::RepoUrl, "repo_url")
+                .column_as(ServiceColumn::Port, "port")
+                .column_as(ServiceColumn::RepoPath, "repo_path")
+                .column_as(ServiceColumn::Status, "status")
+                .into_model::<JoinedDependency>()
+                .all(db)
+                .await?;
+
+            Ok(DetailedServiceRecord {
+                service: service.service,
+                config: service.config,
+                dependencies: dependencies,
+            })
+        } else {
+            bail!("No Service found with ID `{}`", id)
+        }
+    }
+
     pub async fn get_all(&self) -> anyhow::Result<Vec<Service>> {
         let db = self.connection;
-        let services = ServiceEntity::find()
-            .all(db)
-            .await?;
+        let services = ServiceEntity::find().all(db).await?;
         Ok(services)
     }
 
     pub async fn get_by_id(&self, id: i64) -> anyhow::Result<Option<Service>> {
         let db = self.connection;
-        let service = ServiceEntity::find_by_id(id)
-            .one(db)
-            .await?;
+        let service = ServiceEntity::find_by_id(id).one(db).await?;
         Ok(service)
     }
 
@@ -54,7 +87,10 @@ impl ServiceRepository<'_> {
         Ok(service)
     }
 
-    pub async fn get_by_service_ref(&self, service_ref: &ServiceRef) -> anyhow::Result<Option<Service>> {
+    pub async fn get_by_service_ref(
+        &self,
+        service_ref: &ServiceRef,
+    ) -> anyhow::Result<Option<Service>> {
         match service_ref {
             ServiceRef::Id(id) => self.get_by_id(*id).await,
             ServiceRef::Name(name) => self.get_by_name(name).await,
@@ -99,7 +135,9 @@ impl ServiceRepository<'_> {
     pub async fn delete_by_id(&self, id: i64) -> anyhow::Result<()> {
         let db = self.connection;
 
-        let service = self.get_by_id(id).await?
+        let service = self
+            .get_by_id(id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found with id: {}", id))?;
 
         let model: ServiceActiveModel = service.into();
@@ -111,13 +149,18 @@ impl ServiceRepository<'_> {
     pub async fn get_status(&self, service_ref: &ServiceRef) -> anyhow::Result<ServiceStatus> {
         let db = self.connection;
 
-        let service = self.get_by_service_ref(service_ref).await?
+        let service = self
+            .get_by_service_ref(service_ref)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         // Get dependencies
         let dependencies = ServiceDependencyEntity::find()
             .filter(ServiceDependencyColumn::ServiceId.eq(service.id))
-            .join(sea_orm::JoinType::LeftJoin, ServiceDependencyRelation::DependentService.def())
+            .join(
+                sea_orm::JoinType::LeftJoin,
+                ServiceDependencyRelation::DependentService.def(),
+            )
             .into_model::<JoinedDependency>()
             .all(db)
             .await?;
@@ -136,7 +179,8 @@ impl ServiceRepository<'_> {
             let has_dependencies = ServiceDependencyEntity::find()
                 .filter(ServiceDependencyColumn::ServiceId.eq(service.id))
                 .count(db)
-                .await? > 0;
+                .await?
+                > 0;
 
             let service_info = nexsock_protocol::commands::list_services::ServiceInfo {
                 name: service.name,
@@ -149,7 +193,7 @@ impl ServiceRepository<'_> {
         }
 
         Ok(ListServicesResponse {
-            services: result_services
+            services: result_services,
         })
     }
 
@@ -157,7 +201,9 @@ impl ServiceRepository<'_> {
         match service_ref {
             ServiceRef::Id(id) => Ok(*id),
             ServiceRef::Name(name) => {
-                let service = self.get_by_name(name).await?
+                let service = self
+                    .get_by_name(name)
+                    .await?
                     .ok_or_else(|| anyhow!("No service with the name `{}`", name))?;
 
                 Ok(service.id)
