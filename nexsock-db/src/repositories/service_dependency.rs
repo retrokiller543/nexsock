@@ -6,6 +6,7 @@ use nexsock_protocol::commands::dependency::ListDependenciesResponse;
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
 use crate::get_db_connection;
 
+#[derive(Debug)]
 pub struct ServiceDependencyRepository<'a> {
     connection: &'a DatabaseConnection
 }

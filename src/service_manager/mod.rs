@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+pub(crate) mod new;
+
 use crate::models::service_config::ServiceConfig;
 use crate::models::service_record::ServiceRecord;
 use crate::repositories::service::SERVICE_REPOSITORY;

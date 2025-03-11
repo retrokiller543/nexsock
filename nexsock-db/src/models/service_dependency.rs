@@ -1,9 +1,11 @@
-use sea_orm::entity::prelude::*;
+use sea_orm::{entity::prelude::*, FromJsonQueryResult};
+use serde::{Deserialize, Serialize};
 use super::{prelude::JoinedDependency, service::{Entity as Service, ServiceStatus}};
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, DerivePartialModel, FromJsonQueryResult, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "service_dependency")]
+#[sea_orm(entity = "Entity")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i64,

@@ -22,3 +22,4 @@ pub use super::service_dependency::ActiveModel as ServiceDependencyActiveModel;
 pub use super::service_dependency::PrimaryKey as ServiceDependencyPrimaryKey;
 
 pub use super::service_dep::*;
+pub use super::service_record::*;

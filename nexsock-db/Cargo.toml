@@ -18,3 +18,5 @@ derive_more.workspace = true
 
 tokio = { version = "1.43", features = ["full"] }
 anyhow = "1.0.97"
+serde = "1.0"
+serde_json = "1.0"

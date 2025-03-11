@@ -2139,6 +2139,8 @@ dependencies = [
  "nexsock-config",
  "nexsock-protocol",
  "sea-orm",
+ "serde",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",

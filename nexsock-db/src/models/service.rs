@@ -3,14 +3,15 @@
 use derive_more::Display;
 use sea_orm::entity::prelude::*;
 use sea_orm::sea_query::{ArrayType, ValueType, ValueTypeErr};
-use sea_orm::{ColIdx, TryGetError, TryGetable};
+use sea_orm::{ColIdx, FromQueryResult, TryGetError, TryGetable};
 use sqlx::Type;
 use nexsock_protocol::commands::service_status::ServiceState;
 
 use crate::models::prelude::*;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, DerivePartialModel, Eq)]
 #[sea_orm(table_name = "service")]
+#[sea_orm(entity = "Entity")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i64,
