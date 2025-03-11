@@ -1,7 +1,6 @@
 use sea_orm::entity::prelude::*;
-use super::service::{Entity as Service, ServiceStatus};
+use super::{prelude::JoinedDependency, service::{Entity as Service, ServiceStatus}};
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
-use nexsock_protocol::commands::service_status::ServiceState;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "service_dependency")]
@@ -11,12 +10,6 @@ pub struct Model {
     pub service_id: i64,
     pub dependent_service_id: i64,
     pub tunnel_enabled: bool,
-    // Additional join fields
-    pub name: String,
-    pub repo_url: String,
-    pub port: i64,
-    pub repo_path: String,
-    pub status: ServiceStatus,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -47,9 +40,8 @@ impl Related<Service> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-// Implement conversion to DependencyInfo
-impl From<Model> for DependencyInfo {
-    fn from(value: Model) -> Self {
+impl From<JoinedDependency> for DependencyInfo {
+    fn from(value: JoinedDependency) -> Self {
         Self {
             id: value.dependent_service_id,
             name: value.name,
@@ -60,7 +52,7 @@ impl From<Model> for DependencyInfo {
 }
 
 // Helper for creating a new model
-impl Model {
+impl JoinedDependency {
     pub fn new(parent_service_id: i64, dependent_service_id: i64, tunnel_enabled: bool) -> Self {
         Self {
             id: 0,

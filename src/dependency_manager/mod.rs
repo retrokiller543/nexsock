@@ -1,3 +1,5 @@
+pub(crate) mod new;
+
 use crate::models::service_dependency::ServiceDependency;
 use crate::repositories::service_dependency::{
     ServiceDependencyFilter, SERVICE_DEPENDENCY_REPOSITORY,

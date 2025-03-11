@@ -1,4 +1,3 @@
-use std::convert::Infallible;
 use crate::commands::manage_service::ServiceRef;
 use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
@@ -6,11 +5,16 @@ use bincode::{Decode, Encode};
 use derive_more::Display;
 #[cfg(feature = "savefile")]
 use savefile::prelude::Savefile;
-use sea_orm::sea_query::{ArrayType, ValueType, ValueTypeErr};
-use sea_orm::{ColIdx, ColumnType, DbErr, QueryResult, TryGetError, TryGetable, Value};
-use sea_orm::prelude::StringLen;
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "sea-orm")] {
+        use sea_orm::sea_query::{ArrayType, ValueType, ValueTypeErr};
+        use sea_orm::{ColIdx, ColumnType, DbErr, QueryResult, TryGetError, TryGetable, Value};
+        use sea_orm::prelude::StringLen;
+    }
+}
+
 use serde::{Deserialize, Serialize};
-use serde::__private::de::IdentifierDeserializer;
 use sqlx::Type;
 
 service_command! {
@@ -96,6 +100,7 @@ impl From<Option<String>> for ConfigFormat {
     }
 }
 
+#[cfg(feature = "sea-orm")]
 impl ValueType for ConfigFormat {
     fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
         match v {
@@ -123,12 +128,14 @@ impl ValueType for ConfigFormat {
     }
 }
 
+#[cfg(feature = "sea-orm")]
 impl From<ConfigFormat> for Value {
     fn from(config_format: ConfigFormat) -> Self {
         Value::String(Some(Box::new(config_format.to_string())))
     }
 }
 
+#[cfg(feature = "sea-orm")]
 impl TryGetable for ConfigFormat {
     fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
         let val: String = res.try_get_by(index)?;

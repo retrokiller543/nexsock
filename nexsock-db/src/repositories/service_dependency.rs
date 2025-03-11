@@ -1,5 +1,6 @@
 use anyhow::anyhow;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set, TransactionTrait};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Set, TransactionTrait};
+use tracing::debug;
 use crate::models::prelude::*;
 use nexsock_protocol::commands::dependency::ListDependenciesResponse;
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
@@ -27,17 +28,28 @@ impl ServiceDependencyRepository<'_> {
     pub async fn get_by_id(&self, id: i64) -> anyhow::Result<Option<ServiceDependency>> {
         let db = self.connection;
         let dependency = ServiceDependencyEntity::find_by_id(id)
+            .join(sea_orm::JoinType::LeftJoin, ServiceDependencyRelation::DependentService.def())
             .one(db)
             .await?;
         Ok(dependency)
     }
 
-    pub async fn get_by_service_id(&self, service_id: i64) -> anyhow::Result<Vec<ServiceDependency>> {
+    pub async fn get_by_service_id(&self, service_id: i64) -> anyhow::Result<Vec<JoinedDependency>> {
         let db = self.connection;
         let dependencies = ServiceDependencyEntity::find()
             .filter(ServiceDependencyColumn::ServiceId.eq(service_id))
-            .all(db)
-            .await?;
+            .join(sea_orm::JoinType::LeftJoin, ServiceDependencyRelation::DependentService.def())
+            .column_as(ServiceColumn::Name, "name")
+            .column_as(ServiceColumn::RepoUrl, "repo_url")
+            .column_as(ServiceColumn::Port, "port")
+            .column_as(ServiceColumn::RepoPath, "repo_path")
+            .column_as(ServiceColumn::Status, "status");
+
+        let sql = dependencies.build(sea_orm::DatabaseBackend::Sqlite).to_string();
+        debug!(%sql);
+
+        let dependencies = dependencies.into_model::<JoinedDependency>().all(db).await?;
+
         Ok(dependencies)
     }
 
@@ -51,11 +63,6 @@ impl ServiceDependencyRepository<'_> {
                 service_id: Set(dependency.service_id),
                 dependent_service_id: Set(dependency.dependent_service_id),
                 tunnel_enabled: Set(dependency.tunnel_enabled),
-                name: Set(dependency.name.clone()),
-                repo_url: Set(dependency.repo_url.clone()),
-                port: Set(dependency.port),
-                repo_path: Set(dependency.repo_path.clone()),
-                status: Set(dependency.status),
             };
 
             let result = active_model.insert(db).await?;
@@ -67,11 +74,6 @@ impl ServiceDependencyRepository<'_> {
                 service_id: Set(dependency.service_id),
                 dependent_service_id: Set(dependency.dependent_service_id),
                 tunnel_enabled: Set(dependency.tunnel_enabled),
-                name: Set(dependency.name.clone()),
-                repo_url: Set(dependency.repo_url.clone()),
-                port: Set(dependency.port),
-                repo_path: Set(dependency.repo_path.clone()),
-                status: Set(dependency.status),
             };
 
             active_model.update(db).await?;
@@ -112,12 +114,8 @@ impl ServiceDependencyRepository<'_> {
 
     // Get service dependencies with joined service info
     pub async fn get_dependencies_with_service_info(&self, service_id: i64) -> anyhow::Result<Vec<DependencyInfo>> {
-        let db = self.connection;
-
         // Custom SQL query to join with service table
-        let dependencies = ServiceDependencyEntity::find()
-            .filter(ServiceDependencyColumn::ServiceId.eq(service_id))
-            .all(db)
+        let dependencies = self.get_by_service_id(service_id)
             .await?
             .into_iter()
             .map(Into::into)

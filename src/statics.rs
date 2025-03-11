@@ -9,6 +9,8 @@ use nexsock_plugins::native::external_native_plugins;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 use tracing::info;
+use crate::config_manager::new::ConfigManager2;
+use crate::dependency_manager::new::DependencyManager2;
 
 /// Database path used for the program execution, at the moment only SQLite is supported, but in theory
 /// any SQL database could be used
@@ -40,7 +42,9 @@ fn get_database_path() -> anyhow::Result<PathBuf> {
 
 pub static SERVICE_MANAGER: LazyLock<ServiceManager> = LazyLock::new(ServiceManager::default);
 pub static CONFIG_MANAGER: LazyLock<ConfigManager> = LazyLock::new(|| ConfigManager);
+pub static NEW_CONFIG_MANAGER: LazyLock<ConfigManager2> = ConfigManager2::new_const();
 pub static DEPENDENCY_MANAGER: LazyLock<DependencyManager> = LazyLock::new(|| DependencyManager);
+pub static NEW_DEPENDENCY_MANAGER: LazyLock<DependencyManager2> = DependencyManager2::new_const();
 
 /// Pre-hook plugins
 pub static PRE_HOOKS: LazyLock<PreHooks> = LazyLock::new(|| {

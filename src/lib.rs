@@ -22,6 +22,7 @@ use std::time::Duration;
 use tokio::time::timeout;
 use tosic_utils::logging::init_tracing_layered;
 use tracing::{error, info};
+use nexsock_db::initialize_db;
 
 /// Default Database pool used for data storage
 #[inline]
@@ -51,6 +52,7 @@ pub async fn run_daemon() -> Result<()> {
 
     let pool = db_pool().await?;
     initialize_db_pool(pool);
+    initialize_db().await?; // TODO: Remove old DB pool
 
     info!("Running migrations...");
     sqlx::migrate!().run(get_db_pool()).await?;

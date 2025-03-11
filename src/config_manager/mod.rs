@@ -1,3 +1,5 @@
+pub(crate) mod new;
+
 use crate::models::service_config::ServiceConfig;
 use crate::repositories::service_config::SERVICE_CONFIG_REPOSITORY;
 use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
