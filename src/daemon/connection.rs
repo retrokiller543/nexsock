@@ -1,5 +1,5 @@
 use crate::error;
-use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
+use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, NEW_CONFIG_MANAGER, NEW_DEPENDENCY_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
 use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
@@ -199,14 +199,14 @@ where
             Command::UpdateConfig => {
                 let payload = Self::read_req_payload(payload)?;
 
-                CONFIG_MANAGER.update_config(&payload).await?;
+                NEW_CONFIG_MANAGER.update_config(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::GetConfig => {
                 let payload = Self::read_req_payload(payload)?;
 
-                let config = CONFIG_MANAGER.get_config(&payload).await?;
+                let config = NEW_CONFIG_MANAGER.get_config(&payload).await?;
 
                 Ok(CommandPayload::ServiceConfig(config))
             }
@@ -214,21 +214,21 @@ where
             Command::AddDependency => {
                 let payload = Self::read_req_payload(payload)?;
 
-                DEPENDENCY_MANAGER.add_dependency(&payload).await?;
+                NEW_DEPENDENCY_MANAGER.add_dependency(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::RemoveDependency => {
                 let payload = Self::read_req_payload(payload)?;
 
-                DEPENDENCY_MANAGER.remove_dependency(&payload).await?;
+                NEW_DEPENDENCY_MANAGER.remove_dependency(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::ListDependencies => {
                 let payload = Self::read_req_payload(payload)?;
 
-                let deps = DEPENDENCY_MANAGER.list_dependencies(&payload).await?;
+                let deps = NEW_DEPENDENCY_MANAGER.list_dependencies(&payload).await?;
 
                 Ok(CommandPayload::Dependencies(deps))
             }

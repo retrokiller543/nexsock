@@ -20,3 +20,5 @@ pub use super::service_dependency::Column as ServiceDependencyColumn;
 pub use super::service_dependency::Relation as ServiceDependencyRelation;
 pub use super::service_dependency::ActiveModel as ServiceDependencyActiveModel;
 pub use super::service_dependency::PrimaryKey as ServiceDependencyPrimaryKey;
+
+pub use super::service_dep::*;

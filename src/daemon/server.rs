@@ -1,4 +1,4 @@
-use crate::daemon::Daemon;
+use crate::{daemon::Daemon, traits::process_manager::ProcessManager};
 use crate::error::Result;
 use crate::statics::SERVICE_MANAGER;
 use crate::traits::VecExt;

@@ -45,7 +45,7 @@ impl Model {
         }
     }
     
-    pub fn to_status(&self, dependencies: Vec<ServiceDependency>) -> nexsock_protocol::commands::service_status::ServiceStatus {
+    pub fn to_status(&self, dependencies: Vec<JoinedDependency>) -> nexsock_protocol::commands::service_status::ServiceStatus {
         nexsock_protocol::commands::service_status::ServiceStatus {
             id: self.id,
             name: self.name.clone(),

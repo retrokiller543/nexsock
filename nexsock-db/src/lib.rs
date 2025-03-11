@@ -7,6 +7,11 @@ use nexsock_config::NEXSOCK_CONFIG;
 pub mod models;
 mod repositories;
 
+pub mod prelude {
+    pub use crate::repositories::*;
+    pub use crate::models::prelude::*;
+}
+
 static DB_CONNECTION: OnceLock<DatabaseConnection> = OnceLock::new();
 
 pub async fn initialize_db() -> anyhow::Result<&'static DatabaseConnection> {

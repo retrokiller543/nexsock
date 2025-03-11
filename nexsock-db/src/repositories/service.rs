@@ -117,6 +117,8 @@ impl ServiceRepository<'_> {
         // Get dependencies
         let dependencies = ServiceDependencyEntity::find()
             .filter(ServiceDependencyColumn::ServiceId.eq(service.id))
+            .join(sea_orm::JoinType::LeftJoin, ServiceDependencyRelation::DependentService.def())
+            .into_model::<JoinedDependency>()
             .all(db)
             .await?;
 
