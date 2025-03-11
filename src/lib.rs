@@ -14,6 +14,7 @@ pub mod traits;
 use crate::daemon::server::DaemonServer;
 use crate::statics::DATABASE_PATH;
 use nexsock_config::{NexsockConfig, PROJECT_DIRECTORIES};
+use nexsock_db::initialize_db;
 use prelude::*;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx_utils::pool::{get_db_pool, initialize_db_pool};
@@ -22,7 +23,6 @@ use std::time::Duration;
 use tokio::time::timeout;
 use tosic_utils::logging::init_tracing_layered;
 use tracing::{error, info};
-use nexsock_db::initialize_db;
 
 /// Default Database pool used for data storage
 #[inline]

@@ -1,11 +1,11 @@
-use anyhow::anyhow;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use crate::get_db_connection;
 use crate::models::prelude::{ServiceConfig, ServiceConfigActiveModel, ServiceConfigEntity};
+use anyhow::anyhow;
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set};
 
 #[derive(Debug)]
 pub struct ServiceConfigRepository<'a> {
-    connection: &'a DatabaseConnection
+    connection: &'a DatabaseConnection,
 }
 
 impl<'a> ServiceConfigRepository<'a> {
@@ -25,9 +25,7 @@ impl ServiceConfigRepository<'static> {
 impl ServiceConfigRepository<'_> {
     pub async fn get_by_id(&self, id: i64) -> anyhow::Result<Option<ServiceConfig>> {
         let db = self.connection;
-        let config = ServiceConfigEntity::find_by_id(id)
-            .one(db)
-            .await?;
+        let config = ServiceConfigEntity::find_by_id(id).one(db).await?;
         Ok(config)
     }
 
@@ -63,7 +61,9 @@ impl ServiceConfigRepository<'_> {
     pub async fn delete_by_id(&self, id: i64) -> anyhow::Result<()> {
         let db = self.connection;
 
-        let config = self.get_by_id(id).await?
+        let config = self
+            .get_by_id(id)
+            .await?
             .ok_or_else(|| anyhow!("Service config not found with id: {}", id))?;
 
         let model: ServiceConfigActiveModel = config.into();

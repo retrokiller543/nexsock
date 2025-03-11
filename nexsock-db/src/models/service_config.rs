@@ -1,6 +1,6 @@
-use sea_orm::entity::prelude::*;
+use crate::models::prelude::ServiceEntity;
 use nexsock_protocol::commands::config::ConfigFormat;
-use crate::models::prelude::{Service, ServiceEntity};
+use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, DerivePartialModel, Eq)]
 #[sea_orm(table_name = "service_config")]
@@ -39,7 +39,10 @@ impl Model {
     }
 
     // Convert to protocol ServiceConfigPayload
-    pub fn to_payload(&self, service: nexsock_protocol::commands::manage_service::ServiceRef) -> nexsock_protocol::commands::config::ServiceConfigPayload {
+    pub fn to_payload(
+        &self,
+        service: nexsock_protocol::commands::manage_service::ServiceRef,
+    ) -> nexsock_protocol::commands::config::ServiceConfigPayload {
         nexsock_protocol::commands::config::ServiceConfigPayload {
             service,
             filename: self.filename.clone(),

@@ -1,5 +1,5 @@
 use crate::error;
-use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, NEW_CONFIG_MANAGER, NEW_DEPENDENCY_MANAGER, NEW_SERVICE_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
+use crate::statics::{NEW_CONFIG_MANAGER, NEW_DEPENDENCY_MANAGER, NEW_SERVICE_MANAGER, PRE_HOOKS};
 use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;

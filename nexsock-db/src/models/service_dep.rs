@@ -1,6 +1,8 @@
-use sea_orm::{FromQueryResult, LinkDef, Linked, RelationDef, RelationTrait};
-use super::service_dependency::{Entity as ServiceDependency, Relation as ServiceDependencyRelation};
 use super::service::{Entity as Service, ServiceStatus};
+use super::service_dependency::{
+    Entity as ServiceDependency, Relation as ServiceDependencyRelation,
+};
+use sea_orm::{FromQueryResult, LinkDef, Linked, RelationTrait};
 
 // This links from Service to ServiceDependency
 pub struct ServiceToDependencies;
@@ -10,9 +12,7 @@ impl Linked for ServiceToDependencies {
     type ToEntity = ServiceDependency;
 
     fn link(&self) -> Vec<LinkDef> {
-        vec![
-            ServiceDependencyRelation::ParentService.def().rev(),
-        ]
+        vec![ServiceDependencyRelation::ParentService.def().rev()]
     }
 }
 
@@ -24,9 +24,7 @@ impl Linked for DependencyToService {
     type ToEntity = Service;
 
     fn link(&self) -> Vec<LinkDef> {
-        vec![
-            ServiceDependencyRelation::DependentService.def(),
-        ]
+        vec![ServiceDependencyRelation::DependentService.def()]
     }
 }
 

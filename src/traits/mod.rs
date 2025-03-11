@@ -3,8 +3,8 @@
 pub mod configuration_management;
 pub mod dependency_management;
 pub mod git_service;
-pub mod service_management;
 pub mod process_manager;
+pub mod service_management;
 
 pub trait FromDbResult<T> {
     fn from_db_result(value: T) -> Self;
