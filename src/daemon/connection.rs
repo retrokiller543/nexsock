@@ -271,7 +271,7 @@ where
         }
     }
 
-    fn read_req_payload<T: Decode>(payload: Option<Vec<u8>>) -> error::Result<T> {
+    fn read_req_payload<T: Decode<()>>(payload: Option<Vec<u8>>) -> error::Result<T> {
         let payload = if let Some(payload) = payload {
             payload
         } else {

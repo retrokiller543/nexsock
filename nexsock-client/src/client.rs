@@ -139,7 +139,7 @@ impl Client {
         self.handle_response().await
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     async fn handle_response(&mut self) -> Result<CommandPayload> {
         let (header, payload) = self
             .protocol

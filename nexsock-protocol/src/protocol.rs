@@ -139,7 +139,7 @@ impl Protocol {
         Ok((header, payload))
     }
 
-    pub fn read_payload<T: Decode>(payload: &[u8]) -> io::Result<Option<T>> {
+    pub fn read_payload<T: Decode<()>>(payload: &[u8]) -> io::Result<Option<T>> {
         let config = bincode::config::standard();
 
         if !payload.is_empty() {
