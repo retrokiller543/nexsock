@@ -1,6 +1,6 @@
 #[cfg(feature = "git")]
 use crate::traits::git_service::GitService;
-use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
+use nexsock_protocol::commands::service_status::{ServiceConfig, ServiceState, ServiceStatus};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use sqlx_utils::traits::Model;
@@ -83,7 +83,7 @@ impl From<ServiceRecord> for ServiceStatus {
             id: value.id.unwrap(),
             name: value.name,
             state: value.status,
-            config_id: value.config_id,
+            config: value.config_id.map(|id| ServiceConfig::new().id(id)),
             port: value.port,
             repo_url: value.repo_url,
             repo_path: value.repo_path,
@@ -98,7 +98,7 @@ impl From<&ServiceRecord> for ServiceStatus {
             id: value.id.unwrap(),
             name: value.name.clone(),
             state: value.status,
-            config_id: value.config_id,
+            config: value.config_id.map(|id| ServiceConfig::new().id(id)),
             port: value.port,
             repo_url: value.repo_url.clone(),
             repo_path: value.repo_path.clone(),

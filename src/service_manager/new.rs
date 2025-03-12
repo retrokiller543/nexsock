@@ -82,7 +82,7 @@ impl ServiceManagement for ServiceManager2 {
         }
 
         // Get the full service info including config
-        let service = self.service_repository.get_detailed(service_id).await?;
+        let service = self.service_repository.get_detailed_by_id(service_id).await?;
 
         let run_command = service
             .config
@@ -199,9 +199,9 @@ impl ServiceManagement for ServiceManager2 {
 
     #[tracing::instrument]
     async fn get_status(&self, payload: &ServiceRef) -> crate::error::Result<ServiceStatus> {
-        let service_status = self.service_repository.get_status(payload).await?;
+        let service_status = self.service_repository.get_detailed_by_ref(payload).await?;
 
-        Ok(service_status)
+        Ok(service_status.into())
     }
 
     #[tracing::instrument]
