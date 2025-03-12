@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::statics::NEW_SERVICE_MANAGER;
+use crate::statics::SERVICE_MANAGER;
 use crate::traits::VecExt;
 use crate::{daemon::Daemon, traits::process_manager::ProcessManager};
 use nexsock_config::NexsockConfig;
@@ -104,7 +104,7 @@ impl DaemonServer {
         self.complete_connections().await?;
         self.config.save()?;
         self.daemon.clone().shutdown().await?;
-        NEW_SERVICE_MANAGER.kill_all().await?;
+        SERVICE_MANAGER.kill_all().await?;
         Ok(())
     }
 
@@ -159,7 +159,7 @@ impl DaemonServer {
 
                             if self.last_cleanup.elapsed() >= self.cleanup_interval {
                                 self.cleanup_completed_connections().await;
-                                NEW_SERVICE_MANAGER.clean_old().await?;
+                                SERVICE_MANAGER.clean_old().await?;
                                 self.last_cleanup = Instant::now();
                             }
                         }

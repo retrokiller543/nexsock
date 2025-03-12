@@ -2,7 +2,7 @@ use super::service::{Entity as Service, ServiceStatus};
 use super::service_dependency::{
     Entity as ServiceDependency, Relation as ServiceDependencyRelation,
 };
-use sea_orm::{FromQueryResult, LinkDef, Linked, RelationTrait};
+use sea_orm::{DerivePartialModel, FromQueryResult, LinkDef, Linked, RelationTrait};
 
 // This links from Service to ServiceDependency
 pub struct ServiceToDependencies;

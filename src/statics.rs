@@ -1,9 +1,6 @@
 use crate::config_manager::new::ConfigManager2;
-use crate::config_manager::ConfigManager;
 use crate::dependency_manager::new::DependencyManager2;
-use crate::dependency_manager::DependencyManager;
 use crate::service_manager::new::ServiceManager2;
-use crate::service_manager::ServiceManager;
 use anyhow::Context;
 use futures::executor::block_on;
 use nexsock_abi::PreHooks;
@@ -41,12 +38,9 @@ fn get_database_path() -> anyhow::Result<PathBuf> {
     Ok(path)
 }
 
-pub static SERVICE_MANAGER: LazyLock<ServiceManager> = LazyLock::new(ServiceManager::default);
-pub static NEW_SERVICE_MANAGER: LazyLock<ServiceManager2> = ServiceManager2::new_const();
-pub static CONFIG_MANAGER: LazyLock<ConfigManager> = LazyLock::new(|| ConfigManager);
-pub static NEW_CONFIG_MANAGER: LazyLock<ConfigManager2> = ConfigManager2::new_const();
-pub static DEPENDENCY_MANAGER: LazyLock<DependencyManager> = LazyLock::new(|| DependencyManager);
-pub static NEW_DEPENDENCY_MANAGER: LazyLock<DependencyManager2> = DependencyManager2::new_const();
+pub static SERVICE_MANAGER: LazyLock<ServiceManager2> = ServiceManager2::new_const();
+pub static CONFIG_MANAGER: LazyLock<ConfigManager2> = ConfigManager2::new_const();
+pub static DEPENDENCY_MANAGER: LazyLock<DependencyManager2> = DependencyManager2::new_const();
 
 /// Pre-hook plugins
 pub static PRE_HOOKS: LazyLock<PreHooks> = LazyLock::new(|| {

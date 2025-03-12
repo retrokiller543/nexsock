@@ -54,7 +54,7 @@ impl Model {
             id: self.id,
             name: self.name.clone(),
             state: self.status.into(),
-            config_id: self.config_id,
+            config: None,
             port: self.port,
             repo_url: self.repo_url.clone(),
             repo_path: self.repo_path.clone(),
