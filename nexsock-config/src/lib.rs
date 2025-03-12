@@ -8,10 +8,11 @@ use derive_more::{
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::env::temp_dir;
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use thiserror::Error;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 pub type ConfigResult<T, E = NexsockConfigError> = Result<T, E>;
 
@@ -72,6 +73,15 @@ pub enum NexsockConfigError {
 pub enum SocketRef {
     Port(u16),
     Path(PathBuf),
+}
+
+impl Display for SocketRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SocketRef::Port(port) => port.fmt(f),
+            SocketRef::Path(path) => path.display().fmt(f),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
@@ -170,7 +180,7 @@ impl NexsockConfig {
 
         let config_file = config_path.join("config.toml");
 
-        info!("Using config file: {:?}", config_file);
+        info!(config_file = %config_file.display(), "Loading config from file");
 
         let defaults: AppConfig = AppConfig::default();
 
@@ -188,6 +198,8 @@ impl NexsockConfig {
         let config = builder.build()?;
 
         let inner: AppConfig = config.clone().try_deserialize()?;
+        
+        debug!(config = ?inner, "loaded config");
 
         Ok(Self {
             inner,

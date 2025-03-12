@@ -1,5 +1,6 @@
 use clap::Parser;
 use std::time::Duration;
+use nexsockd::tracing;
 
 /// Daemon service for managing other services on the running machine.
 ///
@@ -17,6 +18,8 @@ pub struct App {
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> nexsockd::prelude::Result<()> {
+    let _guards = tracing()?;
+    
     let app = App::parse();
 
     if app.dry_run {

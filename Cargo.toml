@@ -38,7 +38,8 @@ anyhow = { version = "1.0", default-features = false, features = ["std"] }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
 bincode = { version = "2.0.0-rc.3" }
-tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], registry = "gitea" }
+# tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], registry = "gitea" }
+tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], path = "../tosic-utils" }
 savefile = { version = "0.18.5", features = ["derive", "serde"] }
 savefile-derive = { version = "0.18.5" }
 savefile-abi = { version = "0.18.5" }
@@ -67,7 +68,7 @@ serde = { version = "1.0.215", features = ["derive"] }
 paste = "1.0.15"
 futures = "0.3.31"
 nexsock-protocol = { workspace = true }
-nexsock-config = { workspace = true }
+nexsock-config = { workspace = true, features = ["static-config"] }
 nexsock-utils = { workspace = true }
 nexsock-db.workspace = true
 bincode = { workspace = true }
@@ -78,6 +79,9 @@ nexsock-abi.workspace = true
 nexsock-plugins = { workspace = true, features = ["native", "lua"] }
 cfg-if = "1.0.0"
 clap = { version = "4.5.31", features = ["derive"] }
+tracing-appender = { version = "0.2.3", features = ["parking_lot"] }
+oneshot = "0.1.11"
+parking_lot = { version = "0.12.3", features = ["send_guard", "arc_lock"] }
 
 [build-dependencies]
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
