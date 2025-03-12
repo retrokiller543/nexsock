@@ -1,8 +1,10 @@
+use migration::{Migrator, MigratorTrait};
 use nexsock_config::NEXSOCK_CONFIG;
 use sea_orm::ConnectOptions;
 use sea_orm::{Database, DatabaseConnection};
 use std::sync::OnceLock;
 use std::time::Duration;
+use tracing::debug;
 
 pub mod models;
 mod repositories;
@@ -14,8 +16,11 @@ pub mod prelude {
 
 static DB_CONNECTION: OnceLock<DatabaseConnection> = OnceLock::new();
 
-pub async fn initialize_db() -> anyhow::Result<&'static DatabaseConnection> {
+#[tracing::instrument(level = "debug", err)]
+pub async fn initialize_db(run_migrations: bool) -> anyhow::Result<&'static DatabaseConnection> {
     let url = NEXSOCK_CONFIG.database().path.display().to_string();
+
+    debug!(%url);
 
     let mut opt = ConnectOptions::from(&url);
 
@@ -26,6 +31,10 @@ pub async fn initialize_db() -> anyhow::Result<&'static DatabaseConnection> {
         .max_lifetime(Duration::from_secs(60 * 60 * 24));
 
     let conn = Database::connect(opt).await?;
+
+    if run_migrations {
+        Migrator::up(&conn, None).await?;
+    }
 
     let db = DB_CONNECTION.get_or_init(|| conn);
 

@@ -9,7 +9,6 @@ use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
 use port_selector::is_free_tcp;
-use sqlx_utils::traits::Repository;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::{Arc, LazyLock};
@@ -82,7 +81,10 @@ impl ServiceManagement for ServiceManager2 {
         }
 
         // Get the full service info including config
-        let service = self.service_repository.get_detailed_by_id(service_id).await?;
+        let service = self
+            .service_repository
+            .get_detailed_by_id(service_id)
+            .await?;
 
         let run_command = service
             .config

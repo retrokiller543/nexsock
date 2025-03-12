@@ -1,15 +1,6 @@
 pub(crate) mod new;
 
-use crate::models::service_config::ServiceConfig;
-use crate::repositories::service_config::SERVICE_CONFIG_REPOSITORY;
-use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
-use crate::traits::configuration_management::ConfigurationManagement;
-use anyhow::anyhow;
-use nexsock_protocol::commands::config::ServiceConfigPayload;
-use nexsock_protocol::commands::manage_service::ServiceRef;
-use sqlx_utils::traits::Repository;
-
-pub struct ConfigManager;
+/*pub struct ConfigManager;
 
 impl ConfigurationManagement for ConfigManager {
     async fn update_config(&self, payload: &ServiceConfigPayload) -> crate::error::Result<()> {
@@ -65,3 +56,4 @@ impl ConfigurationManagement for ConfigManager {
         }
     }
 }
+*/

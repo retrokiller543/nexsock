@@ -8,15 +8,19 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
+nexsock-config = { workspace = true, features = ["static-config"] }
+nexsock-protocol = { workspace = true, features = ["sea-orm"] }
+migration = { path = "migration", version = "0.1.0" }
+
 sea-orm.workspace = true
 sqlx.workspace = true
 tracing.workspace = true
-
-nexsock-config = { workspace = true, features = ["static-config"] }
-nexsock-protocol = { workspace = true, features = ["sea-orm"] }
 derive_more.workspace = true
+anyhow.workspace = true
 
-tokio = { version = "1.43", features = ["full"] }
-anyhow = "1.0.97"
 serde = "1.0"
 serde_json = "1.0"
+
+[features]
+default = []
+debug = ["anyhow/backtrace"]
