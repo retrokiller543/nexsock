@@ -9,6 +9,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType,
     QueryFilter, QuerySelect, RelationTrait, Set,
 };
+use tracing::debug;
 
 #[derive(Debug)]
 pub struct ServiceRepository<'a> {
@@ -33,82 +34,18 @@ impl ServiceRepository<'_> {
     pub async fn get_detailed_by_id(&self, id: i64) -> anyhow::Result<DetailedServiceRecord> {
         let db = self.connection;
 
-        let service = ServiceEntity::find()
-            .filter(ServiceColumn::Id.eq(id))
-            .join(JoinType::LeftJoin, ServiceRelation::ServiceConfig.def())
-            .column_as(ServiceColumn::Id, "id")
-            .column_as(ServiceColumn::Name, "name")
-            .column_as(ServiceColumn::RepoUrl, "repo_url")
-            .column_as(ServiceColumn::Port, "port")
-            .column_as(ServiceColumn::RepoPath, "repo_path")
-            .column_as(ServiceColumn::Status, "status")
-            .column_as(ServiceConfigColumn::Id, "config_id")
-            .column_as(ServiceConfigColumn::Filename, "filename")
-            .column_as(ServiceConfigColumn::Format, "format")
-            .column_as(ServiceConfigColumn::RunCommand, "run_command")
-            .into_partial_model::<ServiceRecord>();
-        
-        dbg!(&service);
-        
+        let service = ServiceEntity::find_by_id(id)
+            .find_also_related(ServiceConfigEntity);
+
         let service = service.one(db)
             .await
             .context("Failed to fetch Service with its config")?;
 
-        if let Some(service) = service {
+        debug!(?service);
+
+        if let Some((service, config)) = service {
             let dependencies = ServiceDependencyEntity::find()
-                .filter(ServiceDependencyColumn::ServiceId.eq(id))
-                .join(
-                    JoinType::LeftJoin,
-                    ServiceDependencyRelation::DependentService.def(),
-                )
-                .column_as(ServiceColumn::Name, "name")
-                .column_as(ServiceColumn::RepoUrl, "repo_url")
-                .column_as(ServiceColumn::Port, "port")
-                .column_as(ServiceColumn::RepoPath, "repo_path")
-                .column_as(ServiceColumn::Status, "status")
-                .into_model::<JoinedDependency>()
-                .all(db)
-                .await
-                .context("Failed to fetch dependencies for service")?;
-
-            Ok(DetailedServiceRecord {
-                service: service.service,
-                config: service.config,
-                dependencies,
-            })
-        } else {
-            bail!("No Service found with ID `{}`", id)
-        }
-    }
-
-    pub async fn get_detailed_by_name(&self, name: impl AsRef<str>) -> anyhow::Result<DetailedServiceRecord> {
-        let db = self.connection;
-        let name = name.as_ref();
-
-        let service = ServiceEntity::find()
-            .filter(ServiceColumn::Name.eq(name))
-            .join(JoinType::LeftJoin, ServiceRelation::ServiceConfig.def())
-            .column_as(ServiceColumn::Id, "id")
-            .column_as(ServiceColumn::Name, "name")
-            .column_as(ServiceColumn::RepoUrl, "repo_url")
-            .column_as(ServiceColumn::Port, "port")
-            .column_as(ServiceColumn::RepoPath, "repo_path")
-            .column_as(ServiceColumn::Status, "status")
-            .column_as(ServiceConfigColumn::Id, "config_id")
-            .column_as(ServiceConfigColumn::Filename, "filename")
-            .column_as(ServiceConfigColumn::Format, "format")
-            .column_as(ServiceConfigColumn::RunCommand, "run_command")
-            .into_partial_model::<ServiceRecord>();
-
-        dbg!(&service);
-        
-        let service = service.one(db)
-            .await
-            .context("Failed to fetch Service with its config")?;
-
-        if let Some(service) = service {
-            let dependencies = ServiceDependencyEntity::find()
-                .filter(ServiceDependencyColumn::ServiceId.eq(service.service.id))
+                .filter(ServiceDependencyColumn::ServiceId.eq(service.id))
                 .join(
                     JoinType::LeftJoin,
                     ServiceDependencyRelation::DependentService.def(),
@@ -124,12 +61,53 @@ impl ServiceRepository<'_> {
                 .context("Failed to fetch Service with its config")?;
 
             Ok(DetailedServiceRecord {
-                service: service.service,
-                config: service.config,
+                service,
+                config,
                 dependencies,
             })
         } else {
-            bail!("No Service found with ID `{}`", name)
+            bail!("No Service found with ID `{}`", id)
+        }
+    }
+
+    pub async fn get_detailed_by_name(&self, name: impl AsRef<str>) -> anyhow::Result<DetailedServiceRecord> {
+        let db = self.connection;
+        let name = name.as_ref();
+
+        let service = ServiceEntity::find()
+            .filter(ServiceColumn::Name.eq(name)) // or Name.eq(name) for the other method
+            .find_also_related(ServiceConfigEntity);
+        
+        let service = service.one(db)
+            .await
+            .context("Failed to fetch Service with its config")?;
+
+        debug!(?service);
+        
+        if let Some((service, config)) = service {
+            let dependencies = ServiceDependencyEntity::find()
+                .filter(ServiceDependencyColumn::ServiceId.eq(service.id))
+                .join(
+                    JoinType::LeftJoin,
+                    ServiceDependencyRelation::DependentService.def(),
+                )
+                .column_as(ServiceColumn::Name, "name")
+                .column_as(ServiceColumn::RepoUrl, "repo_url")
+                .column_as(ServiceColumn::Port, "port")
+                .column_as(ServiceColumn::RepoPath, "repo_path")
+                .column_as(ServiceColumn::Status, "status")
+                .into_model::<JoinedDependency>()
+                .all(db)
+                .await
+                .context("Failed to fetch Service with its config")?;
+
+            Ok(DetailedServiceRecord {
+                service,
+                config,
+                dependencies,
+            })
+        } else {
+            bail!("No Service found with name: `{}`", name)
         }
     }
     
