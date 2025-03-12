@@ -1,5 +1,5 @@
 use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
-
+use std::process::Stdio;
 use anyhow::{anyhow, Context as _};
 use command_group::AsyncCommandGroup as _;
 use nexsock_protocol::commands::service_status::ServiceState;
@@ -10,6 +10,7 @@ use tokio::{
     sync::{broadcast, RwLock},
     time::sleep,
 };
+use tokio::process::ChildStdout;
 use tracing::{info, warn};
 
 use crate::{
@@ -219,6 +220,9 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
         .arg("-c")
         .arg(run_command)
         .current_dir(path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .stdin(Stdio::piped())
         .kill_on_drop(true);
 
     #[cfg(unix)]
@@ -229,9 +233,14 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
         command.env(key, value);
     }
 
-    let process = command
+    let mut process = command
         .group_spawn()
         .with_context(|| format!("Failed to spawn service process: {}", run_command))?;
+    
+    let child = process.inner();
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let stdin = child.stdin.take();
 
     info!("Spawned process {}: {:?}", service_id, process.id());
 
@@ -239,6 +248,9 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
         process,
         state: ServiceState::Running,
         env_vars,
+        stdout,
+        stdin,
+        stderr
     };
 
     Ok(service_process)

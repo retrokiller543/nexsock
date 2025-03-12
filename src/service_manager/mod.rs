@@ -23,16 +23,26 @@ use sqlx_utils::traits::Repository;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::Arc;
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::process::{ChildStderr, ChildStdin, ChildStdout};
 use tokio::sync::broadcast;
 use tokio::sync::RwLock;
 use tracing::warn;
 
 // Track running processes and their states
 #[derive(Debug)]
-pub(crate) struct ServiceProcess {
+pub(crate) struct ServiceProcess<Out = ChildStdout, In = ChildStdin, Err = ChildStderr>
+where
+    Out: AsyncRead,
+    In: AsyncWrite,
+    Err: AsyncRead,
+{
     pub(crate) process: AsyncGroupChild,
     pub(crate) state: ServiceState,
     pub(crate) env_vars: HashMap<String, String>,
+    pub(crate) stdout: Option<Out>,
+    pub(crate) stdin: Option<In>,
+    pub(crate) stderr: Option<Err>,
 }
 
 impl ServiceProcess {
@@ -52,7 +62,7 @@ impl ServiceProcess {
     }
 }
 
-#[derive(Debug)]
+/*#[derive(Debug)]
 pub struct ServiceManager {
     running_services: Arc<RwLock<HashMap<i64, ServiceProcess>>>,
     shutdown_tx: broadcast::Sender<()>,
@@ -303,3 +313,4 @@ impl ServiceManagement for ServiceManager {
         Ok(response_services.into_iter().collect())
     }
 }
+*/

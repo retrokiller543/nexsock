@@ -113,7 +113,7 @@ impl ServiceManagement for ServiceManager2 {
 
     #[tracing::instrument]
     async fn restart(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
-        self.stop(&payload.service.clone()).await?;
+        self.stop(&payload.service).await?;
 
         self.start(payload).await?;
 
