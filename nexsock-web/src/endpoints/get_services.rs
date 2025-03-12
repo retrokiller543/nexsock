@@ -7,6 +7,7 @@ use axum::response::Html;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::str::FromStr;
 
+#[tracing::instrument(level = "debug", skip(state), err)]
 pub async fn get_nexsock_service(
     State(ref state): State<AppState>,
     Path(service_ref): Path<String>,
