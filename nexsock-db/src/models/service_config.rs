@@ -1,7 +1,7 @@
 use crate::models::prelude::ServiceEntity;
 use nexsock_protocol::commands::config::ConfigFormat;
-use sea_orm::entity::prelude::*;
 use nexsock_protocol::commands::service_status::ServiceConfig;
+use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, DerivePartialModel, Eq)]
 #[sea_orm(table_name = "service_config")]

@@ -1,19 +1,6 @@
 pub(crate) mod new;
 
-use crate::models::service_dependency::ServiceDependency;
-use crate::repositories::service_dependency::{
-    ServiceDependencyFilter, SERVICE_DEPENDENCY_REPOSITORY,
-};
-use crate::repositories::service_record::{ServiceRecordRepository, SERVICE_RECORD_REPOSITORY};
-use crate::traits::dependency_management::DependencyManagement;
-use anyhow::anyhow;
-use nexsock_protocol::commands::dependency::{
-    AddDependencyPayload, ListDependenciesResponse, RemoveDependencyPayload,
-};
-use nexsock_protocol::commands::dependency_info::DependencyInfo;
-use nexsock_protocol::commands::manage_service::ServiceRef;
-use sqlx_utils::traits::Repository;
-
+/*
 pub struct DependencyManager;
 
 impl DependencyManagement for DependencyManager {
@@ -104,3 +91,4 @@ impl DependencyManagement for DependencyManager {
         })
     }
 }
+*/

@@ -1,24 +1,22 @@
-use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
-use std::process::Stdio;
 use anyhow::{anyhow, Context as _};
 use command_group::AsyncCommandGroup as _;
 use nexsock_protocol::commands::service_status::ServiceState;
 use port_selector::is_free_tcp;
-use sqlx_utils::traits::Repository as _;
+use std::process::Stdio;
+use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
 use tokio::{
     process::Command,
     sync::{broadcast, RwLock},
     time::sleep,
 };
-use tokio::process::ChildStdout;
 use tracing::{info, warn};
 
-use crate::{
-    repositories::service_record::SERVICE_RECORD_REPOSITORY, service_manager::ServiceProcess,
-};
+use crate::service_manager::ServiceProcess;
+use crate::statics::SERVICE_REPOSITORY;
 
 pub(crate) trait ProcessManager {
     fn running_services(&self) -> &Arc<RwLock<HashMap<i64, ServiceProcess>>>;
+    #[allow(dead_code)]
     fn shutdown_tx(&self) -> &broadcast::Sender<()>;
 
     async fn kill_all(&self) -> crate::error::Result<()> {
@@ -54,7 +52,7 @@ async fn kill_all<T: ProcessManager + ?Sized>(manager: &T) -> crate::error::Resu
 }
 
 async fn cleanup_process<T: ProcessManager + ?Sized>(
-    manager: &T,
+    _manager: &T,
     service_id: i64,
     process: &mut ServiceProcess,
 ) -> crate::error::Result<()> {
@@ -125,7 +123,7 @@ async fn kill_service_process<T: ProcessManager + ?Sized>(
     }
 
     // Wait for port to be actually freed
-    let service = SERVICE_RECORD_REPOSITORY
+    let service = SERVICE_REPOSITORY
         .get_by_id(service_id)
         .await?
         .ok_or_else(|| anyhow!("Service not found"))?;
@@ -209,7 +207,7 @@ async fn clean_old<T: ProcessManager + ?Sized>(manager: &T) -> crate::error::Res
 }
 
 async fn spawn_service_process<T: ProcessManager + ?Sized>(
-    manager: &T,
+    _manager: &T,
     service_id: i64,
     path: impl AsRef<Path>,
     run_command: &str,
@@ -236,7 +234,7 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
     let mut process = command
         .group_spawn()
         .with_context(|| format!("Failed to spawn service process: {}", run_command))?;
-    
+
     let child = process.inner();
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
@@ -250,13 +248,14 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
         env_vars,
         stdout,
         stdin,
-        stderr
+        stderr,
     };
 
     Ok(service_process)
 }
 
 pub(crate) trait FullProcessManager: ProcessManager {
+    #[allow(dead_code)]
     async fn cleanup_process(
         &self,
         service_id: i64,

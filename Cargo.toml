@@ -1,5 +1,5 @@
 [workspace]
-members = ['.', 'nexsock', "nexsock-abi", "nexsock-client", "nexsock-config", "nexsock-db", "nexsock-example-plugin", "nexsock-plugins", "nexsock-protocol", "nexsock-utils", "nexsock-web"]
+members = ['.', 'nexsock', "nexsock-abi", "nexsock-client", "nexsock-config", "nexsock-db", "nexsock-example-plugin", "nexsock-plugins", "nexsock-protocol", "nexsock-utils", "nexsock-web", "nexsock-db/migration"]
 
 [workspace.package]
 version = "1.0.0-7"
@@ -33,6 +33,8 @@ nexsock-client = { path = "nexsock-client" }
 nexsock-config = { path = "nexsock-config" }
 nexsock-utils = { path = "nexsock-utils" }
 nexsock-db = { path = "nexsock-db" }
+
+anyhow = { version = "1.0", default-features = false, features = ["std"] }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
 bincode = { version = "2.0.0-rc.3" }

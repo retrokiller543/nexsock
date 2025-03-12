@@ -2,31 +2,12 @@
 
 pub(crate) mod new;
 
-use crate::models::service_config::ServiceConfig;
-use crate::models::service_record::ServiceRecord;
-use crate::repositories::service::SERVICE_REPOSITORY;
-use crate::repositories::service_config::SERVICE_CONFIG_REPOSITORY;
-use crate::repositories::service_dependency::SERVICE_DEPENDENCY_REPOSITORY;
-use crate::repositories::service_record::{ServiceRecordFilter, SERVICE_RECORD_REPOSITORY};
-use crate::traits::process_manager::{FullProcessManager, ProcessManager};
-use crate::traits::service_management::ServiceManagement;
-use anyhow::anyhow;
 use command_group::AsyncGroupChild;
-use futures::future::join_all;
-use nexsock_protocol::commands::add_service::AddServicePayload;
-use nexsock_protocol::commands::list_services::ListServicesResponse;
-use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
-use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
-use port_selector::is_free_tcp;
-use sqlx_utils::filter::equals;
-use sqlx_utils::traits::Repository;
+use nexsock_protocol::commands::service_status::ServiceState;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::process::{ChildStderr, ChildStdin, ChildStdout};
-use tokio::sync::broadcast;
-use tokio::sync::RwLock;
 use tracing::warn;
 
 // Track running processes and their states

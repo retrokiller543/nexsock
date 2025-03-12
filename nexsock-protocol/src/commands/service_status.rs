@@ -1,3 +1,4 @@
+use crate::commands::config::{ConfigFormat, ServiceConfigPayload};
 use crate::commands::dependency_info::DependencyInfo;
 use crate::commands::manage_service::ServiceRef;
 use crate::commands::CommandPayload;
@@ -8,7 +9,6 @@ use derive_more::Display;
 use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
-use crate::commands::config::{ConfigFormat, ServiceConfigPayload};
 
 service_command! {
     pub struct GetServiceStatus<ServiceRef, ServiceStatus> = GetServiceStatus
@@ -71,22 +71,22 @@ impl ServiceConfig {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     pub fn id(mut self, value: i64) -> Self {
         self.id = Some(value);
         self
     }
-    
+
     pub fn filename(mut self, value: Option<String>) -> Self {
         self.filename = value;
         self
     }
-    
+
     pub fn format(mut self, value: ConfigFormat) -> Self {
         self.format = Some(value);
         self
     }
-    
+
     pub fn run_command(mut self, value: Option<String>) -> Self {
         self.run_command = value;
         self

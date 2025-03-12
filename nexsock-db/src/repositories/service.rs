@@ -6,9 +6,10 @@ use nexsock_protocol::commands::manage_service::ServiceRef;
 use nexsock_protocol::commands::service_status::ServiceStatus;
 use sea_orm::PaginatorTrait;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType,
-    QueryFilter, QuerySelect, RelationTrait, Set,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
+    QuerySelect, RelationTrait, Set,
 };
+use std::sync::LazyLock;
 use tracing::debug;
 
 #[derive(Debug)]
@@ -28,16 +29,20 @@ impl ServiceRepository<'static> {
 
         Self { connection }
     }
+
+    pub const fn new_const() -> LazyLock<Self> {
+        LazyLock::new(Self::new_from_static)
+    }
 }
 
 impl ServiceRepository<'_> {
     pub async fn get_detailed_by_id(&self, id: i64) -> anyhow::Result<DetailedServiceRecord> {
         let db = self.connection;
 
-        let service = ServiceEntity::find_by_id(id)
-            .find_also_related(ServiceConfigEntity);
+        let service = ServiceEntity::find_by_id(id).find_also_related(ServiceConfigEntity);
 
-        let service = service.one(db)
+        let service = service
+            .one(db)
             .await
             .context("Failed to fetch Service with its config")?;
 
@@ -70,20 +75,24 @@ impl ServiceRepository<'_> {
         }
     }
 
-    pub async fn get_detailed_by_name(&self, name: impl AsRef<str>) -> anyhow::Result<DetailedServiceRecord> {
+    pub async fn get_detailed_by_name(
+        &self,
+        name: impl AsRef<str>,
+    ) -> anyhow::Result<DetailedServiceRecord> {
         let db = self.connection;
         let name = name.as_ref();
 
         let service = ServiceEntity::find()
             .filter(ServiceColumn::Name.eq(name)) // or Name.eq(name) for the other method
             .find_also_related(ServiceConfigEntity);
-        
-        let service = service.one(db)
+
+        let service = service
+            .one(db)
             .await
             .context("Failed to fetch Service with its config")?;
 
         debug!(?service);
-        
+
         if let Some((service, config)) = service {
             let dependencies = ServiceDependencyEntity::find()
                 .filter(ServiceDependencyColumn::ServiceId.eq(service.id))
@@ -110,12 +119,16 @@ impl ServiceRepository<'_> {
             bail!("No Service found with name: `{}`", name)
         }
     }
-    
-    pub async fn get_detailed_by_ref(&self, service_ref: &ServiceRef) -> anyhow::Result<DetailedServiceRecord> {
+
+    pub async fn get_detailed_by_ref(
+        &self,
+        service_ref: &ServiceRef,
+    ) -> anyhow::Result<DetailedServiceRecord> {
         match service_ref {
             ServiceRef::Id(id) => self.get_detailed_by_id(*id).await,
             ServiceRef::Name(name) => self.get_detailed_by_name(name).await,
-        }.context("Failed to get detailed service by reference")
+        }
+        .context("Failed to get detailed service by reference")
     }
 
     pub async fn get_all(&self) -> anyhow::Result<Vec<Service>> {

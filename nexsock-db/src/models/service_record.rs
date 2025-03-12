@@ -1,6 +1,6 @@
-use sea_orm::{DerivePartialModel, FromQueryResult};
-use nexsock_protocol::commands::service_status::ServiceStatus;
 use super::prelude::JoinedDependency;
+use nexsock_protocol::commands::service_status::ServiceStatus;
+use sea_orm::{DerivePartialModel, FromQueryResult};
 
 #[derive(Debug, FromQueryResult, DerivePartialModel)]
 #[sea_orm(entity = "super::service::Entity")]
@@ -28,7 +28,7 @@ impl From<DetailedServiceRecord> for ServiceStatus {
             repo_path: record.service.repo_path,
             repo_url: record.service.repo_url,
             config: record.config.map(Into::into),
-            dependencies: record.dependencies.into_iter().map(Into::into).collect()
+            dependencies: record.dependencies.into_iter().map(Into::into).collect(),
         }
     }
 }
