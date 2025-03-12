@@ -12,25 +12,55 @@ mod test;
 pub mod traits;
 
 use crate::daemon::server::DaemonServer;
-use nexsock_config::{NexsockConfig, PROJECT_DIRECTORIES};
+use nexsock_config::{NexsockConfig, NEXSOCK_CONFIG, PROJECT_DIRECTORIES};
 use nexsock_db::initialize_db;
 use prelude::*;
 use std::time::Duration;
+use futures::TryFutureExt;
 use tokio::time::timeout;
-use tosic_utils::logging::init_tracing_layered;
-use tracing::{error, info};
+use tokio::try_join;
+use tosic_utils::logging::{env_filter, init_tracing_layered, FilterConfig, StdoutLayerConfig, TracingSubscriberBuilder};
+use tracing::{debug, debug_span, error, info};
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::format::FmtSpan;
+
+fn tracing_std_layer() -> StdoutLayerConfig {
+    StdoutLayerConfig::default()
+        .file(false)
+        .thread_names(true)
+        .line_number(true)
+        .level(true)
+        .compact(true)
+        .with_span_events(FmtSpan::CLOSE)
+}
+
+fn tracing_env_filter() -> EnvFilter {
+    FilterConfig::default()
+        .use_env(true)
+        .build()
+}
+
+pub fn tracing() -> Result<Vec<WorkerGuard>> {
+    TracingSubscriberBuilder::new()
+        .with_stdout(Some(tracing_std_layer()))
+        .with_filter(tracing_env_filter())
+        .init().map_err(Into::into)
+}
+
+#[tracing::instrument(err)]
+async fn setup() -> Result<DaemonServer> {
+    // loads the database static variable and runs migrations while at the same time we initialize the server
+    let (_, server) = try_join!(initialize_db(true).map_err(Error::from), DaemonServer::new())?;
+    
+    Ok(server)
+}
 
 /// Runs the default server implementation alongside the migrations.
+#[inline]
+#[tracing::instrument(name = "nexsockd", err)]
 pub async fn run_daemon() -> Result<()> {
-    let logging_path = PROJECT_DIRECTORIES.data_dir().join("logs");
-
-    let _guard = init_tracing_layered(Some((logging_path, "nexsockd.log")))?;
-    
-    initialize_db(true).await?;
-
-    let nexsock_config = NexsockConfig::new().expect("Failed to get config");
-
-    let mut server = DaemonServer::new(nexsock_config).await?;
+    let mut server = setup().await?;
 
     match server.run().await {
         Ok(_) => info!("Server completed successfully!"),
@@ -43,6 +73,7 @@ pub async fn run_daemon() -> Result<()> {
     Ok(())
 }
 
+#[inline]
 pub async fn timed_run_daemon(duration: Duration) -> Result<()> {
     match timeout(duration, run_daemon()).await {
         Ok(res) => res,

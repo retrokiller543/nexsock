@@ -1,7 +1,13 @@
-use crate::SocketRef;
+use crate::{NexsockConfig, SocketRef};
 
 pub trait SocketBind {
     fn bind_address(&self) -> std::io::Result<String>;
+}
+
+impl<T: SocketBind> SocketBind for &T {
+    fn bind_address(&self) -> std::io::Result<String> {
+        (*self).bind_address()
+    }
 }
 
 impl SocketBind for SocketRef {
@@ -15,5 +21,11 @@ impl SocketBind for SocketRef {
                 })?
                 .to_string()),
         }
+    }
+}
+
+impl SocketBind for NexsockConfig {
+    fn bind_address(&self) -> std::io::Result<String> {
+        self.inner.socket.bind_address() 
     }
 }

@@ -4,6 +4,7 @@ use nexsock_protocol::commands::service_status::ServiceState;
 use port_selector::is_free_tcp;
 use std::process::Stdio;
 use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
+use futures::future::try_join_all;
 use tokio::{
     process::Command,
     sync::{broadcast, RwLock},
@@ -41,12 +42,12 @@ async fn kill_all<T: ProcessManager + ?Sized>(manager: &T) -> crate::error::Resu
         }
     }
 
-    for id in ids {
-        kill_service_process(manager, id).await?
-    }
+    let futures = ids.into_iter().map(|id| kill_service_process(manager, id));
+    
+    try_join_all(futures).await?;
 
-    info!("Terminated all child processes, waiting for 5 seconds before shutting down");
-    sleep(Duration::from_secs(5)).await;
+    /*info!("Terminated all child processes, waiting for 5 seconds before shutting down");
+    sleep(Duration::from_secs(5)).await;*/
 
     Ok(())
 }

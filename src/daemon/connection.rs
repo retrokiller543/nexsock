@@ -93,7 +93,7 @@ where
                     break;
                 }
                 Err(e) => {
-                    debug!("Error handling message: {:?}", e);
+                    debug!(error = ?e, "Error handling message");
                     return Err(e.into());
                 }
             }
@@ -107,9 +107,8 @@ where
         let (header, payload) = self.protocol.read_message(&mut self.reader).await?;
 
         debug!(
-            "Received command: {:?} with payload: {}",
-            header.command,
-            if payload.is_some() { "yes" } else { "no" }
+            command = ?header.command,
+            payload = %if payload.is_some() { "yes" } else { "no" },
         );
 
         // Handle the command
@@ -122,8 +121,8 @@ where
                 }
             }
             Err(e) => {
-                // Send error response
-                warn!("Command failed: {:?}", e);
+                warn!(error = ?e, "Command failed");
+                
                 self.send_error(e).await?;
             }
         }
@@ -266,7 +265,7 @@ where
 
             _ => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                format!("Unsupported command: {:?}", command),
+                format!("Unsupported command: `{:?}`", command),
             ))),
         }
     }

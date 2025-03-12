@@ -2469,6 +2469,8 @@ dependencies = [
  "nexsock-plugins",
  "nexsock-protocol",
  "nexsock-utils",
+ "oneshot",
+ "parking_lot",
  "paste",
  "port-selector",
  "serde",
@@ -2479,6 +2481,7 @@ dependencies = [
  "tokio",
  "tosic-utils",
  "tracing",
+ "tracing-appender",
  "tracing-core",
  "tracing-subscriber",
 ]
@@ -2591,6 +2594,12 @@ name = "once_cell"
 version = "1.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "945462a4b81e43c4e3ba96bd7b49d834c6f61198356aa858733bc4acf3cbe62e"
+
+[[package]]
+name = "oneshot"
+version = "0.1.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ce411919553d3f9fa53a0880544cda985a112117a0444d5ff1e870a893d6ea"
 
 [[package]]
 name = "openssl-probe"
@@ -4370,8 +4379,6 @@ dependencies = [
 [[package]]
 name = "tosic-env-utils"
 version = "0.1.2"
-source = "sparse+https://reasonably-happy-moose.ngrok-free.app/api/packages/tosic.killer/cargo/"
-checksum = "7327a445afbffb9203ab74f3bf1d2722f814d7b689ff0dd81dc650c0be7dfb10"
 dependencies = [
  "dotenvy",
 ]
@@ -4379,9 +4386,8 @@ dependencies = [
 [[package]]
 name = "tosic-logging-utils"
 version = "0.2.3"
-source = "sparse+https://reasonably-happy-moose.ngrok-free.app/api/packages/tosic.killer/cargo/"
-checksum = "16208dec454946f09c407c12a776985cbb7a67c8e9114250854ddd147b4436c1"
 dependencies = [
+ "thiserror 2.0.11",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
@@ -4390,8 +4396,6 @@ dependencies = [
 [[package]]
 name = "tosic-utils"
 version = "0.2.4"
-source = "sparse+https://reasonably-happy-moose.ngrok-free.app/api/packages/tosic.killer/cargo/"
-checksum = "7eadf898593660be11120e3f5707836edef9e842e73fb3296924339dea159a9c"
 dependencies = [
  "tosic-env-utils",
  "tosic-logging-utils",
@@ -4471,6 +4475,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3566e8ce28cc0a3fe42519fc80e6b4c943cc4c8cef275620eb8dac2d3d4e06cf"
 dependencies = [
  "crossbeam-channel",
+ "parking_lot",
  "thiserror 1.0.69",
  "time",
  "tracing-subscriber",
