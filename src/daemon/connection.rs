@@ -1,5 +1,5 @@
 use crate::error;
-use crate::statics::{NEW_CONFIG_MANAGER, NEW_DEPENDENCY_MANAGER, NEW_SERVICE_MANAGER, PRE_HOOKS};
+use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, SERVICE_MANAGER, PRE_HOOKS};
 use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
 use crate::traits::service_management::ServiceManagement;
@@ -151,47 +151,47 @@ where
                     plugin.pre_start_command(&payload);
                 });
 
-                NEW_SERVICE_MANAGER.start(&payload).await?;
+                SERVICE_MANAGER.start(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::StopService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                NEW_SERVICE_MANAGER.stop(&payload).await?;
+                SERVICE_MANAGER.stop(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::RestartService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                NEW_SERVICE_MANAGER.restart(&payload).await?;
+                SERVICE_MANAGER.restart(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::GetServiceStatus => {
                 let payload = Self::read_req_payload(payload)?;
 
-                let status = NEW_SERVICE_MANAGER.get_status(&payload).await?;
+                let status = SERVICE_MANAGER.get_status(&payload).await?;
 
                 Ok(CommandPayload::Status(status))
             }
             Command::AddService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                NEW_SERVICE_MANAGER.add_service(&payload).await?;
+                SERVICE_MANAGER.add_service(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::RemoveService => {
                 let payload = Self::read_req_payload(payload)?;
 
-                NEW_SERVICE_MANAGER.remove_service(&payload).await?;
+                SERVICE_MANAGER.remove_service(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::ListServices => {
-                let services = NEW_SERVICE_MANAGER.get_all().await?;
+                let services = SERVICE_MANAGER.get_all().await?;
 
                 Ok(CommandPayload::ListServices(services))
             }
@@ -199,14 +199,14 @@ where
             Command::UpdateConfig => {
                 let payload = Self::read_req_payload(payload)?;
 
-                NEW_CONFIG_MANAGER.update_config(&payload).await?;
+                CONFIG_MANAGER.update_config(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::GetConfig => {
                 let payload = Self::read_req_payload(payload)?;
 
-                let config = NEW_CONFIG_MANAGER.get_config(&payload).await?;
+                let config = CONFIG_MANAGER.get_config(&payload).await?;
 
                 Ok(CommandPayload::ServiceConfig(config))
             }
@@ -214,21 +214,21 @@ where
             Command::AddDependency => {
                 let payload = Self::read_req_payload(payload)?;
 
-                NEW_DEPENDENCY_MANAGER.add_dependency(&payload).await?;
+                DEPENDENCY_MANAGER.add_dependency(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::RemoveDependency => {
                 let payload = Self::read_req_payload(payload)?;
 
-                NEW_DEPENDENCY_MANAGER.remove_dependency(&payload).await?;
+                DEPENDENCY_MANAGER.remove_dependency(&payload).await?;
 
                 Ok(CommandPayload::Empty)
             }
             Command::ListDependencies => {
                 let payload = Self::read_req_payload(payload)?;
 
-                let deps = NEW_DEPENDENCY_MANAGER.list_dependencies(&payload).await?;
+                let deps = DEPENDENCY_MANAGER.list_dependencies(&payload).await?;
 
                 Ok(CommandPayload::Dependencies(deps))
             }

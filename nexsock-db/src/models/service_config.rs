@@ -1,6 +1,7 @@
 use crate::models::prelude::ServiceEntity;
 use nexsock_protocol::commands::config::ConfigFormat;
 use sea_orm::entity::prelude::*;
+use nexsock_protocol::commands::service_status::ServiceConfig;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, DerivePartialModel, Eq)]
 #[sea_orm(table_name = "service_config")]
@@ -11,6 +12,17 @@ pub struct Model {
     pub filename: String,
     pub format: ConfigFormat,
     pub run_command: Option<String>,
+}
+
+impl From<Model> for ServiceConfig {
+    fn from(config: Model) -> Self {
+        Self {
+            id: Some(config.id),
+            filename: Some(config.filename),
+            format: Some(config.format),
+            run_command: config.run_command,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
