@@ -4,11 +4,11 @@ use anyhow::{anyhow, bail, Context};
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use nexsock_protocol::commands::service_status::ServiceStatus;
-use sea_orm::PaginatorTrait;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
     QuerySelect, RelationTrait, Set,
 };
+use sea_orm::{NotSet, PaginatorTrait};
 use std::sync::LazyLock;
 use tracing::debug;
 
@@ -168,7 +168,7 @@ impl ServiceRepository<'_> {
         // If ID is 0, it's a new record
         if service.id == 0 {
             let active_model = ServiceActiveModel {
-                id: Set(0), // Auto increment
+                id: NotSet, // Auto increment
                 config_id: Set(service.config_id),
                 name: Set(service.name.clone()),
                 repo_url: Set(service.repo_url.clone()),

@@ -1,3 +1,5 @@
+#![feature(string_from_utf8_lossy_owned)]
+
 mod config_manager;
 pub mod daemon;
 mod dependency_manager;
@@ -35,23 +37,25 @@ fn tracing_std_layer() -> StdoutLayerConfig {
 }
 
 fn tracing_env_filter() -> EnvFilter {
-    FilterConfig::default()
-        .use_env(true)
-        .build()
+    FilterConfig::default().use_env(true).build()
 }
 
 pub fn tracing() -> Result<Vec<WorkerGuard>> {
     TracingSubscriberBuilder::new()
         .with_stdout(Some(tracing_std_layer()))
         .with_filter(tracing_env_filter())
-        .init().map_err(Into::into)
+        .init()
+        .map_err(Into::into)
 }
 
 #[tracing::instrument(err)]
 async fn setup() -> Result<DaemonServer> {
     // loads the database static variable and runs migrations while at the same time we initialize the server
-    let (_, server) = try_join!(initialize_db(true).map_err(Error::from), DaemonServer::new())?;
-    
+    let (_, server) = try_join!(
+        initialize_db(true).map_err(Error::from),
+        DaemonServer::new()
+    )?;
+
     Ok(server)
 }
 

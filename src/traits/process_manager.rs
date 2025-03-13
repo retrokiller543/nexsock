@@ -4,16 +4,15 @@ use dashmap::DashMap;
 use futures::future::try_join_all;
 use nexsock_protocol::commands::service_status::ServiceState;
 use port_selector::is_free_tcp;
-use std::process::Stdio;
+use std::collections::VecDeque;
 use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
-use tokio::{
-    process::Command,
-    sync::broadcast,
-    time::sleep,
-};
+use std::process::Stdio;
+use tokio::io::AsyncReadExt;
+use tokio::sync::Mutex;
+use tokio::{process::Command, sync::broadcast, time::sleep};
 use tracing::{debug, info, warn};
 
-use crate::service_manager::ServiceProcess;
+use crate::service_manager::{LogEntry, ServiceProcess};
 use crate::statics::SERVICE_REPOSITORY;
 
 pub(crate) trait ProcessManager {
@@ -41,11 +40,11 @@ async fn kill_all<T: ProcessManager + ?Sized>(manager: &T) -> crate::error::Resu
             ids.push(*service.key());
         }
     }
-    
+
     debug!(running_services=?ids, "Killing all child processes");
 
     let futures = ids.into_iter().map(|id| kill_service_process(manager, id));
-    
+
     try_join_all(futures).await?;
 
     /*info!("Terminated all child processes, waiting for 5 seconds before shutting down");
@@ -59,6 +58,11 @@ async fn cleanup_process<T: ProcessManager + ?Sized>(
     service_id: i64,
     process: &mut ServiceProcess,
 ) -> crate::error::Result<()> {
+    if let Some(handle) = process.log_task_handle.take() {
+        handle.0.abort();
+        handle.1.abort();
+    }
+
     // First try graceful termination via SIGTERM
     if let Err(e) = process.process.kill().await {
         warn!(
@@ -150,10 +154,7 @@ async fn kill_service_process<T: ProcessManager + ?Sized>(
     Err(anyhow!("Failed to free port after service termination").into())
 }
 
-fn get_service_state<T: ProcessManager + ?Sized>(
-    manager: &T,
-    service_id: i64,
-) -> ServiceState {
+fn get_service_state<T: ProcessManager + ?Sized>(manager: &T, service_id: i64) -> ServiceState {
     let services = manager.running_services();
 
     if let Some(mut process) = services.get_mut(&service_id) {
@@ -174,7 +175,7 @@ async fn clean_old<T: ProcessManager + ?Sized>(manager: &T) -> crate::error::Res
 
     for mut service in services.iter_mut() {
         let (service_id, process) = service.pair_mut();
-        
+
         // Check both status and process health
         let should_remove = match process.check_status().await {
             Ok(ServiceState::Failed) => true,
@@ -250,16 +251,76 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
 
     info!("Spawned process {}: {:?}", service_id, process.id());
 
-    let service_process = ServiceProcess {
+    let mut service_process = ServiceProcess {
         process,
         state: ServiceState::Running,
         env_vars,
         stdout,
         stdin,
         stderr,
+        stdout_logs: Arc::new(Mutex::new(VecDeque::with_capacity(10_000))),
+        log_task_handle: None,
     };
 
+    start_log_collection(&mut service_process).await?;
+
     Ok(service_process)
+}
+
+async fn start_log_collection(process: &mut ServiceProcess) -> crate::error::Result<()> {
+    if process.stdout.is_none() {
+        return Ok(());
+    }
+
+    // Take stdout ownership
+    let mut stdout = process.stdout.take().unwrap();
+
+    // Create a channel to send logs back to the main process
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(100);
+
+    // Start a task to read from stdout
+    let stdout_task = tokio::spawn(async move {
+        let mut buffer = [0u8; 1024];
+
+        loop {
+            match stdout.read(&mut buffer).await {
+                Ok(0) => break, // EOF
+                Ok(n) => {
+                    if let Ok(s) = String::from_utf8(buffer[0..n].to_vec()) {
+                        if tx.send(s).await.is_err() {
+                            break; // Receiver dropped
+                        }
+                    }
+                }
+                Err(_) => break, // Error reading
+            }
+        }
+    });
+
+    // Start a task to process received logs
+    let logs = process.stdout_logs.clone();
+
+    let log_task = tokio::spawn(async move {
+        while let Some(content) = rx.recv().await {
+            let now = chrono::Utc::now();
+            let entry = LogEntry {
+                timestamp: now,
+                content,
+            };
+
+            // Add the log entry and maintain buffer size (e.g., keep last 10,000 entries)
+            let mut logs = logs.lock().await;
+            logs.push_back(entry);
+            while logs.len() > 10_000 {
+                logs.pop_front();
+            }
+        }
+    });
+
+    // Store the log processing task handle
+    process.log_task_handle = Some((log_task, stdout_task));
+
+    Ok(())
 }
 
 pub(crate) trait FullProcessManager: ProcessManager {

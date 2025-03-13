@@ -19,7 +19,7 @@ pub struct App {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> nexsockd::prelude::Result<()> {
     let _guards = tracing()?;
-    
+
     let app = App::parse();
 
     if app.dry_run {

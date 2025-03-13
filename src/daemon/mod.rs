@@ -112,13 +112,15 @@ impl Daemon {
             lua_plugin_manager,
         })
     }
-    
+
     #[cfg(unix)]
     fn clear_old_socket(socket_ref: &SocketRef) -> Result<()> {
         if let SocketRef::Path(path) = socket_ref {
             if path.exists() {
                 fs::remove_file(path).map_err(Into::into)
-            } else { Ok(()) }
+            } else {
+                Ok(())
+            }
         } else {
             Err(Error::InvalidSocket {
                 message: "Unable to clear the UNIX socket".into(),
@@ -127,7 +129,7 @@ impl Daemon {
             })
         }
     }
-    
+
     async fn get_listener(socket_ref: &SocketRef) -> Result<Arc<Listener>> {
         #[cfg(unix)]
         Self::clear_old_socket(socket_ref)?;

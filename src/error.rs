@@ -42,7 +42,7 @@ pub enum Error {
     #[error(transparent)]
     JoinHandle(#[from] JoinError),
     #[error("Would deadlock")]
-    LockError
+    LockError,
 }
 
 impl Error {
@@ -63,7 +63,7 @@ impl Error {
             Error::InvalidSocket { .. } => 12,
             Error::OneShotSend(_) => 13,
             Error::JoinHandle(_) => 14,
-            _ => 0xFFFF
+            _ => 0xFFFF,
         }
     }
 }
