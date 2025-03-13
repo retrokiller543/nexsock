@@ -122,7 +122,7 @@ where
             }
             Err(e) => {
                 warn!(error = ?e, "Command failed");
-                
+
                 self.send_error(e).await?;
             }
         }
@@ -143,6 +143,14 @@ where
         });
 
         match command {
+            Command::GetServiceStdout => {
+                let payload = Self::read_req_payload(payload)?;
+
+                let res = SERVICE_MANAGER.get_stdout(&payload).await?;
+
+                Ok(CommandPayload::Stdout(res))
+            }
+
             Command::StartService => {
                 let payload = Self::read_req_payload(payload)?;
 

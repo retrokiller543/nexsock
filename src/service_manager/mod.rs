@@ -4,10 +4,12 @@ pub(crate) mod new;
 
 use command_group::AsyncGroupChild;
 use nexsock_protocol::commands::service_status::ServiceState;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
+use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::process::{ChildStderr, ChildStdin, ChildStdout};
+use tokio::sync::Mutex;
 use tracing::warn;
 
 // Track running processes and their states
@@ -24,6 +26,14 @@ where
     pub(crate) stdout: Option<Out>,
     pub(crate) stdin: Option<In>,
     pub(crate) stderr: Option<Err>,
+    pub(crate) stdout_logs: Arc<Mutex<VecDeque<LogEntry>>>, // Add this to store logs
+    pub(crate) log_task_handle: Option<(tokio::task::JoinHandle<()>, tokio::task::JoinHandle<()>)>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct LogEntry {
+    pub(crate) timestamp: chrono::DateTime<chrono::Utc>,
+    pub(crate) content: String,
 }
 
 impl ServiceProcess {

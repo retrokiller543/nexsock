@@ -99,6 +99,7 @@ oneshot = "0.1.11"
 parking_lot = { version = "0.12.3", features = ["send_guard", "arc_lock"] }
 dashmap = { version = "6.1.0", features = ["rayon"] }
 rayon = "1.10.0"
+chrono = "0.4.39"
 
 
 [build-dependencies]

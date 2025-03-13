@@ -78,7 +78,7 @@ impl DaemonServer {
             cleanup_interval,
         })
     }
-    
+
     #[inline]
     pub async fn shutdown(&mut self) -> Result<()> {
         self.complete_connections().await?;
@@ -89,15 +89,20 @@ impl DaemonServer {
         Ok(())
     }
 
+    //#[allow(clippy::await_holding_lock)]
     async fn complete_connections(&mut self) -> Result<()> {
-        let mut connections_guard = self.connections.lock();
-        let connections = std::mem::take(&mut *connections_guard);
-        drop(connections_guard);
+        let connections = {
+            let mut connections_guard = self.connections.lock();
+            let connections = std::mem::take(&mut *connections_guard);
+            drop(connections_guard);
+
+            connections
+        };
 
         info!("Clearing all connections");
         let res = join_all(connections).await;
 
-        let errors = res.into_iter().filter_map(|res| if res.is_err() { Some(res.unwrap_err())} else { None });
+        let errors = res.into_iter().filter_map(|res| res.err());
 
         for error in errors {
             error!(error = ?error, "Connection handler error during shutdown");
@@ -106,13 +111,15 @@ impl DaemonServer {
         Ok(())
     }
 
-    async fn cleanup_completed_connections(connections: &Arc<Mutex<Vec<JoinHandle<()>>>>) -> Result<()> {
+    async fn cleanup_completed_connections(
+        connections: &Arc<Mutex<Vec<JoinHandle<()>>>>,
+    ) -> Result<()> {
         let mut connections_guard = connections.lock_arc();
-        
+
         if connections_guard.is_empty() {
             return Ok(());
         }
-        
+
         let mut i = 0;
         let mut cleaned = 0;
 
@@ -134,7 +141,6 @@ impl DaemonServer {
         info!("Cleaned up completed connections. Active connections: {}, cleared {cleaned} connections", connections_guard.len());
         Ok(())
     }
-
 
     /// Runs the daemon server.
     ///
@@ -163,15 +169,15 @@ impl DaemonServer {
 
         let cleanup_task = self.cleanup_task(cleanup_stop_rx);
         let server_future = self.server_task(cleanup_stop_tx);
-        
+
         select! {
             res = server_future => res?,
             res = cleanup_task => res??,
         }
-        
+
         Ok(())
     }
-    
+
     async fn server_task(&mut self, cleanup_stop_tx: oneshot::Sender<()>) -> Result<()> {
         loop {
             select! {
@@ -192,17 +198,17 @@ impl DaemonServer {
                 }
                 _ = ctrl_c() => {
                     info!("Got Ctrl-C, shutting down");
-                    
+
                     cleanup_stop_tx.send(())?;
                     self.shutdown().await?;
                     break;
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     fn cleanup_task(&self, cleanup_stop_rx: oneshot::Receiver<()>) -> JoinHandle<Result<()>> {
         let connections_arc = Arc::clone(&self.connections);
         let cleanup_interval = self.cleanup_interval;

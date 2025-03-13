@@ -4,8 +4,8 @@ use anyhow::anyhow;
 use nexsock_protocol::commands::dependency::ListDependenciesResponse;
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
-    QueryTrait, RelationTrait, Set, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, NotSet, QueryFilter,
+    QuerySelect, QueryTrait, RelationTrait, Set, TransactionTrait,
 };
 use tracing::debug;
 
@@ -77,7 +77,7 @@ impl ServiceDependencyRepository<'_> {
         // If ID is 0, it's a new record
         if dependency.id == 0 {
             let active_model = ServiceDependencyActiveModel {
-                id: Set(0), // Auto increment
+                id: NotSet, // Auto increment
                 service_id: Set(dependency.service_id),
                 dependent_service_id: Set(dependency.dependent_service_id),
                 tunnel_enabled: Set(dependency.tunnel_enabled),

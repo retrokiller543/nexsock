@@ -104,24 +104,24 @@ impl Protocol {
     {
         let mut magic = [0u8; 4];
         reader.read_exact(&mut magic).await?;
-        
+
         if &magic != b"NEX\0" {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 "Invalid protocol magic bytes",
             ));
         }
-        
+
         let mut header_bytes = vec![0u8; size_of::<MessageHeader>() - 2]; // Subtract magic bytes
         reader.read_exact(&mut header_bytes).await?;
-        
+
         let mut full_header = Vec::with_capacity(size_of::<MessageHeader>());
         full_header.extend_from_slice(&magic);
         full_header.extend_from_slice(&header_bytes);
 
         let header: MessageHeader = BinRead::read(&mut io::Cursor::new(full_header))
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        
+
         let payload = if header.flags.contains(MessageFlags::HAS_PAYLOAD) {
             let mut payload = vec![0u8; header.payload_length as usize];
             reader.read_exact(&mut payload).await?;

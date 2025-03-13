@@ -1,7 +1,7 @@
 use crate::get_db_connection;
 use crate::models::prelude::{ServiceConfig, ServiceConfigActiveModel, ServiceConfigEntity};
 use anyhow::anyhow;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, NotSet, Set};
 
 #[derive(Debug)]
 pub struct ServiceConfigRepository<'a> {
@@ -35,7 +35,7 @@ impl ServiceConfigRepository<'_> {
         // If ID is 0, it's a new record
         if config.id == 0 {
             let active_model = ServiceConfigActiveModel {
-                id: Set(0), // Auto increment
+                id: NotSet, // Auto increment
                 filename: Set(config.filename.clone()),
                 format: Set(config.format),
                 run_command: Set(config.run_command.clone()),

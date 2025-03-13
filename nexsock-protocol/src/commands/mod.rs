@@ -8,6 +8,7 @@ pub mod git;
 pub mod list_services;
 pub mod manage_service;
 pub mod service_status;
+pub mod stdout;
 
 use crate::commands::add_service::AddServiceCommand;
 use crate::commands::config::{GetConfig, ServiceConfigPayload, UpdateConfigCommand};
@@ -22,6 +23,7 @@ use crate::commands::manage_service::{
     RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand,
 };
 use crate::commands::service_status::{GetServiceStatus, ServiceStatus};
+use crate::commands::stdout::GetServiceStdout;
 use crate::service_command;
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinWrite};
@@ -65,6 +67,7 @@ pub enum Command {
     AddService = 5,
     RemoveService = 6,
     ListServices = 7,
+    GetServiceStdout = 8,
 
     // Configuration
     UpdateConfig = 10,
@@ -108,6 +111,8 @@ pub enum CommandPayload {
 
     Dependencies(ListDependenciesResponse),
 
+    Stdout(String),
+
     Error(ErrorPayload),
     Empty,
 }
@@ -119,18 +124,23 @@ try_from!(Empty => ());
 #[try_unwrap(ref, ref_mut)]
 #[non_exhaustive]
 pub enum ServiceCommand {
+    Stdout(GetServiceStdout),
     Start(StartServiceCommand),
     Stop(StopServiceCommand),
     Restart(RestartServiceCommand),
     List(ListServicesCommand),
     Status(GetServiceStatus),
+
     Add(AddServiceCommand),
     Remove(RemoveServiceCommand),
+
     ConfigGet(GetConfig),
     ConfigUpdate(UpdateConfigCommand),
+
     DependencyAdd(AddDependencyCommand),
     DependencyRemove(RemoveDependencyCommand),
     DependencyList(ListDependenciesCommand),
+
     GitCheckout(CheckoutCommand),
     GitStatus(GetRepoStatusCommand),
 }

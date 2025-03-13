@@ -26,6 +26,6 @@ impl SocketBind for SocketRef {
 
 impl SocketBind for NexsockConfig {
     fn bind_address(&self) -> std::io::Result<String> {
-        self.inner.socket.bind_address() 
+        self.inner.socket.bind_address()
     }
 }

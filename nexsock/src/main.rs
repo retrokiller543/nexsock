@@ -4,7 +4,7 @@ use anyhow::{bail, Context};
 use clap::Parser;
 use nexsock_client::Client;
 use nexsock_config::NexsockConfig;
-use nexsock_protocol::commands::ServiceCommand;
+use nexsock_protocol::commands::{CommandPayload, ServiceCommand};
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tracing::warn;
@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
     let command = create_command(cli.command)?;
 
     let response = match command {
+        ServiceCommand::Stdout(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Start(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Stop(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Restart(cmd) => client.execute_command(cmd).await?,
@@ -87,7 +88,12 @@ async fn main() -> anyhow::Result<()> {
         _ => bail!("Unknown command"),
     };
 
-    dbg!(response);
+    match response {
+        CommandPayload::Stdout(log) => print!("{log}"),
+        res => {
+            dbg!(res);
+        }
+    }
 
     Ok(())
 }

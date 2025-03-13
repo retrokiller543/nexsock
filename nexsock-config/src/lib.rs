@@ -198,7 +198,7 @@ impl NexsockConfig {
         let config = builder.build()?;
 
         let inner: AppConfig = config.clone().try_deserialize()?;
-        
+
         debug!(config = ?inner, "loaded config");
 
         Ok(Self {

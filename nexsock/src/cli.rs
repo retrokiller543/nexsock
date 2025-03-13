@@ -76,6 +76,15 @@ pub enum Commands {
         service: ServiceRef,
     },
 
+    /// Get current stdout of a service
+    Stdout {
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+    },
+
     /// Add a new service
     Add {
         /// Name of the service to add
