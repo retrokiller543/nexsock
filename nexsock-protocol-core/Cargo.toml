@@ -1,0 +1,31 @@
+[package]
+name = "nexsock-protocol-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+binrw = { version = "0.14" }
+tokio = { version = "1", features = ["full", "io-util"] }
+thiserror = "2.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+sqlx = { workspace = true }
+bincode = { workspace = true }
+derive_more.workspace = true
+paste = "1.0"
+futures = "0.3.19"
+
+savefile = { workspace = true, optional = true }
+mlua = { workspace = true, optional = true }
+cfg-if = "1.0"
+bytes = "1.10.0"
+
+[features]
+default = ["tokio"]
+tokio = []
