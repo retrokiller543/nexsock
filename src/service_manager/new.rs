@@ -1,6 +1,9 @@
+use super::ServiceProcess;
 use crate::traits::process_manager::{FullProcessManager, ProcessManager};
 use crate::traits::service_management::ServiceManagement;
 use anyhow::anyhow;
+use dashmap::try_result::TryResult;
+use dashmap::DashMap;
 use nexsock_db::prelude::{
     Service, ServiceConfig, ServiceConfigRepository, ServiceDependencyRepository, ServiceRepository,
 };
@@ -9,17 +12,15 @@ use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
 use port_selector::is_free_tcp;
-use std::collections::HashMap;
+use rayon::prelude::*;
 use std::fmt::Debug;
 use std::sync::{Arc, LazyLock};
 use tokio::sync::broadcast;
-use tokio::sync::RwLock;
-
-use super::ServiceProcess;
+use tracing::{debug, warn};
 
 #[derive(Debug)]
 pub struct ServiceManager2 {
-    running_services: Arc<RwLock<HashMap<i64, ServiceProcess>>>,
+    running_services: Arc<DashMap<i64, ServiceProcess>>,
     shutdown_tx: broadcast::Sender<()>,
     service_repository: ServiceRepository<'static>,
     dependency_repository: ServiceDependencyRepository<'static>,
@@ -36,7 +37,7 @@ impl Default for ServiceManager2 {
     fn default() -> Self {
         let (shutdown_tx, _) = broadcast::channel(1);
         Self {
-            running_services: Arc::new(RwLock::new(HashMap::new())),
+            running_services: Arc::new(DashMap::new()),
             shutdown_tx,
             service_repository: ServiceRepository::new_from_static(),
             dependency_repository: ServiceDependencyRepository::new_from_static(),
@@ -46,7 +47,7 @@ impl Default for ServiceManager2 {
 }
 
 impl ProcessManager for ServiceManager2 {
-    fn running_services(&self) -> &Arc<RwLock<HashMap<i64, ServiceProcess>>> {
+    fn running_services(&self) -> &Arc<DashMap<i64, ServiceProcess>> {
         &self.running_services
     }
 
@@ -74,7 +75,7 @@ impl ServiceManagement for ServiceManager2 {
 
         // Check current state
         if matches!(
-            self.get_service_state(service_id).await,
+            self.get_service_state(service_id),
             ServiceState::Running
         ) {
             return Err(anyhow!("Service is already running").into());
@@ -94,8 +95,11 @@ impl ServiceManagement for ServiceManager2 {
 
         let path = service.service.repo_path;
 
-        self.spawn_service_process(service_id, path, &run_command, env_vars.clone())
-            .await?;
+        let service_process = self.spawn_service_process(service_id, path, &run_command, env_vars.clone()).await?;
+        
+        self.running_services.insert(service_id, service_process);
+        
+        debug!(service_manager = ?self);
 
         Ok(())
     }
@@ -115,9 +119,38 @@ impl ServiceManagement for ServiceManager2 {
 
     #[tracing::instrument]
     async fn restart(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
-        self.stop(&payload.service).await?;
+        let service = self.service_repository.get_by_service_ref(&payload.service).await?;
 
-        self.start(payload).await?;
+        if let Some(service) = service {
+            // Don't hold a reference to the process during stop/start
+            let env_vars = {
+                // Scope the reference to ensure it's dropped before stop is called
+                match self.running_services.try_get(&service.id) {
+                    TryResult::Present(process) => {
+                        if payload.env_vars.is_empty() && !process.env_vars.is_empty() {
+                            process.env_vars.clone()
+                        } else {
+                            payload.env_vars.clone()
+                        }
+                    },
+                    TryResult::Absent => {
+                        warn!(service = %payload.service, "Service is not running");
+                        return Ok(())
+                    },
+                    TryResult::Locked => return Err(crate::Error::LockError)
+                }
+            };
+
+            // Create payload with resolved env_vars
+            let payload = StartServicePayload {
+                service: payload.service.clone(),
+                env_vars
+            };
+
+            // Now stop and start without holding any references
+            self.stop(&payload.service).await?;
+            self.start(&payload).await?;
+        }
 
         Ok(())
     }
@@ -166,7 +199,7 @@ impl ServiceManagement for ServiceManager2 {
         let config_id = service.config_id;
 
         // First stop if running
-        match self.get_service_state(service_id).await {
+        match self.get_service_state(service_id) {
             ServiceState::Running | ServiceState::Starting => {
                 self.kill_service_process(service_id).await?;
             }
@@ -201,13 +234,23 @@ impl ServiceManagement for ServiceManager2 {
 
     #[tracing::instrument]
     async fn get_status(&self, payload: &ServiceRef) -> crate::error::Result<ServiceStatus> {
-        let service_status = self.service_repository.get_detailed_by_ref(payload).await?;
+        let mut service_status = self.service_repository.get_status(payload).await?;
+        
+        service_status.state = self.get_service_state(service_status.id);
 
-        Ok(service_status.into())
+        Ok(service_status)
     }
 
     #[tracing::instrument]
     async fn get_all(&self) -> crate::error::Result<ListServicesResponse> {
-        Ok(self.service_repository.get_all_with_dependencies().await?)
+        let mut services = self.service_repository.get_all_with_dependencies().await?;
+        
+        services.services.par_iter_mut().for_each(|service| {
+            let state = self.get_service_state(service.id);
+            
+            service.state = state;
+        });
+        
+        Ok(services)
     }
 }

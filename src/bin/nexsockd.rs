@@ -1,6 +1,6 @@
 use clap::Parser;
-use std::time::Duration;
 use nexsockd::tracing;
+use std::time::Duration;
 
 /// Daemon service for managing other services on the running machine.
 ///

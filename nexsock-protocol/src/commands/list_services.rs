@@ -57,6 +57,7 @@ impl<T: Into<ServiceInfo>> FromIterator<T> for ListServicesResponse {
     Decode,
 )]
 pub struct ServiceInfo {
+    pub id: i64,
     pub name: String,
     pub state: ServiceState,
     pub port: i64,

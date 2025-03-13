@@ -1,8 +1,7 @@
-use std::borrow::Cow;
 use nexsock_config::NexsockConfigError;
+use std::borrow::Cow;
 use thiserror::Error;
 use tokio::task::JoinError;
-use tracing::log;
 use tracing_core::dispatcher::SetGlobalDefaultError;
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
@@ -41,7 +40,9 @@ pub enum Error {
     #[error(transparent)]
     OneShotSend(#[from] oneshot::SendError<()>),
     #[error(transparent)]
-    JoinHandle(#[from] JoinError)
+    JoinHandle(#[from] JoinError),
+    #[error("Would deadlock")]
+    LockError
 }
 
 impl Error {
@@ -62,6 +63,7 @@ impl Error {
             Error::InvalidSocket { .. } => 12,
             Error::OneShotSend(_) => 13,
             Error::JoinHandle(_) => 14,
+            _ => 0xFFFF
         }
     }
 }

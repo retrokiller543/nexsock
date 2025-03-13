@@ -57,6 +57,7 @@ impl GitService for Service {
 impl From<Service> for ServiceInfo {
     fn from(value: Service) -> ServiceInfo {
         ServiceInfo {
+            id: 0,
             name: value.record.name,
             state: value.record.status,
             port: value.record.port,

@@ -1,19 +1,17 @@
-use std::hint::spin_loop;
-use std::sync::Arc;
 use crate::error::Result;
 use crate::statics::SERVICE_MANAGER;
 use crate::traits::VecExt;
 use crate::{daemon::Daemon, traits::process_manager::ProcessManager};
-use nexsock_config::{NexsockConfig, NEXSOCK_CONFIG};
-use std::time::Duration;
 use futures::future::join_all;
-use futures::{select_biased, TryFutureExt};
+use nexsock_config::{NexsockConfig, NEXSOCK_CONFIG};
 use parking_lot::Mutex;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::signal::ctrl_c;
 use tokio::task::JoinHandle;
 use tokio::time::{sleep, Instant};
 use tokio::{join, select, task, try_join};
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 /// Server implementation for the Nexsock daemon.
 ///
@@ -110,6 +108,11 @@ impl DaemonServer {
 
     async fn cleanup_completed_connections(connections: &Arc<Mutex<Vec<JoinHandle<()>>>>) -> Result<()> {
         let mut connections_guard = connections.lock_arc();
+        
+        if connections_guard.is_empty() {
+            return Ok(());
+        }
+        
         let mut i = 0;
         let mut cleaned = 0;
 
