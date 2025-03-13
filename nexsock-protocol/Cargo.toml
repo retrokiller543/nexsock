@@ -9,7 +9,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-nexsock-protocol-core.workspace = true
+# nexsock-protocol-core.workspace = true
 
 binrw = { version = "0.14.1" }
 tokio = { version = "1.43", features = ["full"] }
