@@ -80,29 +80,7 @@ impl DaemonServer {
             cleanup_interval,
         })
     }
-
-    /*async fn cleanup_completed_connections(&mut self) {
-        let mut i = 0;
-        let mut cleaned = 0;
-
-        while i < self.connections.len() {
-            if self.connections[i].is_finished() {
-                if let Some(handle) = self.connections.try_swap_remove(i) {
-                    cleaned += 1;
-                    if let Err(e) = handle.await {
-                        error!(error = ?e, "Connection handler error");
-                    }
-                } else {
-                    error!("Failed to remove the connection")
-                }
-            } else {
-                i += 1;
-            }
-        }
-
-        info!("Cleaned up completed connections. Active connections: {}, cleared {cleaned} connections", self.connections.len());
-    }*/
-
+    
     #[inline]
     pub async fn shutdown(&mut self) -> Result<()> {
         self.complete_connections().await?;

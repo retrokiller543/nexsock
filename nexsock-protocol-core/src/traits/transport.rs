@@ -8,4 +8,6 @@ pub trait Transport {
 
     /// Receive a frame from the transport
     async fn receive_frame(&mut self) -> io::Result<Frame>;
+
+    async fn process_message(&mut self) -> ProtocolResult<()>;
 }

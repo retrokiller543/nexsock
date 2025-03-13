@@ -10,7 +10,7 @@ use tokio::pin;
 use crate::prelude::*;
 
 /// A trait for extracting typed data from a request frame
-pub trait FromRequest: Sized {
+pub trait FromRequest: Sized + Message {
     type Error: Into<ProtocolError> + std::error::Error;
 
     /// Extract and convert the payload into the concrete type
@@ -18,7 +18,7 @@ pub trait FromRequest: Sized {
 }
 
 /// Default FromRequest implementation for BinaryMessage types
-impl<T: BinaryMessage> FromRequest for T {
+impl<T: Message> FromRequest for T {
     type Error = ProtocolError;
 
     fn from_request(payload: Bytes) -> Result<Self, Self::Error> {
@@ -54,8 +54,8 @@ pub struct HandlerFunc<F, Req, Res> {
 impl<F, Req, Res, Fut> HandlerFunc<F, Req, Res>
 where
     F: Fn(Req) -> Fut,
-    Req: BinaryMessage,
-    Res: BinaryMessage,
+    Req: Message,
+    Res: Message,
     Fut: Future<Output = Result<Res, ProtocolError>>,
 {
     pub fn new(f: F, req_type: u16, res_type: u16) -> Self {
@@ -72,8 +72,8 @@ where
 impl<F, Req, Res, Fut> Handler<Req, Res> for HandlerFunc<F, Req, Res>
 where
     F: Fn(Req) -> Fut,
-    Req: BinaryMessage,
-    Res: BinaryMessage,
+    Req: Message,
+    Res: Message,
     Fut: Future<Output = Result<Res, ProtocolError>>,
 {
     type Future = Fut;
@@ -139,7 +139,7 @@ impl<'a> MessageRegistry<'a> {
     where
         H: Handler<Req, Res> + Send + Sync + 'static,
         Req: FromRequest,
-        Res: BinaryMessage,
+        Res: Message,
         H::Future: Future<Output = Result<Res, ProtocolError>> + Send + 'a,
     {
         let message_type = handler.message_type();
@@ -200,8 +200,8 @@ impl<'a> MessageRegistry<'a> {
 pub trait HandlerExt<F, Req, Res, Fut>
 where
     F: Fn(Req) -> Fut,
-    Req: BinaryMessage + FromRequest,
-    Res: BinaryMessage,
+    Req: Message + FromRequest,
+    Res: Message,
     Fut: Future<Output = Result<Res, ProtocolError>>,
 {
     fn handler(self, req_type: u16, res_type: u16) -> HandlerFunc<F, Req, Res>;
@@ -210,8 +210,8 @@ where
 impl<F, Req, Res, Fut> HandlerExt<F, Req, Res, Fut> for F
 where
     F: Fn(Req) -> Fut,
-    Req: BinaryMessage + FromRequest,
-    Res: BinaryMessage,
+    Req: Message + FromRequest,
+    Res: Message,
     Fut: Future<Output = Result<Res, ProtocolError>>,
 {
     fn handler(self, req_type: u16, res_type: u16) -> HandlerFunc<F, Req, Res> {
