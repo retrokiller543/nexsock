@@ -33,8 +33,6 @@ pub mod server;
 pub use connection::*;
 use nexsock_config::NEXSOCK_CONFIG;
 use nexsock_protocol::commands::list_services::{ListServicesCommand, ListServicesResponse};
-use nexsock_protocol::{ListServices, NexsockServerBuilder};
-use nexsock_protocol_core::prelude::*;
 pub use server::*;
 
 /// The main daemon structure responsible for handling client connections and service management.
@@ -109,28 +107,11 @@ impl Daemon {
             .context("failed to load plugins")?;
 
         let lua_plugin_manager = Arc::new(lua_plugin_manager);
-        
-        let mut server = NexsockServerBuilder::new()
-            .listener(Self::get_listener_new(config.socket()).await?);
-        
-        Self::register_handlers(&mut server);
 
         Ok(Self {
             listener,
             lua_plugin_manager,
         })
-    }
-    
-    fn register_handlers(builder: &mut NexsockServerBuilder) {
-        pub struct ListServicesHandler;
-
-        impl ListServices for ListServicesHandler {
-            async fn list_services(_: ListServicesCommand) -> ProtocolResult<ListServicesResponse> {
-                todo!()
-            }
-        }
-        
-        builder.register(ListServicesHandler::list_services.handler(ListServicesCommand::MESSAGE_TYPE_ID, ListServicesResponse::MESSAGE_TYPE_ID));
     }
     
     #[cfg(unix)]

@@ -9,7 +9,7 @@ members = [
     "nexsock-example-plugin",
     "nexsock-plugins",
     "nexsock-protocol",
-    "nexsock-protocol-core",
+    #"nexsock-protocol-core",
     "nexsock-utils",
     "nexsock-web",
     "nexsock-db/migration"
@@ -43,7 +43,7 @@ eula = false
 nexsock-abi = { path = "nexsock-abi" }
 nexsock-plugins = { path = "nexsock-plugins" }
 nexsock-protocol = { path = "nexsock-protocol" }
-nexsock-protocol-core = { path = "nexsock-protocol-core" }
+# nexsock-protocol-core = { path = "nexsock-protocol-core" }
 nexsock-client = { path = "nexsock-client" }
 nexsock-config = { path = "nexsock-config" }
 nexsock-utils = { path = "nexsock-utils" }
@@ -83,7 +83,6 @@ serde = { version = "1.0.215", features = ["derive"] }
 paste = "1.0.15"
 futures = "0.3.31"
 nexsock-protocol = { workspace = true }
-nexsock-protocol-core = { workspace = true }
 nexsock-config = { workspace = true, features = ["static-config"] }
 nexsock-utils = { workspace = true }
 nexsock-db.workspace = true
