@@ -232,6 +232,7 @@ impl ServiceRepository<'_> {
                 > 0;
 
             let service_info = nexsock_protocol::commands::list_services::ServiceInfo {
+                id: service.id,
                 name: service.name,
                 state: service.status.into(),
                 port: service.port,

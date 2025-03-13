@@ -32,7 +32,6 @@ pub mod server;
 
 pub use connection::*;
 use nexsock_config::NEXSOCK_CONFIG;
-use nexsock_protocol::commands::list_services::{ListServicesCommand, ListServicesResponse};
 pub use server::*;
 
 /// The main daemon structure responsible for handling client connections and service management.
@@ -141,22 +140,6 @@ impl Daemon {
         let listener = Arc::new(Listener::bind(&bind_addr)?);
         #[cfg(windows)]
         let listener = Arc::new(Listener::bind(&bind_addr).await?);
-
-        Ok(listener)
-    }
-
-    async fn get_listener_new(socket_ref: &SocketRef) -> Result<Listener> {
-        #[cfg(unix)]
-        Self::clear_old_socket(socket_ref)?;
-
-        let bind_addr = socket_ref.bind_address()?;
-
-        info!("Listening on: {}", bind_addr);
-
-        #[cfg(unix)]
-        let listener = Listener::bind(&bind_addr)?;
-        #[cfg(windows)]
-        let listener = Listener::bind(&bind_addr).await?;
 
         Ok(listener)
     }

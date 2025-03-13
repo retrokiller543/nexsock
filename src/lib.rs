@@ -12,18 +12,17 @@ mod test;
 pub mod traits;
 
 use crate::daemon::server::DaemonServer;
-use nexsock_config::{NexsockConfig, NEXSOCK_CONFIG, PROJECT_DIRECTORIES};
+use futures::TryFutureExt;
 use nexsock_db::initialize_db;
 use prelude::*;
 use std::time::Duration;
-use futures::TryFutureExt;
 use tokio::time::timeout;
 use tokio::try_join;
-use tosic_utils::logging::{env_filter, init_tracing_layered, FilterConfig, StdoutLayerConfig, TracingSubscriberBuilder};
-use tracing::{debug, debug_span, error, info};
+use tosic_utils::logging::{FilterConfig, StdoutLayerConfig, TracingSubscriberBuilder};
+use tracing::{error, info};
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::EnvFilter;
 
 fn tracing_std_layer() -> StdoutLayerConfig {
     StdoutLayerConfig::default()
