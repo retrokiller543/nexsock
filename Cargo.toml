@@ -1,5 +1,19 @@
 [workspace]
-members = ['.', 'nexsock', "nexsock-abi", "nexsock-client", "nexsock-config", "nexsock-db", "nexsock-example-plugin", "nexsock-plugins", "nexsock-protocol", "nexsock-utils", "nexsock-web", "nexsock-db/migration"]
+members = [
+    '.',
+    'nexsock',
+    "nexsock-abi",
+    "nexsock-client",
+    "nexsock-config",
+    "nexsock-db",
+    "nexsock-example-plugin",
+    "nexsock-plugins",
+    "nexsock-protocol",
+    "nexsock-protocol-core",
+    "nexsock-utils",
+    "nexsock-web",
+    "nexsock-db/migration"
+]
 
 [workspace.package]
 version = "1.0.0-7"
