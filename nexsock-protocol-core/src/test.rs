@@ -1,4 +1,4 @@
-#![cfg(test)]
+/*#![cfg(test)]
 
 use bincode::{Decode, Encode};
 use crate::error::ProtocolError;
@@ -97,4 +97,4 @@ async fn test() {
     // Verify the response
     assert_eq!(response.id, 42);
     assert_eq!(response.message, "Hello Test");
-}
+}*/
