@@ -1,16 +1,13 @@
-use crate::cli::{Cli, Commands, ToolCommands};
-use crate::commands::create_command;
 use anyhow::{bail, Context};
 use clap::Parser;
+use nexsock::cli::{Cli, Commands, ToolCommands};
+use nexsock::commands::create_command;
 use nexsock_client::Client;
 use nexsock_config::NexsockConfig;
 use nexsock_protocol::commands::{CommandPayload, ServiceCommand};
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tracing::warn;
-
-mod cli;
-mod commands;
 
 pub fn handle_tool_commands(command: ToolCommands) -> anyhow::Result<()> {
     warn!("Downloading and managing nexsock tools is currently unsupported");

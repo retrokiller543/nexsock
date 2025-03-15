@@ -4,10 +4,9 @@ mod config_manager;
 pub mod daemon;
 mod dependency_manager;
 pub mod error;
-mod models;
+//mod models;
 mod plugins;
 pub mod prelude;
-//mod repositories;
 mod service_manager;
 mod statics;
 mod test;
@@ -24,6 +23,7 @@ use tosic_utils::logging::{FilterConfig, StdoutLayerConfig, TracingSubscriberBui
 use tracing::{error, info};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::fmt::layer;
 use tracing_subscriber::EnvFilter;
 
 fn tracing_std_layer() -> StdoutLayerConfig {
@@ -41,11 +41,27 @@ fn tracing_env_filter() -> EnvFilter {
 }
 
 pub fn tracing() -> Result<Vec<WorkerGuard>> {
+    let (log_writer, guard) = tracing_appender::non_blocking(std::io::stdout());
+    
     TracingSubscriberBuilder::new()
-        .with_stdout(Some(tracing_std_layer()))
         .with_filter(tracing_env_filter())
+        .with_layer(
+            layer()
+                .with_writer(log_writer)
+                .with_file(false)
+                .with_thread_names(true)
+                //.with_thread_ids(true)
+                .with_line_number(true)
+                .with_level(true)
+                .with_span_events(FmtSpan::CLOSE)
+                .compact()
+        )
         .init()
         .map_err(Into::into)
+        .map(|mut guards| { 
+            guards.push(guard);
+            guards
+        })
 }
 
 #[tracing::instrument(err)]

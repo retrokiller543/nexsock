@@ -21,6 +21,7 @@
       <sourceFolder url="file://$MODULE_DIR$/nexsock-db/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/nexsock-db/migration/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/nexsock-protocol-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/nexsock/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
