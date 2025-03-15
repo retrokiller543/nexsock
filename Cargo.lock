@@ -2325,6 +2325,7 @@ dependencies = [
  "nexsock-config",
  "nexsock-protocol",
  "thiserror 2.0.11",
+ "tikv-jemallocator",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -2453,6 +2454,7 @@ dependencies = [
  "axum 0.8.1",
  "axum-response-cache",
  "bincode",
+ "cfg-if",
  "deadpool",
  "derive_more",
  "directories",
@@ -2465,6 +2467,7 @@ dependencies = [
  "serde",
  "tera",
  "thiserror 2.0.11",
+ "tikv-jemallocator",
  "tokio",
  "tosic-utils",
  "tower-http",
@@ -2499,10 +2502,9 @@ dependencies = [
  "port-selector",
  "rayon",
  "serde",
- "sqlx",
- "sqlx-utils",
  "tempfile",
  "thiserror 2.0.11",
+ "tikv-jemallocator",
  "tokio",
  "tokio_util_watchdog",
  "tosic-utils",
@@ -2979,30 +2981,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edce586971a4dfaa28950c6f18ed55e0406c1ab88bbce2c6f6293a7aaba73d35"
 dependencies = [
  "toml_edit",
-]
-
-[[package]]
-name = "proc-macro-error"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
-dependencies = [
- "proc-macro-error-attr",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
-dependencies = [
- "proc-macro2",
- "quote",
- "version_check",
 ]
 
 [[package]]
@@ -4061,32 +4039,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sqlx-utils"
-version = "1.0.0-2"
-source = "git+https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git#c7d7281510d6a09b12089be2b5843182bd490a20"
-dependencies = [
- "futures",
- "paste",
- "sqlx",
- "sqlx-utils-macro",
- "thiserror 2.0.11",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "sqlx-utils-macro"
-version = "1.0.0-2"
-source = "git+https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git#c7d7281510d6a09b12089be2b5843182bd490a20"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn 2.0.98",
- "syn_derive",
-]
-
-[[package]]
 name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4147,18 +4099,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "syn_derive"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdb066a04799e45f5d582e8fc6ec8e6d6896040d00898eb4e6a835196815b219"
-dependencies = [
- "proc-macro-error2",
- "proc-macro2",
- "quote",
- "syn 2.0.98",
 ]
 
 [[package]]
@@ -4268,6 +4208,26 @@ checksum = "8b9ef9bad013ada3808854ceac7b46812a6465ba368859a37e2100283d2d719c"
 dependencies = [
  "cfg-if",
  "once_cell",
+]
+
+[[package]]
+name = "tikv-jemalloc-sys"
+version = "0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd3c60906412afa9c2b5b5a48ca6a5abe5736aec9eb48ad05037a677e52e4e2d"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
+name = "tikv-jemallocator"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cec5ff18518d81584f477e9bfdf957f5bb0979b0bac3af4ca30b5b3ae2d2865"
+dependencies = [
+ "libc",
+ "tikv-jemalloc-sys",
 ]
 
 [[package]]

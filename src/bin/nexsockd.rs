@@ -2,7 +2,12 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use clap::Parser;
 use nexsockd::tracing;
 use std::time::Duration;
+#[cfg(feature = "watchdog")]
 use tokio_util_watchdog::Watchdog;
+
+#[cfg(feature = "jemalloc")]
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 /// Daemon service for managing other services on the running machine.
 ///
@@ -19,7 +24,10 @@ pub struct App {
 }
 
 fn main() -> nexsockd::prelude::Result<()> {
-    dotenvy::dotenv()?;
+    //setup_periodic_heap_dumps();
+    
+    // We dont really care to much if the env file is loaded or not
+    dotenvy::dotenv().ok();
     let _guards = tracing()?;
     let app = App::parse();
     
@@ -32,6 +40,7 @@ fn main() -> nexsockd::prelude::Result<()> {
         })
         .build()?
         .block_on(async {
+            #[cfg(feature = "watchdog")]
             let _watchdog = Watchdog::builder().thread_name("nexsockd-watchdog").build();
 
             if app.dry_run {

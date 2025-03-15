@@ -12,6 +12,10 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::time::{Duration, Instant};
 
+#[cfg(feature = "jemalloc")]
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 async fn execute_request<C>(
     pool: &Pool<ClientManager>,
     payload: C,

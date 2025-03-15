@@ -129,6 +129,7 @@ async fn kill_service_process<T: ProcessManager + ?Sized>(
                 return Err(anyhow!("Failed to cleanup process {}", service_id).into());
             } else {
                 debug!("Successfully cleaned up service");
+                services.shrink_to_fit();
             }
         }
     }
@@ -227,9 +228,9 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
         .arg("-c")
         .arg(run_command)
         .current_dir(path)
-        .stdout(Stdio::piped())
+        /*.stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .stdin(Stdio::piped())
+        .stdin(Stdio::piped())*/
         .kill_on_drop(true);
 
     #[cfg(unix)]
@@ -258,7 +259,7 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
         stdout,
         stdin,
         stderr,
-        stdout_logs: Arc::new(Mutex::new(VecDeque::with_capacity(10_000))),
+        stdout_logs: Arc::new(Mutex::new(VecDeque::with_capacity(10_00))),
         log_task_handle: None,
     };
 

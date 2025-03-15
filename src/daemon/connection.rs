@@ -47,8 +47,8 @@ impl Connection<OwnedReadHalf, OwnedWriteHalf> {
     pub fn new(stream: Stream, lua_plugin_manager: Arc<LuaPluginManager>) -> Self {
         let (reader, writer) = stream.into_split();
 
-        let reader = BufReader::with_capacity(32 * 1024, reader);
-        let writer = BufWriter::with_capacity(32 * 1024, writer);
+        let reader = BufReader::with_capacity(8 * 1024, reader);
+        let writer = BufWriter::with_capacity(8 * 1024, writer);
         let protocol = Protocol::default();
 
         Self {

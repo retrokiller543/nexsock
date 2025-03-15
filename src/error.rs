@@ -8,12 +8,12 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error(transparent)]
+    /*#[error(transparent)]
     Sqlx(#[from] sqlx::Error),
     #[error(transparent)]
     SqlxUtils(#[from] sqlx_utils::Error),
     #[error(transparent)]
-    Migration(#[from] sqlx::migrate::MigrateError),
+    Migration(#[from] sqlx::migrate::MigrateError),*/
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
@@ -50,9 +50,9 @@ pub enum Error {
 impl Error {
     pub fn kind(&self) -> u32 {
         match self {
-            Error::Sqlx(_) => 1,
+            /*Error::Sqlx(_) => 1,
             Error::SqlxUtils(_) => 2,
-            Error::Migration(_) => 3,
+            Error::Migration(_) => 3,*/
             Error::Io(_) => 4,
             Error::Tracing(_) => 5,
             Error::Logging(_) => 6,
