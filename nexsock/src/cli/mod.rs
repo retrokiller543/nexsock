@@ -1,4 +1,7 @@
+mod concurrent;
+
 use clap::{Parser, Subcommand};
+pub use concurrent::*;
 use derive_more::IsVariant;
 use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
 use nexsock_protocol::commands::manage_service::ServiceRef;
@@ -14,7 +17,7 @@ pub struct Cli {
     /// Socket path to use to communicate with the daemon
     #[cfg(unix)]
     #[arg(short, long)]
-    pub(crate) socket: Option<PathBuf>,
+    pub socket: Option<PathBuf>,
 
     /// Tcp address to use to communicate with the daemon
     #[cfg(windows)]
@@ -22,7 +25,7 @@ pub struct Cli {
     pub(crate) address: Option<SocketAddr>,
 
     #[command(subcommand)]
-    pub(crate) command: Commands,
+    pub command: Commands,
 }
 
 #[derive(Subcommand, IsVariant)]

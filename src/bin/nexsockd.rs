@@ -1,6 +1,8 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use clap::Parser;
 use nexsockd::tracing;
 use std::time::Duration;
+use tokio_util_watchdog::Watchdog;
 
 /// Daemon service for managing other services on the running machine.
 ///
@@ -16,16 +18,27 @@ pub struct App {
     timeout: u64,
 }
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> nexsockd::prelude::Result<()> {
+fn main() -> nexsockd::prelude::Result<()> {
+    dotenvy::dotenv()?;
     let _guards = tracing()?;
-
     let app = App::parse();
+    
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .thread_name_fn(|| {
+            static ATOMIC_ID: AtomicUsize = AtomicUsize::new(0);
+            let id = ATOMIC_ID.fetch_add(1, Ordering::SeqCst);
+            format!("nexsockd-worker-{}", id)
+        })
+        .build()?
+        .block_on(async {
+            let _watchdog = Watchdog::builder().thread_name("nexsockd-watchdog").build();
 
-    if app.dry_run {
-        println!("[+] dry-run");
-        nexsockd::timed_run_daemon(Duration::from_secs(app.timeout)).await
-    } else {
-        nexsockd::run_daemon().await
-    }
+            if app.dry_run {
+                println!("[+] dry-run");
+                nexsockd::timed_run_daemon(Duration::from_secs(app.timeout)).await
+            } else {
+                nexsockd::run_daemon().await
+            }
+        })
 }

@@ -69,9 +69,10 @@ sea-orm = { version = "1.1", features = [
 ]}
 
 [dependencies]
+dotenvy = "0.15.7"
 sqlx-utils = { workspace = true }
 sqlx = { workspace = true }
-tokio = { version = "1.43", features = ["full"] }
+tokio = { version = "1.43", features = ["full", "tracing"] }
 thiserror = "2.0.11"
 tempfile = "3.15.0"
 tracing.workspace = true
@@ -100,7 +101,10 @@ parking_lot = { version = "0.12.3", features = ["send_guard", "arc_lock"] }
 dashmap = { version = "6.1.0", features = ["rayon"] }
 rayon = "1.10.0"
 chrono = "0.4.39"
+tokio_util_watchdog = "0.1.2"
 
+[dev-dependencies]
+nexsock-client.workspace = true
 
 [build-dependencies]
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }

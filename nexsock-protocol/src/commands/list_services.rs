@@ -28,6 +28,7 @@ pub struct ListServicesResponse {
 }
 
 service_command! {
+    #[derive(Debug, Clone, Copy)]
     pub struct ListServicesCommand<_, ListServicesResponse> = ListServices
 }
 

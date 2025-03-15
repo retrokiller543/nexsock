@@ -29,6 +29,10 @@ async fn main() -> sqlx_utils::Result<()> {
         .run(&pool)
         .await
         .expect("Failed to run migrations");
+    
+    /*if cfg!(not(debug_assertions)) {
+        println!("cargo:rustc-cfg=feature=\"tracing/\"");
+    }*/
 
     Ok(())
 }

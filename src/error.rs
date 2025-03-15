@@ -43,6 +43,8 @@ pub enum Error {
     JoinHandle(#[from] JoinError),
     #[error("Would deadlock")]
     LockError,
+    #[error(transparent)]
+    Dotenv(#[from] dotenvy::Error),
 }
 
 impl Error {
@@ -60,9 +62,7 @@ impl Error {
             Error::ExpectedPayload => 9,
             Error::FailedToGetPayload => 10,
             Error::Config(_) => 11,
-            Error::InvalidSocket { .. } => 12,
             Error::OneShotSend(_) => 13,
-            Error::JoinHandle(_) => 14,
             _ => 0xFFFF,
         }
     }

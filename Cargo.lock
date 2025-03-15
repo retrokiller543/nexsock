@@ -2320,6 +2320,7 @@ dependencies = [
  "bincode",
  "clap",
  "derive_more",
+ "futures",
  "nexsock-client",
  "nexsock-config",
  "nexsock-protocol",
@@ -2482,9 +2483,11 @@ dependencies = [
  "clap",
  "command-group",
  "dashmap",
+ "dotenvy",
  "futures",
  "git2",
  "nexsock-abi",
+ "nexsock-client",
  "nexsock-config",
  "nexsock-db",
  "nexsock-plugins",
@@ -2501,6 +2504,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.11",
  "tokio",
+ "tokio_util_watchdog",
  "tosic-utils",
  "tracing",
  "tracing-appender",
@@ -4346,6 +4350,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
+ "tracing",
  "windows-sys 0.52.0",
 ]
 
@@ -4382,6 +4387,16 @@ dependencies = [
  "futures-sink",
  "pin-project-lite",
  "tokio",
+]
+
+[[package]]
+name = "tokio_util_watchdog"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "766bc522acb325ed97b56261ad8e0b76fd1a677aa267a00f9d76bc1d8cb9375a"
+dependencies = [
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
