@@ -36,8 +36,13 @@ tosic-utils = { workspace = true }
 axum-response-cache = "0.2.0"
 futures = "0.3.31"
 deadpool = "0.12.1"
+tikv-jemallocator = { workspace = true, optional = true }
+cfg-if = "1.0.0"
 
 [build-dependencies]
 directories = "6.0.0"
 anyhow = "1.0.95"
 
+[features]
+default = []
+jemalloc = ["tikv-jemallocator"]

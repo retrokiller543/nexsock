@@ -9,6 +9,10 @@ use nexsock_protocol::commands::{CommandPayload, ServiceCommand};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tracing::warn;
 
+#[cfg(feature = "jemalloc")]
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 pub fn handle_tool_commands(command: ToolCommands) -> anyhow::Result<()> {
     warn!("Downloading and managing nexsock tools is currently unsupported");
     match command {
