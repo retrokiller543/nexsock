@@ -52,8 +52,8 @@ nexsock-db = { path = "nexsock-db" }
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 bincode = { version = "2.0.0-rc.3" }
-# tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], registry = "gitea" }
-tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], path = "../tosic-utils" }
+tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/tosic-utils.git" }
+#tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], path = "../tosic-utils" }
 savefile = { version = "0.18.5", features = ["derive", "serde"] }
 savefile-derive = { version = "0.18.5" }
 savefile-abi = { version = "0.18.5" }
