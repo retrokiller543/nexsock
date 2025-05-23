@@ -20,7 +20,7 @@ static DB_CONNECTION: OnceLock<DatabaseConnection> = OnceLock::new();
 pub async fn initialize_db(run_migrations: bool) -> anyhow::Result<&'static DatabaseConnection> {
     let url = NEXSOCK_CONFIG.database().path.display().to_string();
 
-    debug!(%url);
+    debug!(database_url = %url);
 
     let mut opt = ConnectOptions::from(&url);
 
