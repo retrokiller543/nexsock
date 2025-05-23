@@ -17,18 +17,25 @@ use serde::{Deserialize, Serialize};
     Serialize,
     Deserialize,
 )]
+/// Represents a dependency relationship between two services.
 #[sea_orm(table_name = "service_dependency")]
 #[sea_orm(entity = "Entity")]
 pub struct Model {
+    /// The unique identifier for the dependency record.
     #[sea_orm(primary_key)]
     pub id: i64,
+    /// The ID of the service that has the dependency.
     pub service_id: i64,
+    /// The ID of the service that is the dependency.
     pub dependent_service_id: i64,
+    /// Indicates whether a tunnel is enabled for this dependency.
     pub tunnel_enabled: bool,
 }
 
+/// Defines the relationships for the `ServiceDependency` entity.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    /// Defines a "belongs_to" relationship with the `Service` entity, representing the parent service.
     #[sea_orm(
         belongs_to = "Service",
         from = "Column::ServiceId",
@@ -37,6 +44,7 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     ParentService,
+    /// Defines a "belongs_to" relationship with the `Service` entity, representing the dependent service.
     #[sea_orm(
         belongs_to = "Service",
         from = "Column::DependentServiceId",
@@ -68,6 +76,16 @@ impl From<JoinedDependency> for DependencyInfo {
 
 // Helper for creating a new model
 impl JoinedDependency {
+    /// Creates a new `JoinedDependency` instance.
+    ///
+    /// Note: This constructor initializes fields like `name`, `repo_url`, etc., to default values.
+    /// These are expected to be populated from a database query when fetching actual dependency details.
+    ///
+    /// # Arguments
+    ///
+    /// * `parent_service_id` - The ID of the service that has this dependency.
+    /// * `dependent_service_id` - The ID of the service that is the dependency.
+    /// * `tunnel_enabled` - Indicates whether a tunnel is enabled for this dependency.
     pub fn new(parent_service_id: i64, dependent_service_id: i64, tunnel_enabled: bool) -> Self {
         Self {
             id: 0,

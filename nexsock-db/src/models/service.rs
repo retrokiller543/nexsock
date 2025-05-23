@@ -9,25 +9,42 @@ use sqlx::Type;
 
 use crate::models::prelude::*;
 
+/// Represents a service managed by nexsock.
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, DerivePartialModel, Eq)]
 #[sea_orm(table_name = "service")]
 #[sea_orm(entity = "Entity")]
 pub struct Model {
+    /// The unique identifier for the service.
     #[sea_orm(primary_key)]
     pub id: i64,
+    /// The foreign key referencing the service's configuration.
     pub config_id: Option<i64>,
+    /// The unique name of the service.
     #[sea_orm(column_type = "Text", unique)]
     pub name: String,
+    /// The URL of the service's repository.
     #[sea_orm(column_type = "Text")]
     pub repo_url: String,
+    /// The port number the service will run on.
     pub port: i64,
+    /// The path to the service's repository on the local filesystem.
     #[sea_orm(column_type = "Text")]
     pub repo_path: String,
+    /// The current status of the service.
     #[sea_orm(column_type = "Text")]
     pub status: ServiceStatus,
 }
 
 impl Model {
+    /// Creates a new `Model` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the service.
+    /// * `repo_url` - The URL of the service's repository.
+    /// * `port` - The port number the service will run on.
+    /// * `repo_path` - The path to the service's repository on the local filesystem.
+    /// * `config_id` - An optional foreign key referencing the service's configuration.
     pub fn new(
         name: String,
         repo_url: String,
@@ -46,6 +63,11 @@ impl Model {
         }
     }
 
+    /// Converts this `Model` into a `nexsock_protocol::commands::service_status::ServiceStatus`.
+    ///
+    /// # Arguments
+    ///
+    /// * `dependencies` - A vector of `JoinedDependency` instances representing the service's dependencies.
     pub fn to_status(
         &self,
         dependencies: Vec<JoinedDependency>,
@@ -63,8 +85,10 @@ impl Model {
     }
 }
 
+/// Defines the relationships between the `Service` entity and other entities.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    /// Defines a "belongs_to" relationship with the `ServiceConfig` entity.
     #[sea_orm(
         belongs_to = "super::service_config::Entity",
         from = "Column::ConfigId",
@@ -83,13 +107,19 @@ impl Related<super::service_config::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Represents the possible statuses of a service.
 #[derive(Clone, Copy, Default, Debug, Ord, PartialOrd, PartialEq, Eq, Hash, Type, Display)]
 pub enum ServiceStatus {
+    /// The service is in the process of starting.
     Starting,
+    /// The service is currently running.
     Running,
+    /// The service is in the process of stopping.
     Stopping,
+    /// The service is not running.
     #[default]
     Stopped,
+    /// The service has failed to start or has crashed.
     Failed,
 }
 
@@ -161,7 +191,14 @@ impl TryGetable for ServiceStatus {
             "Stopping" => Ok(ServiceStatus::Stopping),
             "Stopped" => Ok(ServiceStatus::Stopped),
             "Failed" => Ok(ServiceStatus::Failed),
-            _ => Ok(ServiceStatus::Stopped), // Default fallback
+            unknown => Err(TryGetError::DbErr(sea_orm::DbErr::TryIntoErr {
+                from: "String",
+                into: "ServiceStatus",
+                source: Box::new(anyhow::anyhow!(
+                    "Invalid service status string '{}' found in database. Expected one of: Starting, Running, Stopping, Stopped, Failed.",
+                    unknown
+                )),
+            })),
         }
     }
 }
