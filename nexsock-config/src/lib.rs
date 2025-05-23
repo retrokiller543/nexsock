@@ -32,7 +32,7 @@ pub static DATABASE_PATH: LazyLock<PathBuf> =
     LazyLock::new(|| get_database_path().expect("Unable to get database path"));
 
 fn get_database_path() -> anyhow::Result<PathBuf> {
-    let path = std::env::var("DATABASE_PATH")
+    let path = std::env::var("DATABASE_URL")
         .map(Into::into)
         .unwrap_or_else(|_| {
             let data_dir = PROJECT_DIRECTORIES.data_dir();
@@ -87,12 +87,18 @@ impl Display for SocketRef {
 #[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
 pub struct ServerConfig {
     pub cleanup_interval: u64,
+    pub socket: SocketRef,
 }
 
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
             cleanup_interval: 300,
+            socket: if cfg!(unix) {
+                SocketRef::Path(temp_dir().join("nexsock.sock"))
+            } else {
+                SocketRef::Port(50505)
+            },
         }
     }
 }
@@ -101,10 +107,12 @@ impl From<ServerConfig> for Value {
     fn from(val: ServerConfig) -> Self {
         Self::new(
             None,
-            ValueKind::Table(Map::from_iter(vec![(
-                "cleanup_interval".to_string(),
-                val.cleanup_interval.into(),
-            )])),
+            ValueKind::Table(Map::from_iter(
+            vec![
+                    ("cleanup_interval".to_string(), val.cleanup_interval.into()),
+                    ("socket".to_string(), val.socket.into()),
+                ]
+            )),
         )
     }
 }
@@ -137,6 +145,7 @@ impl Default for DatabaseConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Into, From, AsRef, AsMut)]
 pub struct AppConfig {
     pub socket: SocketRef,
+    pub log_str: String,
     pub server: ServerConfig,
     pub database: DatabaseConfig,
 }
@@ -149,6 +158,7 @@ impl Default for AppConfig {
             } else {
                 SocketRef::Port(50505)
             },
+            log_str: "info,sqlx=error,sea_orm=error,sea_orm_migration=error".to_string(),
             server: Default::default(),
             database: Default::default(),
         }
