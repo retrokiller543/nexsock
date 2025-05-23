@@ -54,6 +54,7 @@ sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-t
 bincode = { version = "2.0.0-rc.3" }
 tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/tosic-utils.git" }
 #tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], path = "../tosic-utils" }
+tokio = { version = "1.43", features = ["full", "tracing"] }
 savefile = { version = "0.18.5", features = ["derive", "serde"] }
 savefile-derive = { version = "0.18.5" }
 savefile-abi = { version = "0.18.5" }

@@ -5,7 +5,7 @@ mod tests {
     use crate::repositories::{ServiceDependencyRepository, ServiceRepository};
     use crate::tests::common::setup_in_memory_db;
 
-    async fn setup_services_for_test(repo: &ServiceRepository) -> (Service, Service) {
+    async fn setup_services_for_test(repo: &ServiceRepository<'_>) -> (Service, Service) {
         let mut service1 = Service::new(
             "test_service_dep_1".to_string(),
             "git://test.com/repo1.git".to_string(),

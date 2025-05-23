@@ -20,11 +20,12 @@ anyhow.workspace = true
 
 serde = "1.0"
 serde_json = "1.0"
+thiserror = "2.0.12"
 
 [features]
 default = []
 debug = ["anyhow/backtrace"]
 
 [dev-dependencies]
-sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-native-tls"] }
-sea-orm-macros = { version = "0.12" }
+sqlx = { version = "^0.8", features = ["sqlite", "runtime-tokio-native-tls"] }
+tokio.workspace = true

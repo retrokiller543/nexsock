@@ -49,3 +49,4 @@ pub fn get_db_connection() -> &'static DatabaseConnection {
 
 #[cfg(test)]
 pub mod tests;
+mod error;

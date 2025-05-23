@@ -1,5 +1,5 @@
 use crate::models::prelude::ServiceEntity;
-use nexsock_protocol::commands::config::ConfigFormat;
+pub(crate) use nexsock_protocol::commands::config::ConfigFormat;
 use nexsock_protocol::commands::service_status::ServiceConfig;
 use sea_orm::entity::prelude::*;
 

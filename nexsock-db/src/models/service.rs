@@ -6,7 +6,7 @@ use sea_orm::entity::prelude::*;
 use sea_orm::sea_query::{ArrayType, ValueType, ValueTypeErr};
 use sea_orm::{ColIdx, TryGetError, TryGetable};
 use sqlx::Type;
-
+use crate::error::DatabaseError;
 use crate::models::prelude::*;
 
 /// Represents a service managed by nexsock.
@@ -194,10 +194,11 @@ impl TryGetable for ServiceStatus {
             unknown => Err(TryGetError::DbErr(sea_orm::DbErr::TryIntoErr {
                 from: "String",
                 into: "ServiceStatus",
-                source: Box::new(anyhow::anyhow!(
-                    "Invalid service status string '{}' found in database. Expected one of: Starting, Running, Stopping, Stopped, Failed.",
-                    unknown
-                )),
+                source: Box::new(DatabaseError::UnknownEnumValue {
+                    expected: "Starting, Running, Stopping, Stopped, Failed".to_string(),
+                    value: unknown.to_string(),
+                    enum_name: "ServiceStatus".to_string(),
+                }),
             })),
         }
     }

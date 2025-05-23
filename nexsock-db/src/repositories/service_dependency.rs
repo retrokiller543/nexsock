@@ -1,6 +1,6 @@
 use crate::get_db_connection;
 use crate::models::prelude::*;
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use nexsock_protocol::commands::dependency::ListDependenciesResponse;
 use nexsock_protocol::commands::dependency_info::DependencyInfo;
 use sea_orm::{

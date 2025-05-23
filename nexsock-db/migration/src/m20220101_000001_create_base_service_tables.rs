@@ -138,7 +138,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .check(
                                 Expr::col(ServiceDependency::ServiceId)
-                                    .not_equals(Expr::col(ServiceDependency::DependentServiceId)),
+                                    .not_equals(ServiceDependency::DependentServiceId),
                             ),
                     )
                     .col(
@@ -147,7 +147,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .check(
                                 Expr::col(ServiceDependency::DependentServiceId)
-                                    .not_equals(Expr::col(ServiceDependency::ServiceId)),
+                                    .not_equals(ServiceDependency::ServiceId),
                             ),
                     )
                     .col(

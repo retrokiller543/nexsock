@@ -1,6 +1,6 @@
 use crate::get_db_connection;
 use crate::models::prelude::{ServiceConfig, ServiceConfigActiveModel, ServiceConfigEntity};
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, NotSet, Set};
 
 /// Repository for managing `ServiceConfig` entities in the database.
