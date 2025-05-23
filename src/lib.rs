@@ -1,64 +1,85 @@
+#![feature(string_from_utf8_lossy_owned)]
+
 mod config_manager;
 pub mod daemon;
 mod dependency_manager;
 pub mod error;
-mod models;
+//mod models;
 mod plugins;
 pub mod prelude;
-mod repositories;
 mod service_manager;
 mod statics;
 mod test;
 pub mod traits;
 
 use crate::daemon::server::DaemonServer;
-use crate::statics::DATABASE_PATH;
-use nexsock_config::{NexsockConfig, PROJECT_DIRECTORIES};
+use futures::TryFutureExt;
+use nexsock_db::initialize_db;
 use prelude::*;
-use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
-use sqlx_utils::pool::{get_db_pool, initialize_db_pool};
-use sqlx_utils::types::*;
 use std::time::Duration;
 use tokio::time::timeout;
-use tosic_utils::logging::init_tracing_layered;
+use tokio::try_join;
+use tosic_utils::logging::{FilterConfig, StdoutLayerConfig, TracingSubscriberBuilder};
 use tracing::{error, info};
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::fmt::layer;
+use tracing_subscriber::EnvFilter;
 
-/// Default Database pool used for data storage
-#[inline]
-async fn db_pool() -> Result<Pool> {
-    let database_path = &*DATABASE_PATH;
+fn tracing_std_layer() -> StdoutLayerConfig {
+    StdoutLayerConfig::default()
+        .file(false)
+        .thread_names(true)
+        .line_number(true)
+        .level(true)
+        .compact(true)
+        .with_span_events(FmtSpan::CLOSE)
+}
 
-    let connection_opt = SqliteConnectOptions::new()
-        .filename(database_path)
-        .create_if_missing(true)
-        .journal_mode(SqliteJournalMode::Wal);
+fn tracing_env_filter() -> EnvFilter {
+    FilterConfig::default().use_env(true).build()
+}
 
-    Ok(PoolOptions::new()
-        .max_connections(21)
-        .min_connections(5)
-        .idle_timeout(Duration::from_secs(60 * 10))
-        .max_lifetime(Duration::from_secs(60 * 60 * 24))
-        .acquire_timeout(Duration::from_secs(20))
-        .connect_with(connection_opt)
-        .await?)
+pub fn tracing() -> Result<Vec<WorkerGuard>> {
+    let (log_writer, guard) = tracing_appender::non_blocking(std::io::stdout());
+    
+    TracingSubscriberBuilder::new()
+        .with_filter(tracing_env_filter())
+        .with_layer(
+            layer()
+                .with_writer(log_writer)
+                .with_file(false)
+                .with_thread_names(true)
+                //.with_thread_ids(true)
+                .with_line_number(true)
+                .with_level(true)
+                .with_span_events(FmtSpan::CLOSE)
+                .compact()
+        )
+        .init()
+        .map_err(Into::into)
+        .map(|mut guards| { 
+            guards.push(guard);
+            guards
+        })
+}
+
+#[tracing::instrument(err)]
+async fn setup() -> Result<DaemonServer> {
+    // loads the database static variable and runs migrations while at the same time we initialize the server
+    let (_, server) = try_join!(
+        initialize_db(true).map_err(Error::from),
+        DaemonServer::new()
+    )?;
+
+    Ok(server)
 }
 
 /// Runs the default server implementation alongside the migrations.
+#[inline]
+#[tracing::instrument(name = "nexsockd", err)]
 pub async fn run_daemon() -> Result<()> {
-    let logging_path = PROJECT_DIRECTORIES.data_dir().join("logs");
-
-    let _guard = init_tracing_layered(Some((logging_path, "nexsockd.log")))?;
-
-    let pool = db_pool().await?;
-    initialize_db_pool(pool);
-
-    info!("Running migrations...");
-    sqlx::migrate!().run(get_db_pool()).await?;
-    info!("Migrations complete!");
-
-    let nexsock_config = NexsockConfig::new().expect("Failed to get config");
-
-    let mut server = DaemonServer::new(nexsock_config).await?;
+    let mut server = setup().await?;
 
     match server.run().await {
         Ok(_) => info!("Server completed successfully!"),
@@ -71,6 +92,7 @@ pub async fn run_daemon() -> Result<()> {
     Ok(())
 }
 
+#[inline]
 pub async fn timed_run_daemon(duration: Duration) -> Result<()> {
     match timeout(duration, run_daemon()).await {
         Ok(res) => res,

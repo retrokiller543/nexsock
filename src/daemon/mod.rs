@@ -27,12 +27,11 @@ cfg_if! {
     }
 }
 
-pub mod config;
 pub mod connection;
 pub mod server;
 
-pub use config::*;
 pub use connection::*;
+use nexsock_config::NEXSOCK_CONFIG;
 pub use server::*;
 
 /// The main daemon structure responsible for handling client connections and service management.
@@ -43,14 +42,13 @@ pub use server::*;
 /// # Examples
 ///
 /// ```rust
-/// use nexsockd::prelude::{Daemon, DaemonConfig};
+/// use nexsockd::prelude::*;
 ///
 /// async fn start_daemon() -> Result<()> {
-///     let config = DaemonConfig::default();
-///     let daemon = Daemon::new(config).await?;
+///     let daemon = Daemon::new().await?;
 ///     
 ///     // Accept and handle connections
-///     while let Ok(connection) = daemon.accept().await {
+///     while let Ok(mut connection) = daemon.accept().await {
 ///         tokio::spawn(async move {
 ///             if let Err(e) = connection.handle().await {
 ///                 eprintln!("Connection error: {}", e);
@@ -63,8 +61,6 @@ pub use server::*;
 #[derive(Debug, Clone)]
 pub struct Daemon {
     listener: Arc<Listener>,
-    #[allow(dead_code)]
-    config: DaemonConfig,
     lua_plugin_manager: Arc<LuaPluginManager>,
 }
 
@@ -97,22 +93,9 @@ impl Daemon {
     ///
     /// * On Unix: Creates a Unix domain socket and removes any existing socket file
     /// * On Windows: Creates a TCP socket
-    pub async fn new(config: DaemonConfig) -> Result<Self> {
-        #[cfg(unix)]
-        if let SocketRef::Path(path) = &config.socket {
-            if path.exists() {
-                fs::remove_file(path)?;
-            }
-        }
-
-        let bind_addr = config.socket.bind_address()?;
-
-        info!("Listening on: {}", bind_addr);
-
-        #[cfg(unix)]
-        let listener = Arc::new(Listener::bind(&bind_addr)?);
-        #[cfg(windows)]
-        let listener = Arc::new(Listener::bind(&bind_addr).await?);
+    pub async fn new() -> Result<Self> {
+        let config = &*NEXSOCK_CONFIG;
+        let listener = Self::get_listener(config.socket()).await?;
 
         let lua_plugin_manager =
             LuaPluginManager::new().context("failed to load the plugin manager")?;
@@ -126,9 +109,41 @@ impl Daemon {
 
         Ok(Self {
             listener,
-            config,
             lua_plugin_manager,
         })
+    }
+
+    #[cfg(unix)]
+    fn clear_old_socket(socket_ref: &SocketRef) -> Result<()> {
+        if let SocketRef::Path(path) = socket_ref {
+            if path.exists() {
+                fs::remove_file(path).map_err(Into::into)
+            } else {
+                Ok(())
+            }
+        } else {
+            Err(Error::InvalidSocket {
+                message: "Unable to clear the UNIX socket".into(),
+                got: socket_ref.to_string().into(),
+                expected: "<PATH>".into(),
+            })
+        }
+    }
+
+    async fn get_listener(socket_ref: &SocketRef) -> Result<Arc<Listener>> {
+        #[cfg(unix)]
+        Self::clear_old_socket(socket_ref)?;
+
+        let bind_addr = socket_ref.bind_address()?;
+
+        info!("Listening on: {}", bind_addr);
+
+        #[cfg(unix)]
+        let listener = Arc::new(Listener::bind(&bind_addr)?);
+        #[cfg(windows)]
+        let listener = Arc::new(Listener::bind(&bind_addr).await?);
+
+        Ok(listener)
     }
 
     /// Accepts a new client connection.
@@ -147,6 +162,7 @@ impl Daemon {
     /// This function will return an error if:
     /// * The socket accept operation fails
     /// * Connection initialization fails
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn accept(&self) -> Result<Connection<OwnedReadHalf, OwnedWriteHalf>> {
         let (stream, addr) = self.listener.accept().await?;
 
@@ -175,7 +191,7 @@ impl Daemon {
         info!("Shutting down daemon...");
 
         #[cfg(unix)]
-        if let SocketRef::Path(path) = &self.config.socket {
+        if let SocketRef::Path(path) = NEXSOCK_CONFIG.socket() {
             if path.exists() {
                 fs::remove_file(path)?;
             }

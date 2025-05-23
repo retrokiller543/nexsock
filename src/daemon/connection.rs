@@ -47,8 +47,8 @@ impl Connection<OwnedReadHalf, OwnedWriteHalf> {
     pub fn new(stream: Stream, lua_plugin_manager: Arc<LuaPluginManager>) -> Self {
         let (reader, writer) = stream.into_split();
 
-        let reader = BufReader::with_capacity(32 * 1024, reader);
-        let writer = BufWriter::with_capacity(32 * 1024, writer);
+        let reader = BufReader::with_capacity(8 * 1024, reader);
+        let writer = BufWriter::with_capacity(8 * 1024, writer);
         let protocol = Protocol::default();
 
         Self {
@@ -93,7 +93,7 @@ where
                     break;
                 }
                 Err(e) => {
-                    debug!("Error handling message: {:?}", e);
+                    debug!(error = ?e, "Error handling message");
                     return Err(e.into());
                 }
             }
@@ -107,9 +107,8 @@ where
         let (header, payload) = self.protocol.read_message(&mut self.reader).await?;
 
         debug!(
-            "Received command: {:?} with payload: {}",
-            header.command,
-            if payload.is_some() { "yes" } else { "no" }
+            command = ?header.command,
+            payload = %if payload.is_some() { "yes" } else { "no" },
         );
 
         // Handle the command
@@ -122,8 +121,8 @@ where
                 }
             }
             Err(e) => {
-                // Send error response
-                warn!("Command failed: {:?}", e);
+                warn!(error = ?e, "Command failed");
+
                 self.send_error(e).await?;
             }
         }
@@ -144,6 +143,14 @@ where
         });
 
         match command {
+            Command::GetServiceStdout => {
+                let payload = Self::read_req_payload(payload)?;
+
+                let res = SERVICE_MANAGER.get_stdout(&payload).await?;
+
+                Ok(CommandPayload::Stdout(res))
+            }
+
             Command::StartService => {
                 let payload = Self::read_req_payload(payload)?;
 
@@ -266,12 +273,12 @@ where
 
             _ => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                format!("Unsupported command: {:?}", command),
+                format!("Unsupported command: `{:?}`", command),
             ))),
         }
     }
 
-    fn read_req_payload<T: Decode>(payload: Option<Vec<u8>>) -> error::Result<T> {
+    fn read_req_payload<T: Decode<()>>(payload: Option<Vec<u8>>) -> error::Result<T> {
         let payload = if let Some(payload) = payload {
             payload
         } else {

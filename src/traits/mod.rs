@@ -3,6 +3,7 @@
 pub mod configuration_management;
 pub mod dependency_management;
 pub mod git_service;
+pub mod process_manager;
 pub mod service_management;
 
 pub trait FromDbResult<T> {

@@ -1,5 +1,19 @@
 [workspace]
-members = ['.', 'nexsock', "nexsock-abi", "nexsock-client", "nexsock-config", "nexsock-example-plugin", "nexsock-plugins", "nexsock-protocol", "nexsock-utils", "nexsock-web"]
+members = [
+    '.',
+    'nexsock',
+    "nexsock-abi",
+    "nexsock-client",
+    "nexsock-config",
+    "nexsock-db",
+    "nexsock-example-plugin",
+    "nexsock-plugins",
+    "nexsock-protocol",
+    #"nexsock-protocol-core",
+    "nexsock-utils",
+    "nexsock-web",
+    "nexsock-db/migration"
+]
 
 [workspace.package]
 version = "1.0.0-7"
@@ -29,24 +43,35 @@ eula = false
 nexsock-abi = { path = "nexsock-abi" }
 nexsock-plugins = { path = "nexsock-plugins" }
 nexsock-protocol = { path = "nexsock-protocol" }
+# nexsock-protocol-core = { path = "nexsock-protocol-core" }
 nexsock-client = { path = "nexsock-client" }
 nexsock-config = { path = "nexsock-config" }
 nexsock-utils = { path = "nexsock-utils" }
+nexsock-db = { path = "nexsock-db" }
+
+anyhow = { version = "1.0", default-features = false, features = ["std"] }
 sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
-sqlx-utils = { version = "1.0.0-2", default-features = false, features = ["sqlite"],  git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/sqlx-utils.git" }
 bincode = { version = "2.0.0-rc.3" }
-tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], registry = "gitea" }
+tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], git = "https://reasonably-happy-moose.ngrok-free.app/tosic.killer/tosic-utils.git" }
+#tosic-utils = { version = "0.2.4", features = ["env", "dotenv", "tracing"], path = "../tosic-utils" }
 savefile = { version = "0.18.5", features = ["derive", "serde"] }
 savefile-derive = { version = "0.18.5" }
 savefile-abi = { version = "0.18.5" }
 tracing = { version = "0.1.41", features = ["log"] }
 mlua = { version = "0.10.3", features = ["anyhow", "vendored", "lua54", "async"] }
 derive_more = { version = "2.0.1", features = ["full"] }
+sea-orm = { version = "1.1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+    "with-chrono"
+]}
+tikv-jemallocator = { version = "0.6.0", features = ["profiling", "stats"] }
+tokio = { version = "1.43", features = ["full", "tracing"] }
 
 [dependencies]
-sqlx-utils = { workspace = true }
-sqlx = { workspace = true }
-tokio = { version = "1.43", features = ["full"] }
+dotenvy = "0.15.7"
+tokio = { version = "1.43", features = ["full", "tracing"] }
 thiserror = "2.0.11"
 tempfile = "3.15.0"
 tracing.workspace = true
@@ -58,8 +83,9 @@ serde = { version = "1.0.215", features = ["derive"] }
 paste = "1.0.15"
 futures = "0.3.31"
 nexsock-protocol = { workspace = true }
-nexsock-config = { workspace = true }
+nexsock-config = { workspace = true, features = ["static-config"] }
 nexsock-utils = { workspace = true }
+nexsock-db.workspace = true
 bincode = { workspace = true }
 anyhow = "1.0.95"
 port-selector = "0.1.6"
@@ -68,11 +94,23 @@ nexsock-abi.workspace = true
 nexsock-plugins = { workspace = true, features = ["native", "lua"] }
 cfg-if = "1.0.0"
 clap = { version = "4.5.31", features = ["derive"] }
+tracing-appender = { version = "0.2.3", features = ["parking_lot"] }
+oneshot = "0.1.11"
+parking_lot = { version = "0.12.3", features = ["send_guard", "arc_lock"] }
+dashmap = { version = "6.1.0", features = ["rayon"] }
+rayon = "1.10.0"
+chrono = "0.4.39"
+tokio_util_watchdog = { version = "0.1.2", optional = true }
+tikv-jemallocator = { workspace = true, optional = true }
+
+[dev-dependencies]
+nexsock-client.workspace = true
+tokio = { version = "1.43", features = ["full", "tracing"] }
 
 [build-dependencies]
-sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
+#sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }
 tokio = { version = "1.43", features = ["full"] }
-sqlx-utils = { workspace = true }
+#sqlx-utils = { workspace = true }
 
 # The profile that 'dist' will build with
 [profile.dist]
@@ -87,3 +125,5 @@ codegen-units = 1
 [features]
 default = []
 git = ["git2"]
+jemalloc = ["tikv-jemallocator"]
+watchdog = ["tokio_util_watchdog"]

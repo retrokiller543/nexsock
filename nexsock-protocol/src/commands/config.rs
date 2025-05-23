@@ -2,8 +2,18 @@ use crate::commands::manage_service::ServiceRef;
 use crate::commands::CommandPayload;
 use crate::{service_command, try_from};
 use bincode::{Decode, Encode};
+use derive_more::Display;
 #[cfg(feature = "savefile")]
 use savefile::prelude::Savefile;
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "sea-orm")] {
+        use sea_orm::sea_query::{ArrayType, ValueType, ValueTypeErr};
+        use sea_orm::{ColIdx, ColumnType, DbErr, QueryResult, TryGetError, TryGetable, Value};
+        use sea_orm::prelude::StringLen;
+    }
+}
+
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
 
@@ -60,6 +70,7 @@ try_from!(ServiceConfig => ServiceConfigPayload);
     Type,
     Encode,
     Decode,
+    Display,
 )]
 #[serde(rename_all = "lowercase")]
 #[repr(u8)]
@@ -85,6 +96,54 @@ impl From<Option<String>> for ConfigFormat {
             val.into()
         } else {
             Self::Env
+        }
+    }
+}
+
+#[cfg(feature = "sea-orm")]
+impl ValueType for ConfigFormat {
+    fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
+        match v {
+            Value::String(Some(x)) => match x.as_str() {
+                "Env" => Ok(Self::Env),
+                "Properties" => Ok(Self::Properties),
+                _ => Err(ValueTypeErr),
+            },
+            _ => Err(ValueTypeErr),
+        }
+    }
+
+    fn type_name() -> String {
+        String::from("ConfigFormat")
+    }
+
+    fn array_type() -> ArrayType {
+        ArrayType::String
+    }
+
+    fn column_type() -> ColumnType {
+        ColumnType::String(StringLen::None)
+    }
+}
+
+#[cfg(feature = "sea-orm")]
+impl From<ConfigFormat> for Value {
+    fn from(config_format: ConfigFormat) -> Self {
+        Value::String(Some(Box::new(config_format.to_string())))
+    }
+}
+
+#[cfg(feature = "sea-orm")]
+impl TryGetable for ConfigFormat {
+    fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
+        let val: String = res.try_get_by(index)?;
+
+        match val.as_str() {
+            "Env" => Ok(Self::Env),
+            "Properties" => Ok(Self::Properties),
+            val => Err(TryGetError::DbErr(DbErr::Custom(format!(
+                "`{val}` is not a valid config format"
+            )))),
         }
     }
 }

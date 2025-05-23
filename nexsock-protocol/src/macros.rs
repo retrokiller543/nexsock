@@ -1,9 +1,11 @@
 #[macro_export]
 macro_rules! service_command {
     {
+        $(#[$attr:meta])*
         $vis:vis struct $command:ident<_, $output:ty> = $item:ident
     } => {
         // #[cfg_attr(feature = "savefile", derive(::savefile::prelude::Savefile))]
+        $(#[$attr])*
         $vis struct $command;
 
         impl ::std::default::Default for $command {

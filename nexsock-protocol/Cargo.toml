@@ -9,6 +9,8 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
+# nexsock-protocol-core.workspace = true
+
 binrw = { version = "0.14.1" }
 tokio = { version = "1.43", features = ["full"] }
 thiserror = "2.0.11"
@@ -20,11 +22,19 @@ sqlx = { workspace = true }
 bincode = { workspace = true }
 derive_more.workspace = true
 paste = "1.0.15"
+futures = "0.3.19"
 
 savefile = { workspace = true, optional = true }
 mlua = { workspace = true, optional = true }
+cfg-if = "1.0.0"
+bytes = "1.10.0"
+
+[dependencies.sea-orm]
+workspace = true
+optional = true
 
 [features]
 default = []
 savefile = ["dep:savefile"]
 mlua = ["dep:mlua"]
+sea-orm = ["dep:sea-orm"]

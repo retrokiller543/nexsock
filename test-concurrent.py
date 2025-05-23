@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import asyncio
-import time
-import subprocess
 import argparse
+import asyncio
+import subprocess
+import time
 from datetime import datetime
+
 
 async def run_command(session_id):
     """Run the nexsock status command and measure its execution"""

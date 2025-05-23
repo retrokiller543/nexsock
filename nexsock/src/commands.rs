@@ -13,10 +13,13 @@ use nexsock_protocol::commands::manage_service::{
     StopServiceCommand,
 };
 use nexsock_protocol::commands::service_status::GetServiceStatus;
+use nexsock_protocol::commands::stdout::GetServiceStdout;
 use nexsock_protocol::commands::ServiceCommand;
 
 pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
     match cli {
+        Commands::Stdout { service } => Ok(GetServiceStdout::new(service).into()),
+
         Commands::Start { service, env } => {
             let env_vars = Cli::parse_env_vars(env);
             Ok(StartServiceCommand::new(service, env_vars).into())
