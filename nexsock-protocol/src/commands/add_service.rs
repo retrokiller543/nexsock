@@ -41,3 +41,34 @@ service_command! {
         git_auth_type: Option<String>
     }
 }
+
+#[cfg(any(test, feature = "test-helpers"))]
+impl AddServiceCommand {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn repo_url(&self) -> &str {
+        &self.repo_url
+    }
+
+    pub fn port(&self) -> i64 {
+        self.port
+    }
+
+    pub fn repo_path(&self) -> &str {
+        &self.repo_path
+    }
+
+    pub fn config(&self) -> &Option<ServiceConfigPayload> {
+        &self.config
+    }
+
+    pub fn git_branch(&self) -> &Option<String> {
+        &self.git_branch
+    }
+
+    pub fn git_auth_type(&self) -> &Option<String> {
+        &self.git_auth_type
+    }
+}

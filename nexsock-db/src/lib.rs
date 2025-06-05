@@ -12,6 +12,7 @@ mod repositories;
 pub mod prelude {
     pub use crate::models::prelude::*;
     pub use crate::repositories::*;
+    pub use migration::*;
 }
 
 static DB_CONNECTION: OnceLock<DatabaseConnection> = OnceLock::new();

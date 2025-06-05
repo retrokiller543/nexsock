@@ -10,6 +10,7 @@ members = [
     "nexsock-plugins",
     "nexsock-protocol",
     #"nexsock-protocol-core",
+    "nexsock-testing",
     "nexsock-utils",
     "nexsock-web",
     "nexsock-db/migration"
@@ -46,6 +47,7 @@ nexsock-protocol = { path = "nexsock-protocol" }
 # nexsock-protocol-core = { path = "nexsock-protocol-core" }
 nexsock-client = { path = "nexsock-client" }
 nexsock-config = { path = "nexsock-config" }
+nexsock-testing = { path = "nexsock-testing" }
 nexsock-utils = { path = "nexsock-utils" }
 nexsock-db = { path = "nexsock-db" }
 
@@ -68,6 +70,12 @@ sea-orm = { version = "1.1", features = [
     "with-chrono"
 ]}
 tikv-jemallocator = { version = "0.6.0", features = ["profiling", "stats"] }
+uuid = { version = "1.11.0", features = ["v4"] }
+chrono = "0.4.39"
+futures = "0.3.31"
+parking_lot = { version = "0.12.3", features = ["send_guard", "arc_lock"] }
+tempfile = "3.15.0"
+serde = { version = "1.0.217", features = ["derive"] }
 
 [dependencies]
 dotenvy = "0.15.7"
@@ -99,7 +107,7 @@ oneshot = "0.1.11"
 parking_lot = { version = "0.12.3", features = ["send_guard", "arc_lock"] }
 dashmap = { version = "6.1.0", features = ["rayon"] }
 rayon = "1.10.0"
-chrono = "0.4.39"
+chrono.workspace = true
 base64 = "0.22.1"
 async-trait = "0.1.88"
 tokio_util_watchdog = { version = "0.1.2", optional = true }
