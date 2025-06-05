@@ -328,9 +328,11 @@ impl ServiceManagement for ServiceManager {
             *port,
             repo_path.to_owned(),
             id,
-            git_branch.clone(),
-            None, // git_commit_hash will be set when repository is cloned
-            git_auth_type.clone(),
+            nexsock_db::models::service::GitParams {
+                branch: git_branch.clone(),
+                commit_hash: None, // git_commit_hash will be set when repository is cloned
+                auth_type: git_auth_type.clone(),
+            },
         );
 
         self.service_repository.save(&mut record).await?;

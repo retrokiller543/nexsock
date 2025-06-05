@@ -98,6 +98,7 @@ where
     /// This function will return an error if:
     /// * Protocol errors occur
     /// * Command handling fails
+    ///
     /// Handles incoming client messages in a loop until disconnection or a fatal error occurs.
     ///
     /// Processes each message by delegating to `handle_single_message`. Exits cleanly on client disconnect, or returns an error on other I/O failures.

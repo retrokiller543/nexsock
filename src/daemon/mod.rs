@@ -92,6 +92,7 @@ impl Daemon {
     /// # Platform-specific behavior
     ///
     /// * On Unix: Creates a Unix domain socket and removes any existing socket file
+    ///
     /// Initializes a new daemon instance, binding the socket listener and loading Lua plugins.
     ///
     /// On Unix, removes any existing socket file before binding a Unix domain socket. On Windows, binds a TCP socket. Loads all available Lua plugins into the plugin manager. Returns an error if socket binding or plugin loading fails.
@@ -239,6 +240,7 @@ impl Daemon {
     /// # Platform-specific behavior
     ///
     /// * On Unix: Removes the socket file if it exists
+    ///
     /// Shuts down the daemon and performs platform-specific cleanup.
     ///
     /// On Unix, removes the socket file if it exists. On Windows, closes the TCP listener by dropping it.

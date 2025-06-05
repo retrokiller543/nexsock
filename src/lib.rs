@@ -60,6 +60,7 @@ use tracing_subscriber::EnvFilter;
 /// let layer = tracing_std_layer();
 /// assert!(layer.thread_names);
 /// ```
+#[allow(dead_code)]
 fn tracing_std_layer() -> StdoutLayerConfig {
     StdoutLayerConfig::default()
         .file(false)

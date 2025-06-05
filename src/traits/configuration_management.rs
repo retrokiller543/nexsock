@@ -49,7 +49,7 @@ pub trait ConfigurationManagement {
     /// # Arguments
     ///
     /// * `payload` - The configuration data including service reference, filename,
-    ///               format, and run command
+    ///   format, and run command
     ///
     /// # Returns
     ///

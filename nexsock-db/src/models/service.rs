@@ -44,6 +44,14 @@ pub struct Model {
     pub git_auth_type: Option<String>,
 }
 
+/// Git-related parameters for service creation.
+#[derive(Debug, Clone)]
+pub struct GitParams {
+    pub branch: Option<String>,
+    pub commit_hash: Option<String>,
+    pub auth_type: Option<String>,
+}
+
 impl Model {
     /// Creates a new `Model` instance.
     ///
@@ -53,6 +61,7 @@ impl Model {
     /// * `repo_url` - The URL of the service's repository.
     /// * `port` - The port number the service will run on.
     /// * `repo_path` - The path to the service's repository on the local filesystem.
+    ///
     /// Creates a new service model with the specified basic information and default status `Stopped`.
     ///
     /// # Parameters
@@ -106,6 +115,7 @@ impl Model {
     /// * `config_id` - An optional foreign key referencing the service's configuration.
     /// * `git_branch` - The current Git branch name.
     /// * `git_commit_hash` - The current Git commit hash.
+    ///
     /// Creates a new `Model` instance with the specified fields, including optional Git metadata.
     ///
     /// Initializes a service with the provided name, repository URL, port, repository path, optional configuration ID, and optional Git branch, commit hash, and authentication type. The service status is set to `Stopped` by default.
@@ -119,9 +129,11 @@ impl Model {
     ///     8080,
     ///     "/srv/example".to_string(),
     ///     Some(1),
-    ///     Some("main".to_string()),
-    ///     Some("abc123".to_string()),
-    ///     Some("ssh".to_string()),
+    ///     GitParams {
+    ///         branch: Some("main".to_string()),
+    ///         commit_hash: Some("abc123".to_string()),
+    ///         auth_type: Some("ssh".to_string()),
+    ///     },
     /// );
     /// assert_eq!(service.status, ServiceStatus::Stopped);
     /// ```
@@ -131,9 +143,7 @@ impl Model {
         port: i64,
         repo_path: String,
         config_id: Option<i64>,
-        git_branch: Option<String>,
-        git_commit_hash: Option<String>,
-        git_auth_type: Option<String>,
+        git_params: GitParams,
     ) -> Self {
         Self {
             id: 0,
@@ -143,9 +153,9 @@ impl Model {
             port,
             repo_path,
             status: ServiceStatus::Stopped,
-            git_branch,
-            git_commit_hash,
-            git_auth_type,
+            git_branch: git_params.branch,
+            git_commit_hash: git_params.commit_hash,
+            git_auth_type: git_params.auth_type,
         }
     }
 

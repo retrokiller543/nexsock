@@ -224,10 +224,10 @@ impl SystemGitBackend {
             .lines()
             .map(|line| {
                 let line = line.trim();
-                if line.starts_with("* ") {
-                    line[2..].trim().to_string()
-                } else if line.starts_with("  ") {
-                    line[2..].trim().to_string()
+                if let Some(stripped) = line.strip_prefix("* ") {
+                    stripped.trim().to_string()
+                } else if let Some(stripped) = line.strip_prefix("  ") {
+                    stripped.trim().to_string()
                 } else {
                     line.trim().to_string()
                 }

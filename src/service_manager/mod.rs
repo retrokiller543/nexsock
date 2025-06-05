@@ -121,6 +121,7 @@ impl ServiceProcess {
     ///
     /// This method will return an error if:
     /// * The process status cannot be determined
+    ///
     /// Asynchronously checks if the service process has exited and updates its state.
     ///
     /// If the process has exited, updates the internal state to `Stopped` on success or `Failed` on error.  

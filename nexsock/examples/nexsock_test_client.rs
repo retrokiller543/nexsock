@@ -133,11 +133,7 @@ async fn main() -> anyhow::Result<()> {
         let results = join_all(futures).await;
 
         // Collect latencies
-        for result in results {
-            if let Ok(Some(latency)) = result {
-                all_latencies.push(latency);
-            }
-        }
+        all_latencies.extend(results.into_iter().flatten().flatten());
 
         // Update remaining requests
         remaining -= batch_size;

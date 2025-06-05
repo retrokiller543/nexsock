@@ -61,6 +61,7 @@ impl DaemonServer {
     ///
     /// This function will return an error if:
     /// * Daemon initialization fails
+    ///
     /// Initializes a new `DaemonServer` instance with the global configuration.
     ///
     /// Loads the static Nexsock configuration, creates a new daemon, and prepares the server for handling connections and periodic cleanup.
@@ -214,6 +215,7 @@ impl DaemonServer {
     /// This function will return an error if:
     /// * Connection acceptance fails critically
     /// * Shutdown operations fail
+    ///
     /// Runs the main server loop and the background cleanup task concurrently, coordinating their shutdown.
     ///
     /// Starts the server task to accept connections and the cleanup task to periodically remove completed connections and old services. Waits for either task to complete, ensuring graceful shutdown when triggered.

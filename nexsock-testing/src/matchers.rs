@@ -120,6 +120,18 @@ pub fn assert_service_count(services: &[Service], expected_count: usize) {
     );
 }
 
+// Extension trait for Service to add test helpers
+pub trait ServiceTestExt {
+    fn with_status(self, status: ServiceStatus) -> Self;
+}
+
+impl ServiceTestExt for Service {
+    fn with_status(mut self, status: ServiceStatus) -> Self {
+        self.status = status;
+        self
+    }
+}
+
 // TODO: Re-enable when response types are available
 // pub fn assert_status_response_matches(
 //     response: &ServiceStatusResponse,
@@ -198,17 +210,5 @@ mod tests {
 
         let matcher = ServiceMatcher::new().with_name("nonexistent");
         assert_service_list_contains(&services, &matcher);
-    }
-}
-
-// Extension trait for Service to add test helpers
-pub trait ServiceTestExt {
-    fn with_status(self, status: ServiceStatus) -> Self;
-}
-
-impl ServiceTestExt for Service {
-    fn with_status(mut self, status: ServiceStatus) -> Self {
-        self.status = status;
-        self
     }
 }

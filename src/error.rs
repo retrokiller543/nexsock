@@ -84,6 +84,7 @@ impl Error {
     /// - `10` - Payload parsing errors
     /// - `11` - Configuration errors
     /// - `13` - Channel send errors
+    ///
     /// Returns a numeric code representing the type of error.
     ///
     /// Each error variant is mapped to a unique `u32` code for programmatic handling. Unmapped or unknown errors return `0xFFFF`.
