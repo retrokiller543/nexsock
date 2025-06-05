@@ -11,7 +11,7 @@ impl DaemonTestEnvironment {
 
         let test_env = TestEnvironment::new()?;
 
-        nexsock_db::initialize_db("sqlite:memory:", true).await?;
+        nexsock_db::initialize_db("sqlite::memory:", true).await?;
 
         Ok(Self { test_env })
     }
