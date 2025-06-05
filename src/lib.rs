@@ -10,7 +10,7 @@
 //! The daemon manages services through a repository-based architecture with
 //! database persistence and supports both native and Lua plugins.
 
-#![feature(string_from_utf8_lossy_owned)]
+//#![feature(string_from_utf8_lossy_owned)]
 
 mod config_manager;
 pub mod daemon;
@@ -107,6 +107,8 @@ fn tracing_env_filter() -> EnvFilter {
 ///
 /// let _guards = tracing().expect("Failed to initialize tracing");
 /// // Keep guards alive for the duration of the program
+/// ```
+///
 /// Initializes the global tracing subscriber with non-blocking stdout logging.
 ///
 /// Configures tracing to output logs to stdout with compact formatting, thread names, line numbers, log levels, and span close event tracking. Applies environment-based filtering. Returns a vector of `WorkerGuard` objects that must be kept alive to ensure logging remains active.
