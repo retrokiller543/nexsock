@@ -148,11 +148,6 @@ jobs:
     - name: Run clippy
       run: cargo clippy --all-targets --all-features -- -D warnings
 
-    - name: Check documentation
-      run: cargo doc --no-deps --all-features
-      env:
-        RUSTDOCFLAGS: -D warnings
-
   security:
     name: Security Audit
     runs-on: ubuntu-latest

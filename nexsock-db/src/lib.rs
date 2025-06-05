@@ -4,6 +4,7 @@ use migration::{Migrator, MigratorTrait};
 use nexsock_config::NEXSOCK_CONFIG;
 use sea_orm::ConnectOptions;
 use sea_orm::{Database, DatabaseConnection};
+use std::fmt::Debug;
 use std::path::Path;
 use std::sync::OnceLock;
 use std::time::Duration;
@@ -39,21 +40,23 @@ static DB_CONNECTION: OnceLock<DatabaseConnection> = OnceLock::new();
 /// ```
 /// # use nexsock_db::initialize_db;
 /// # async fn example() -> anyhow::Result<()> {
-/// let db = initialize_db(true).await?;
+/// let db = initialize_db("sqlite:memory", true).await?;
 /// // Use `db` for database operations
 /// # Ok(())
 /// # }
 /// ```
 #[tracing::instrument(level = "debug", err)]
-pub async fn initialize_db(run_migrations: bool) -> anyhow::Result<&'static DatabaseConnection> {
-    let url = NEXSOCK_CONFIG.database().path.display().to_string();
+pub async fn initialize_db(
+    url: impl AsRef<str> + Debug,
+    run_migrations: bool,
+) -> anyhow::Result<&'static DatabaseConnection> {
+    let url = url.as_ref();
 
-    debug!(database_url = %url);
-    validate_database_url(&url)
+    validate_database_url(url)
         .await
         .context("Invalid database url")?;
 
-    let conn = create_database_connection(&url).await?;
+    let conn = create_database_connection(url).await?;
 
     if run_migrations {
         run_database_migrations(&conn).await?;

@@ -30,9 +30,11 @@ mod tests;
 
 use crate::daemon::server::DaemonServer;
 use futures::TryFutureExt;
+use nexsock_config::NEXSOCK_CONFIG;
 use nexsock_db::initialize_db;
 use prelude::*;
 use std::time::Duration;
+use thiserror::__private::AsDisplay;
 use tokio::time::timeout;
 use tokio::try_join;
 use tosic_utils::logging::{FilterConfig, StdoutLayerConfig, TracingSubscriberBuilder};
@@ -176,23 +178,11 @@ pub fn tracing() -> Result<Vec<WorkerGuard>> {
 /// * Server socket binding fails
 /// * Plugin manager initialization fails
 #[tracing::instrument(err)]
-/// Concurrently initializes the database (with migrations) and creates a new `DaemonServer`.
-///
-/// Returns the fully initialized `DaemonServer` instance upon success.
-///
-/// # Errors
-///
-/// Returns an error if database initialization, migration, or server creation fails.
-///
-/// # Examples
-///
-/// ```ignore
-/// let server = tokio::runtime::Runtime::new().unwrap().block_on(setup()).unwrap();
-/// ```
 async fn setup() -> Result<DaemonServer> {
-    // loads the database static variable and runs migrations while at the same time we initialize the server
+    let db_url = NEXSOCK_CONFIG.database().path.display().to_string();
+
     let (_, server) = try_join!(
-        initialize_db(true).map_err(Error::from),
+        initialize_db(db_url, true).map_err(Error::from),
         DaemonServer::new()
     )?;
 

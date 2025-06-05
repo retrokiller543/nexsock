@@ -45,7 +45,7 @@ impl TestEnvironment {
     }
 
     pub fn database_url(&self) -> String {
-        format!("sqlite://{}/test.db", self.data_dir.display())
+        "sqlite:memory".to_string()
     }
 }
 

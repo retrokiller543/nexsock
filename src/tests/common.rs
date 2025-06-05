@@ -11,12 +11,7 @@ impl DaemonTestEnvironment {
 
         let test_env = TestEnvironment::new()?;
 
-        // Initialize in-memory database for testing
-        let db_url = test_env.database_url();
-
-        // Initialize the global database with the test URL
-        std::env::set_var("DATABASE_URL", &db_url);
-        nexsock_db::initialize_db(true).await?;
+        nexsock_db::initialize_db("sqlite:memory:", true).await?;
 
         Ok(Self { test_env })
     }
