@@ -10,7 +10,8 @@
 //! The daemon manages services through a repository-based architecture with
 //! database persistence and supports both native and Lua plugins.
 
-//#![feature(string_from_utf8_lossy_owned)]
+#![allow(rustdoc::private_intra_doc_links)]
+#![allow(rustdoc::redundant_explicit_links)]
 
 mod config_manager;
 pub mod daemon;
@@ -34,7 +35,6 @@ use nexsock_config::NEXSOCK_CONFIG;
 use nexsock_db::initialize_db;
 use prelude::*;
 use std::time::Duration;
-use thiserror::__private::AsDisplay;
 use tokio::time::timeout;
 use tokio::try_join;
 use tosic_utils::logging::{FilterConfig, StdoutLayerConfig, TracingSubscriberBuilder};
