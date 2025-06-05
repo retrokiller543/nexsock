@@ -16,7 +16,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.0-7"
+version = "1.1.0"
 edition = "2021"
 authors = ["Emil Schütt <emil.schutt@gmail.com>"]
 license = "Apache-2.0"
@@ -25,7 +25,7 @@ repository = "https://github.com/retrokiller543/nexsock"
 
 [package]
 name = "nexsockd"
-version = "1.0.0-7"
+version = "1.1.0"
 description = "Daemon service for managing other services on the running machine"
 edition.workspace = true
 authors.workspace = true
