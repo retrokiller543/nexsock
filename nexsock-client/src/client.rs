@@ -116,6 +116,16 @@ impl Client {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
+    /// Sends a command to the daemon and returns the decoded response payload.
+    ///
+    /// Converts the provided command into a payload, transmits it to the daemon, and awaits the response. The response is decoded and returned as a `CommandPayload`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut client = Client::connect("/tmp/daemon.sock").await?;
+    /// let response = client.execute_command(MyCommand::new()).await?;
+    /// ```
     pub async fn execute_command<C>(&mut self, command: C) -> Result<CommandPayload>
     where
         C: ServiceCommand,
@@ -139,7 +149,21 @@ impl Client {
         self.handle_response().await
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
+    /// Handles and decodes a response from the daemon.
+    ///
+    /// Reads a message from the socket, interprets the response command, and returns the decoded payload.
+    /// Returns an error if the response indicates a server error, is malformed, or contains an unexpected command.
+    ///
+    /// # Returns
+    /// The decoded `CommandPayload` if the response is successful, or an error if the response indicates failure or is invalid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut client = Client::connect(...).await?;
+    /// let payload = client.handle_response().await?;
+    /// ```
     async fn handle_response(&mut self) -> Result<CommandPayload> {
         let (header, payload) = self
             .protocol

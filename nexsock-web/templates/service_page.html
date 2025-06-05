@@ -9,8 +9,19 @@
     <div>Port: {{ service.port }}</div>
     <div>Repository: <a class="link" href="{{ service.repo_url }}">{{ service.repo_url }}</a></div>
     <div>Path: <a class="link" href="file://{{ service.repo_path }}">{{ service.repo_path }}</a></div>
-    {% if service.config_id %}
-    <div>Config ID: {{ service.config_id }}</div>
+    {% if service.config %}
+    {% if service.config.id %}
+    <div>Config ID: <pre>{{ service.config.id }}</pre></div>
+    {% endif %}
+    {% if service.config.filename %}
+    <div>Project config file: <pre>{{ service.config.filename }}</pre></div>
+    {% endif %}
+    {% if service.config.format %}
+    <div>Project config file format: <pre>{{ service.config.format }}</pre></div>
+    {% endif %}
+    {% if service.config.run_command %}
+    <div>Project run command: <pre>{{ service.config.run_command }}</pre></div>
+    {% endif %}
     {% else %}
     <div class="text-secondary">No config</div>
     {% endif %}

@@ -8,6 +8,7 @@ pub mod git;
 pub mod list_services;
 pub mod manage_service;
 pub mod service_status;
+pub mod stdout;
 
 use crate::commands::add_service::AddServiceCommand;
 use crate::commands::config::{GetConfig, ServiceConfigPayload, UpdateConfigCommand};
@@ -16,12 +17,16 @@ use crate::commands::dependency::{
     RemoveDependencyCommand,
 };
 use crate::commands::error::ErrorPayload;
-use crate::commands::git::{CheckoutCommand, GetRepoStatusCommand};
+use crate::commands::git::{
+    CheckoutCommand, GetRepoStatusCommand, GitCheckoutCommitCommand, GitListBranchesCommand,
+    GitListBranchesResponse, GitLogCommand, GitLogResponse, GitPullCommand, RepoStatus,
+};
 use crate::commands::list_services::{ListServicesCommand, ListServicesResponse};
 use crate::commands::manage_service::{
     RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand,
 };
 use crate::commands::service_status::{GetServiceStatus, ServiceStatus};
+use crate::commands::stdout::GetServiceStdout;
 use crate::service_command;
 use bincode::{Decode, Encode};
 use binrw::{BinRead, BinWrite};
@@ -65,6 +70,7 @@ pub enum Command {
     AddService = 5,
     RemoveService = 6,
     ListServices = 7,
+    GetServiceStdout = 8,
 
     // Configuration
     UpdateConfig = 10,
@@ -78,6 +84,10 @@ pub enum Command {
     // Repository operations
     CheckoutBranch = 30,
     GetRepoStatus = 31,
+    GitCheckoutCommit = 32,
+    GitPull = 33,
+    GitLog = 34,
+    GitListBranches = 35,
 
     // System operations
     Shutdown = 40,
@@ -108,6 +118,12 @@ pub enum CommandPayload {
 
     Dependencies(ListDependenciesResponse),
 
+    GitLog(GitLogResponse),
+    GitBranches(GitListBranchesResponse),
+    GitStatus(RepoStatus),
+
+    Stdout(String),
+
     Error(ErrorPayload),
     Empty,
 }
@@ -119,20 +135,29 @@ try_from!(Empty => ());
 #[try_unwrap(ref, ref_mut)]
 #[non_exhaustive]
 pub enum ServiceCommand {
+    Stdout(GetServiceStdout),
     Start(StartServiceCommand),
     Stop(StopServiceCommand),
     Restart(RestartServiceCommand),
     List(ListServicesCommand),
     Status(GetServiceStatus),
+
     Add(AddServiceCommand),
     Remove(RemoveServiceCommand),
+
     ConfigGet(GetConfig),
     ConfigUpdate(UpdateConfigCommand),
+
     DependencyAdd(AddDependencyCommand),
     DependencyRemove(RemoveDependencyCommand),
     DependencyList(ListDependenciesCommand),
+
     GitCheckout(CheckoutCommand),
+    GitCheckoutCommit(GitCheckoutCommitCommand),
+    GitPull(GitPullCommand),
     GitStatus(GetRepoStatusCommand),
+    GitLog(GitLogCommand),
+    GitListBranches(GitListBranchesCommand),
 }
 
 impl<T: Into<CommandPayload>> From<Option<T>> for CommandPayload {
