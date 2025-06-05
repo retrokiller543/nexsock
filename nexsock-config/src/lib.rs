@@ -107,12 +107,10 @@ impl From<ServerConfig> for Value {
     fn from(val: ServerConfig) -> Self {
         Self::new(
             None,
-            ValueKind::Table(Map::from_iter(
-            vec![
-                    ("cleanup_interval".to_string(), val.cleanup_interval.into()),
-                    ("socket".to_string(), val.socket.into()),
-                ]
-            )),
+            ValueKind::Table(Map::from_iter(vec![
+                ("cleanup_interval".to_string(), val.cleanup_interval.into()),
+                ("socket".to_string(), val.socket.into()),
+            ])),
         )
     }
 }

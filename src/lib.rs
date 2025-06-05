@@ -6,7 +6,7 @@
 //! - Dependency tracking between services
 //! - Plugin system for extensibility
 //! - Unix domain socket (Unix) / TCP socket (Windows) communication
-//! 
+//!
 //! The daemon manages services through a repository-based architecture with
 //! database persistence and supports both native and Lua plugins.
 
@@ -103,7 +103,7 @@ fn tracing_env_filter() -> EnvFilter {
 /// ```
 pub fn tracing() -> Result<Vec<WorkerGuard>> {
     let (log_writer, guard) = tracing_appender::non_blocking(std::io::stdout());
-    
+
     TracingSubscriberBuilder::new()
         .with_filter(tracing_env_filter())
         .with_layer(
@@ -115,11 +115,11 @@ pub fn tracing() -> Result<Vec<WorkerGuard>> {
                 .with_line_number(true)
                 .with_level(true)
                 .with_span_events(FmtSpan::CLOSE)
-                .compact()
+                .compact(),
         )
         .init()
         .map_err(Into::into)
-        .map(|mut guards| { 
+        .map(|mut guards| {
             guards.push(guard);
             guards
         })

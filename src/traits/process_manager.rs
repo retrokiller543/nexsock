@@ -590,7 +590,7 @@ pub(crate) trait FullProcessManager: ProcessManager {
     ///
     /// let mut env_vars = HashMap::new();
     /// env_vars.insert("PORT".to_string(), "3000".to_string());
-    /// 
+    ///
     /// let process = manager.spawn_service_process(
     ///     1,
     ///     Path::new("/app"),

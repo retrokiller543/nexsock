@@ -89,18 +89,19 @@ pub trait GitService {
         use crate::git::backends::SystemGitBackend;
         use crate::git::GitAuth;
         use crate::traits::git_backend::GitBackend;
-        
+
         let backend = SystemGitBackend::new();
         let auth = GitAuth::ssh_agent("git"); // Default to SSH agent
-        
+
         GitBackend::clone(
             &backend,
             &self.repository_url(),
             self.repository_path(),
             &auth,
             None,
-        ).await?;
-        
+        )
+        .await?;
+
         Ok(())
     }
 

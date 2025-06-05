@@ -8,7 +8,7 @@
 //!
 //! ```rust
 //! use nexsockd::prelude::*;
-//! 
+//!
 //! // Now you have access to Error, Result, daemon types, etc.
 //! ```
 

@@ -7,12 +7,7 @@ use sea_orm_migration::prelude::*;
 macro_rules! add_column {
     ($manager:expr, $table:expr, $column:expr) => {
         $manager
-            .alter_table(
-                Table::alter()
-                    .table($table)
-                    .add_column($column)
-                    .to_owned(),
-            )
+            .alter_table(Table::alter().table($table).add_column($column).to_owned())
             .await?;
     };
 }
@@ -35,21 +30,28 @@ impl MigrationTrait for Migration {
     /// - `git_commit_hash`: Optional text field storing the current commit SHA
     /// - `git_auth_type`: Optional text field storing the authentication method
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        add_column!(manager, Service::Table, ColumnDef::new(Service::GitBranch).string().null());
-        add_column!(manager, Service::Table, ColumnDef::new(Service::GitCommitHash).string().null());
-        add_column!(manager, Service::Table, 
-            ColumnDef::new(Service::GitAuthType)
-                .string()
-                .null()
-                .check(
-                    Expr::col(Service::GitAuthType).is_in(vec![
-                        "none",
-                        "ssh_agent", 
-                        "ssh_key",
-                        "token",
-                        "user_pass"
-                    ])
-                )
+        add_column!(
+            manager,
+            Service::Table,
+            ColumnDef::new(Service::GitBranch).string().null()
+        );
+        add_column!(
+            manager,
+            Service::Table,
+            ColumnDef::new(Service::GitCommitHash).string().null()
+        );
+        add_column!(
+            manager,
+            Service::Table,
+            ColumnDef::new(Service::GitAuthType).string().null().check(
+                Expr::col(Service::GitAuthType).is_in(vec![
+                    "none",
+                    "ssh_agent",
+                    "ssh_key",
+                    "token",
+                    "user_pass"
+                ])
+            )
         );
 
         // Add index on git_branch for efficient branch-based queries

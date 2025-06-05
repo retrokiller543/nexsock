@@ -5,21 +5,20 @@ use clap::Parser;
 #[clap(author, version, about = "Load tester for Nexsock process manager")]
 pub struct ConcurrentArgs {
     /*/// Socket path to use to communicate with the daemon
-    /// 
-    /// If none is provided it will default to the system nexsock config, 
-    /// and if that does not exist one will be created 
+    ///
+    /// If none is provided it will default to the system nexsock config,
+    /// and if that does not exist one will be created
     #[cfg(unix)]
     #[arg(short, long)]
     pub socket: Option<PathBuf>,
 
     /// Tcp address to use to communicate with the daemon
     ///
-    /// If none is provided it will default to the system nexsock config, 
+    /// If none is provided it will default to the system nexsock config,
     /// and if that does not exist one will be created
     #[cfg(not(unix))]
     #[arg(short, long)]
     pub(crate) address: Option<SocketAddr>,*/
-
     /// Number of concurrent clients in the pool
     #[clap(short, long, default_value = "50")]
     pub pool_size: usize,

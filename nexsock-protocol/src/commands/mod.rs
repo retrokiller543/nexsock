@@ -17,7 +17,10 @@ use crate::commands::dependency::{
     RemoveDependencyCommand,
 };
 use crate::commands::error::ErrorPayload;
-use crate::commands::git::{CheckoutCommand, GetRepoStatusCommand, GitCheckoutCommitCommand, GitPullCommand, GitLogCommand, GitListBranchesCommand, GitLogResponse, GitListBranchesResponse, RepoStatus};
+use crate::commands::git::{
+    CheckoutCommand, GetRepoStatusCommand, GitCheckoutCommitCommand, GitListBranchesCommand,
+    GitListBranchesResponse, GitLogCommand, GitLogResponse, GitPullCommand, RepoStatus,
+};
 use crate::commands::list_services::{ListServicesCommand, ListServicesResponse};
 use crate::commands::manage_service::{
     RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand,
@@ -114,7 +117,7 @@ pub enum CommandPayload {
     ServiceConfig(ServiceConfigPayload),
 
     Dependencies(ListDependenciesResponse),
-    
+
     GitLog(GitLogResponse),
     GitBranches(GitListBranchesResponse),
     GitStatus(RepoStatus),

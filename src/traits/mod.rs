@@ -15,9 +15,9 @@
 
 pub mod configuration_management;
 pub mod dependency_management;
-pub mod git_service;
 pub mod git_backend;
 pub mod git_management;
+pub mod git_service;
 pub mod process_manager;
 pub mod service_management;
 
@@ -93,7 +93,7 @@ pub(crate) trait VecExt<T> {
     ///
     /// ```rust
     /// use nexsockd::traits::VecExt;
-    /// 
+    ///
     /// let mut vec = vec![1, 2, 3, 4];
     /// assert_eq!(vec.try_swap_remove(1), Some(2));
     /// assert_eq!(vec.try_swap_remove(10), None);

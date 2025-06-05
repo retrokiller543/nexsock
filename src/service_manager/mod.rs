@@ -30,7 +30,7 @@ use tracing::warn;
 /// # Type Parameters
 ///
 /// * `Out` - The stdout stream type (defaults to `ChildStdout`)
-/// * `In` - The stdin stream type (defaults to `ChildStdin`) 
+/// * `In` - The stdin stream type (defaults to `ChildStdin`)
 /// * `Err` - The stderr stream type (defaults to `ChildStderr`)
 ///
 /// # Examples
@@ -51,26 +51,26 @@ where
 {
     /// The underlying process group handle for the service.
     pub(crate) process: AsyncGroupChild,
-    
+
     /// The current state of the service process.
     pub(crate) state: ServiceState,
-    
+
     /// Environment variables that were set when the process was spawned.
     pub(crate) env_vars: HashMap<String, String>,
-    
+
     /// Optional stdout stream from the process.
     pub(crate) stdout: Option<Out>,
-    
+
     /// Optional stdin stream to the process.
     pub(crate) stdin: Option<In>,
-    
+
     /// Optional stderr stream from the process.
     pub(crate) stderr: Option<Err>,
-    
+
     /// Circular buffer storing collected stdout logs with timestamps.
     /// Limited to prevent memory exhaustion from long-running processes.
     pub(crate) stdout_logs: Arc<Mutex<VecDeque<LogEntry>>>,
-    
+
     /// Handles for the background tasks collecting and processing logs.
     /// Tuple contains (log processing task, stdout reading task).
     pub(crate) log_task_handle: Option<(tokio::task::JoinHandle<()>, tokio::task::JoinHandle<()>)>,
@@ -97,7 +97,7 @@ where
 pub(crate) struct LogEntry {
     /// The UTC timestamp when this log entry was captured.
     pub(crate) timestamp: chrono::DateTime<chrono::Utc>,
-    
+
     /// The actual log content captured from the process stdout.
     pub(crate) content: String,
 }

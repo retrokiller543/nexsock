@@ -64,17 +64,17 @@ impl GitRepoInfo {
             behind_count: None,
         }
     }
-    
+
     /// Returns true if the repository has a remote tracking branch.
     pub fn has_remote_tracking(&self) -> bool {
         self.ahead_count.is_some() || self.behind_count.is_some()
     }
-    
+
     /// Returns true if the repository is ahead of its remote.
     pub fn is_ahead(&self) -> bool {
         self.ahead_count.map_or(false, |count| count > 0)
     }
-    
+
     /// Returns true if the repository is behind its remote.
     pub fn is_behind(&self) -> bool {
         self.behind_count.map_or(false, |count| count > 0)
@@ -95,7 +95,7 @@ impl GitCommit {
         } else {
             hash.clone()
         };
-        
+
         Self {
             hash,
             short_hash,

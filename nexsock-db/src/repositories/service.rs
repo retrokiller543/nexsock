@@ -110,7 +110,12 @@ impl ServiceRepository<'_> {
             .find_also_related(ServiceConfigEntity)
             .one(db)
             .await
-            .with_context(|| format!("Database error while fetching service and configuration for ID `{}`", id))?;
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service and configuration for ID `{}`",
+                    id
+                )
+            })?;
 
         self._get_detailed_service_record(
             service_and_config,
@@ -144,7 +149,12 @@ impl ServiceRepository<'_> {
             .find_also_related(ServiceConfigEntity)
             .one(db)
             .await
-            .with_context(|| format!("Database error while fetching service and configuration for name `{}`", name_str))?;
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service and configuration for name `{}`",
+                    name_str
+                )
+            })?;
 
         self._get_detailed_service_record(
             service_and_config,
@@ -174,7 +184,12 @@ impl ServiceRepository<'_> {
             ServiceRef::Id(id) => self.get_detailed_by_id(*id).await,
             ServiceRef::Name(name) => self.get_detailed_by_name(name).await,
         }
-        .with_context(|| format!("Failed to get detailed service for reference `{:?}`", service_ref))
+        .with_context(|| {
+            format!(
+                "Failed to get detailed service for reference `{:?}`",
+                service_ref
+            )
+        })
     }
 
     /// Fetches all services from the database.
@@ -278,7 +293,10 @@ impl ServiceRepository<'_> {
                 git_auth_type: Set(service.git_auth_type.clone()),
             };
 
-            let result = active_model.insert(db).await.context("Database error while inserting new service")?;
+            let result = active_model
+                .insert(db)
+                .await
+                .context("Database error while inserting new service")?;
             service.id = result.id;
         } else {
             // Update existing record
@@ -296,7 +314,12 @@ impl ServiceRepository<'_> {
                 git_auth_type: Set(service.git_auth_type.clone()),
             };
 
-            active_model.update(db).await.with_context(|| format!("Database error while updating service with ID `{}`", original_id))?;
+            active_model.update(db).await.with_context(|| {
+                format!(
+                    "Database error while updating service with ID `{}`",
+                    original_id
+                )
+            })?;
         }
 
         Ok(())
@@ -322,7 +345,10 @@ impl ServiceRepository<'_> {
             .ok_or_else(|| anyhow!("Cannot delete service: Service with ID `{}` not found", id))?;
 
         let model: ServiceActiveModel = service_to_delete.into();
-        model.delete(db).await.with_context(|| format!("Database error while deleting service with ID `{}`", id))?;
+        model
+            .delete(db)
+            .await
+            .with_context(|| format!("Database error while deleting service with ID `{}`", id))?;
 
         Ok(())
     }
@@ -357,7 +383,10 @@ impl ServiceRepository<'_> {
     pub async fn get_all_with_dependencies(&self) -> anyhow::Result<ListServicesResponse> {
         let db = self.connection;
 
-        let services = self.get_all().await.context("Database error while fetching all services for dependency check")?;
+        let services = self
+            .get_all()
+            .await
+            .context("Database error while fetching all services for dependency check")?;
 
         let mut result_services = Vec::new();
 
@@ -367,7 +396,12 @@ impl ServiceRepository<'_> {
                 .filter(ServiceDependencyColumn::ServiceId.eq(service.id))
                 .count(db)
                 .await
-                .with_context(|| format!("Database error while checking dependencies for service ID `{}`", service_id_for_context))?
+                .with_context(|| {
+                    format!(
+                        "Database error while checking dependencies for service ID `{}`",
+                        service_id_for_context
+                    )
+                })?
                 > 0;
 
             let service_info = nexsock_protocol::commands::list_services::ServiceInfo {
@@ -406,8 +440,15 @@ impl ServiceRepository<'_> {
                 let service = self
                     .get_by_name(name)
                     .await
-                    .with_context(|| format!("Database error while trying to extract ID for service name `{}`", name))?
-                    .ok_or_else(|| anyhow!("Cannot extract ID: Service with name `{}` not found", name))?;
+                    .with_context(|| {
+                        format!(
+                            "Database error while trying to extract ID for service name `{}`",
+                            name
+                        )
+                    })?
+                    .ok_or_else(|| {
+                        anyhow!("Cannot extract ID: Service with name `{}` not found", name)
+                    })?;
 
                 Ok(service.id)
             }
@@ -437,11 +478,16 @@ impl ServiceRepository<'_> {
         git_auth_type: Option<String>,
     ) -> anyhow::Result<()> {
         let db = self.connection;
-        
+
         let service = ServiceEntity::find_by_id(service_id)
             .one(db)
             .await
-            .with_context(|| format!("Database error while fetching service with ID `{}`", service_id))?
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service with ID `{}`",
+                    service_id
+                )
+            })?
             .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
 
         let mut active_service: ServiceActiveModel = service.into();
@@ -449,10 +495,12 @@ impl ServiceRepository<'_> {
         active_service.git_commit_hash = Set(git_commit_hash);
         active_service.git_auth_type = Set(git_auth_type);
 
-        active_service
-            .update(db)
-            .await
-            .with_context(|| format!("Failed to update Git information for service with ID `{}`", service_id))?;
+        active_service.update(db).await.with_context(|| {
+            format!(
+                "Failed to update Git information for service with ID `{}`",
+                service_id
+            )
+        })?;
 
         Ok(())
     }
@@ -473,20 +521,27 @@ impl ServiceRepository<'_> {
         git_branch: Option<String>,
     ) -> anyhow::Result<()> {
         let db = self.connection;
-        
+
         let service = ServiceEntity::find_by_id(service_id)
             .one(db)
             .await
-            .with_context(|| format!("Database error while fetching service with ID `{}`", service_id))?
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service with ID `{}`",
+                    service_id
+                )
+            })?
             .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
 
         let mut active_service: ServiceActiveModel = service.into();
         active_service.git_branch = Set(git_branch);
 
-        active_service
-            .update(db)
-            .await
-            .with_context(|| format!("Failed to update Git branch for service with ID `{}`", service_id))?;
+        active_service.update(db).await.with_context(|| {
+            format!(
+                "Failed to update Git branch for service with ID `{}`",
+                service_id
+            )
+        })?;
 
         Ok(())
     }
@@ -507,20 +562,27 @@ impl ServiceRepository<'_> {
         git_commit_hash: Option<String>,
     ) -> anyhow::Result<()> {
         let db = self.connection;
-        
+
         let service = ServiceEntity::find_by_id(service_id)
             .one(db)
             .await
-            .with_context(|| format!("Database error while fetching service with ID `{}`", service_id))?
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service with ID `{}`",
+                    service_id
+                )
+            })?
             .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
 
         let mut active_service: ServiceActiveModel = service.into();
         active_service.git_commit_hash = Set(git_commit_hash);
 
-        active_service
-            .update(db)
-            .await
-            .with_context(|| format!("Failed to update Git commit hash for service with ID `{}`", service_id))?;
+        active_service.update(db).await.with_context(|| {
+            format!(
+                "Failed to update Git commit hash for service with ID `{}`",
+                service_id
+            )
+        })?;
 
         Ok(())
     }
@@ -536,12 +598,17 @@ impl ServiceRepository<'_> {
     /// A `Result` containing a vector of services that are on the specified branch.
     pub async fn find_by_git_branch(&self, branch_name: &str) -> anyhow::Result<Vec<Service>> {
         let db = self.connection;
-        
+
         ServiceEntity::find()
             .filter(ServiceColumn::GitBranch.eq(branch_name))
             .all(db)
             .await
-            .with_context(|| format!("Database error while searching for services on branch `{}`", branch_name))
+            .with_context(|| {
+                format!(
+                    "Database error while searching for services on branch `{}`",
+                    branch_name
+                )
+            })
     }
 
     /// Finds all services using a specific Git commit hash.
@@ -555,11 +622,16 @@ impl ServiceRepository<'_> {
     /// A `Result` containing a vector of services that are on the specified commit.
     pub async fn find_by_git_commit(&self, commit_hash: &str) -> anyhow::Result<Vec<Service>> {
         let db = self.connection;
-        
+
         ServiceEntity::find()
             .filter(ServiceColumn::GitCommitHash.eq(commit_hash))
             .all(db)
             .await
-            .with_context(|| format!("Database error while searching for services on commit `{}`", commit_hash))
+            .with_context(|| {
+                format!(
+                    "Database error while searching for services on commit `{}`",
+                    commit_hash
+                )
+            })
     }
 }

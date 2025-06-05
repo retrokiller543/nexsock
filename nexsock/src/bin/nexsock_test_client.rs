@@ -24,10 +24,10 @@ async fn execute_request<C>(
 ) -> Option<u64>
 where
     C: ServiceCommand,
-    C::Input: Encode + Debug
+    C::Input: Encode + Debug,
 {
     let start = Instant::now();
-    
+
     let mut client = match pool.get().await {
         Ok(client) => client,
         Err(e) => {
@@ -36,7 +36,7 @@ where
             return None;
         }
     };
-    
+
     match client.execute_command(payload).await {
         Ok(_) => {
             success_count.fetch_add(1, Ordering::SeqCst);
@@ -53,18 +53,21 @@ where
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = ConcurrentArgs::parse();
-    
+
     let config = &*NEXSOCK_CONFIG;
     let manager = ClientManager::from_config(config.clone());
 
     let pool = Pool::builder(manager).max_size(args.pool_size).build()?;
-    
+
     let payload = ListServicesCommand;
 
     let success_count = Arc::new(AtomicUsize::new(0));
     let failure_count = Arc::new(AtomicUsize::new(0));
 
-    println!("Starting load test with pool size {} and concurrency {}", args.pool_size, args.concurrency);
+    println!(
+        "Starting load test with pool size {} and concurrency {}",
+        args.pool_size, args.concurrency
+    );
     println!("Request size: {} bytes", args.request_size);
 
     let start_time = Instant::now();
@@ -115,8 +118,12 @@ async fn main() -> anyhow::Result<()> {
             let success = success_count.load(Ordering::SeqCst);
             let rate = success as f64 / elapsed;
 
-            println!("Progress: {}/{} requests, {:.2} req/sec",
-                     args.total_requests - remaining, args.total_requests, rate);
+            println!(
+                "Progress: {}/{} requests, {:.2} req/sec",
+                args.total_requests - remaining,
+                args.total_requests,
+                rate
+            );
         }
     }
 
@@ -153,7 +160,7 @@ async fn main() -> anyhow::Result<()> {
         println!("p95: {}", percentile(&all_latencies, 95));
         println!("p99: {}", percentile(&all_latencies, 99));
     }
-    
+
     Ok(())
 }
 

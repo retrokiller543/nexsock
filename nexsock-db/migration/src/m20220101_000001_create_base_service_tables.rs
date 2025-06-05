@@ -231,7 +231,6 @@ impl MigrationTrait for Migration {
     }
 }
 
-
 /// Defines identifiers for the `service_config` table and its columns.
 #[derive(Iden)]
 enum ServiceConfig {

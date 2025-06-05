@@ -47,10 +47,18 @@ pub trait GitBackend: Send + Sync {
     ) -> crate::error::Result<crate::git::GitRepoInfo>;
 
     /// Pull the latest changes from the remote repository.
-    async fn pull(&self, repo_path: &Path, auth: &crate::git::GitAuth) -> crate::error::Result<crate::git::GitRepoInfo>;
+    async fn pull(
+        &self,
+        repo_path: &Path,
+        auth: &crate::git::GitAuth,
+    ) -> crate::error::Result<crate::git::GitRepoInfo>;
 
     /// Fetch the latest information from the remote repository without merging.
-    async fn fetch(&self, repo_path: &Path, auth: &crate::git::GitAuth) -> crate::error::Result<crate::git::GitRepoInfo>;
+    async fn fetch(
+        &self,
+        repo_path: &Path,
+        auth: &crate::git::GitAuth,
+    ) -> crate::error::Result<crate::git::GitRepoInfo>;
 
     /// Get the commit history for the repository.
     async fn log(

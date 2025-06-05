@@ -244,7 +244,7 @@ pub enum GitCommands {
 
         /// Branch name
         branch: String,
-        
+
         /// Create branch if it doesn't exist
         #[arg(short, long)]
         create: bool,

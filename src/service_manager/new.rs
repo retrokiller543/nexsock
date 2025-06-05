@@ -4,9 +4,9 @@
 //! functionality, providing process lifecycle management and service operations.
 
 use super::ServiceProcess;
+use crate::traits::git_management::GitManagement;
 use crate::traits::process_manager::{FullProcessManager, ProcessManager};
 use crate::traits::service_management::ServiceManagement;
-use crate::traits::git_management::GitManagement;
 use anyhow::anyhow;
 use dashmap::try_result::TryResult;
 use dashmap::DashMap;
@@ -322,8 +322,14 @@ impl GitManagement for ServiceManager {
         use std::path::Path;
 
         // Get service details
-        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
-        let service = self.service_repository.get_by_id(service_id).await?
+        let service_id = self
+            .service_repository
+            .extract_valid_id_from_ref(service_ref)
+            .await?;
+        let service = self
+            .service_repository
+            .get_by_id(service_id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         // Prepare Git authentication
@@ -346,15 +352,19 @@ impl GitManagement for ServiceManager {
         }
 
         // Checkout the branch
-        let repo_info = backend.checkout_branch(repo_path, branch_name, create_if_missing).await?;
+        let repo_info = backend
+            .checkout_branch(repo_path, branch_name, create_if_missing)
+            .await?;
 
         // Update database with new Git information
-        self.service_repository.update_git_info(
-            service_id,
-            repo_info.current_branch.clone(),
-            Some(repo_info.current_commit.clone()),
-            service.git_auth_type.clone(),
-        ).await?;
+        self.service_repository
+            .update_git_info(
+                service_id,
+                repo_info.current_branch.clone(),
+                Some(repo_info.current_commit.clone()),
+                service.git_auth_type.clone(),
+            )
+            .await?;
 
         Ok(())
     }
@@ -371,8 +381,14 @@ impl GitManagement for ServiceManager {
         use std::path::Path;
 
         // Get service details
-        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
-        let service = self.service_repository.get_by_id(service_id).await?
+        let service_id = self
+            .service_repository
+            .extract_valid_id_from_ref(service_ref)
+            .await?;
+        let service = self
+            .service_repository
+            .get_by_id(service_id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         // Prepare Git authentication
@@ -394,12 +410,14 @@ impl GitManagement for ServiceManager {
         let repo_info = backend.checkout_commit(repo_path, commit_hash).await?;
 
         // Update database with new Git information (detached HEAD)
-        self.service_repository.update_git_info(
-            service_id,
-            None, // No branch in detached HEAD
-            Some(repo_info.current_commit.clone()),
-            service.git_auth_type.clone(),
-        ).await?;
+        self.service_repository
+            .update_git_info(
+                service_id,
+                None, // No branch in detached HEAD
+                Some(repo_info.current_commit.clone()),
+                service.git_auth_type.clone(),
+            )
+            .await?;
 
         Ok(())
     }
@@ -412,8 +430,14 @@ impl GitManagement for ServiceManager {
         use std::path::Path;
 
         // Get service details
-        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
-        let service = self.service_repository.get_by_id(service_id).await?
+        let service_id = self
+            .service_repository
+            .extract_valid_id_from_ref(service_ref)
+            .await?;
+        let service = self
+            .service_repository
+            .get_by_id(service_id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         // Prepare Git authentication
@@ -434,25 +458,36 @@ impl GitManagement for ServiceManager {
         let repo_info = backend.pull(repo_path, &auth).await?;
 
         // Update database with new commit information
-        self.service_repository.update_git_info(
-            service_id,
-            repo_info.current_branch.clone(),
-            Some(repo_info.current_commit.clone()),
-            service.git_auth_type.clone(),
-        ).await?;
+        self.service_repository
+            .update_git_info(
+                service_id,
+                repo_info.current_branch.clone(),
+                Some(repo_info.current_commit.clone()),
+                service.git_auth_type.clone(),
+            )
+            .await?;
 
         Ok(())
     }
 
     #[tracing::instrument(skip(self))]
-    async fn git_status(&self, service_ref: &ServiceRef) -> crate::error::Result<crate::git::GitRepoInfo> {
+    async fn git_status(
+        &self,
+        service_ref: &ServiceRef,
+    ) -> crate::error::Result<crate::git::GitRepoInfo> {
         use crate::git::backends::SystemGitBackend;
         use crate::traits::git_backend::GitBackend;
         use std::path::Path;
 
         // Get service details
-        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
-        let service = self.service_repository.get_by_id(service_id).await?
+        let service_id = self
+            .service_repository
+            .extract_valid_id_from_ref(service_ref)
+            .await?;
+        let service = self
+            .service_repository
+            .get_by_id(service_id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         // Create Git backend and get status
@@ -479,8 +514,14 @@ impl GitManagement for ServiceManager {
         use std::path::Path;
 
         // Get service details
-        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
-        let service = self.service_repository.get_by_id(service_id).await?
+        let service_id = self
+            .service_repository
+            .extract_valid_id_from_ref(service_ref)
+            .await?;
+        let service = self
+            .service_repository
+            .get_by_id(service_id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         // Create Git backend and get log
@@ -506,8 +547,14 @@ impl GitManagement for ServiceManager {
         use std::path::Path;
 
         // Get service details
-        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
-        let service = self.service_repository.get_by_id(service_id).await?
+        let service_id = self
+            .service_repository
+            .extract_valid_id_from_ref(service_ref)
+            .await?;
+        let service = self
+            .service_repository
+            .get_by_id(service_id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         // Create Git backend and list branches
@@ -530,8 +577,14 @@ impl GitManagement for ServiceManager {
         use std::path::Path;
 
         // Get service details
-        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
-        let service = self.service_repository.get_by_id(service_id).await?
+        let service_id = self
+            .service_repository
+            .extract_valid_id_from_ref(service_ref)
+            .await?;
+        let service = self
+            .service_repository
+            .get_by_id(service_id)
+            .await?
             .ok_or_else(|| anyhow!("Service not found"))?;
 
         let repo_path = Path::new(&service.repo_path);
@@ -551,16 +604,19 @@ impl GitManagement for ServiceManager {
         // Clone the repository
         let backend = SystemGitBackend::new();
         let target_branch = service.git_branch.as_deref();
-        
-        let repo_info = GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, target_branch).await?;
+
+        let repo_info =
+            GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, target_branch).await?;
 
         // Update database with initial Git information
-        self.service_repository.update_git_info(
-            service_id,
-            repo_info.current_branch.clone(),
-            Some(repo_info.current_commit.clone()),
-            service.git_auth_type.clone(),
-        ).await?;
+        self.service_repository
+            .update_git_info(
+                service_id,
+                repo_info.current_branch.clone(),
+                Some(repo_info.current_commit.clone()),
+                service.git_auth_type.clone(),
+            )
+            .await?;
 
         Ok(())
     }

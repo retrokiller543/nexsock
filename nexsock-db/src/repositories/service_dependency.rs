@@ -63,7 +63,12 @@ impl ServiceDependencyRepository<'_> {
             )
             .one(db)
             .await
-            .with_context(|| format!("Database error while fetching service dependency with ID `{}`", id))?;
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service dependency with ID `{}`",
+                    id
+                )
+            })?;
         Ok(dependency)
     }
 
@@ -103,7 +108,12 @@ impl ServiceDependencyRepository<'_> {
             .into_model::<JoinedDependency>()
             .all(db)
             .await
-            .with_context(|| format!("Database error while fetching joined dependencies for service ID `{}`", service_id))?;
+            .with_context(|| {
+                format!(
+                    "Database error while fetching joined dependencies for service ID `{}`",
+                    service_id
+                )
+            })?;
 
         Ok(dependencies)
     }
@@ -147,7 +157,12 @@ impl ServiceDependencyRepository<'_> {
                 tunnel_enabled: Set(dependency.tunnel_enabled),
             };
 
-            active_model.update(db).await.with_context(|| format!("Database error while updating service dependency with ID `{}`", original_id))?;
+            active_model.update(db).await.with_context(|| {
+                format!(
+                    "Database error while updating service dependency with ID `{}`",
+                    original_id
+                )
+            })?;
         }
 
         Ok(())
@@ -169,11 +184,26 @@ impl ServiceDependencyRepository<'_> {
         let dependency_to_delete = self
             .get_by_id(id)
             .await
-            .with_context(|| format!("Database error while fetching service dependency for deletion with ID `{}`", id))?
-            .ok_or_else(|| anyhow!("Cannot delete service dependency: Service dependency with ID `{}` not found", id))?;
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service dependency for deletion with ID `{}`",
+                    id
+                )
+            })?
+            .ok_or_else(|| {
+                anyhow!(
+                    "Cannot delete service dependency: Service dependency with ID `{}` not found",
+                    id
+                )
+            })?;
 
         let model: ServiceDependencyActiveModel = dependency_to_delete.into();
-        model.delete(db).await.with_context(|| format!("Database error while deleting service dependency with ID `{}`", id))?;
+        model.delete(db).await.with_context(|| {
+            format!(
+                "Database error while deleting service dependency with ID `{}`",
+                id
+            )
+        })?;
 
         Ok(())
     }
@@ -226,7 +256,12 @@ impl ServiceDependencyRepository<'_> {
         let dependencies = self
             .get_by_service_id(service_id)
             .await
-            .with_context(|| format!("Database error while fetching service dependency details for service ID `{}`", service_id))?
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service dependency details for service ID `{}`",
+                    service_id
+                )
+            })?
             .into_iter()
             .map(Into::into)
             .collect();
@@ -253,8 +288,15 @@ impl ServiceDependencyRepository<'_> {
         service_id: i64,
         service_name: String,
     ) -> anyhow::Result<ListDependenciesResponse> {
-        let dependencies = self.get_dependencies_with_service_info(service_id).await
-            .with_context(|| format!("Failed to get dependency information for service ID `{}` (name: `{}`)", service_id, service_name))?;
+        let dependencies = self
+            .get_dependencies_with_service_info(service_id)
+            .await
+            .with_context(|| {
+                format!(
+                    "Failed to get dependency information for service ID `{}` (name: `{}`)",
+                    service_id, service_name
+                )
+            })?;
 
         Ok(ListDependenciesResponse {
             service_name,

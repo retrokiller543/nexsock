@@ -1,6 +1,6 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
 use clap::Parser;
 use nexsockd::tracing;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 #[cfg(feature = "watchdog")]
 use tokio_util_watchdog::Watchdog;
@@ -25,12 +25,12 @@ pub struct App {
 
 fn main() -> nexsockd::prelude::Result<()> {
     //setup_periodic_heap_dumps();
-    
+
     // We dont really care to much if the env file is loaded or not
     dotenvy::dotenv().ok();
     let _guards = tracing()?;
     let app = App::parse();
-    
+
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .thread_name_fn(|| {

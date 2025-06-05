@@ -50,7 +50,12 @@ impl ServiceConfigRepository<'_> {
         ServiceConfigEntity::find_by_id(id)
             .one(db)
             .await
-            .with_context(|| format!("Database error while fetching service configuration with ID `{}`", id))
+            .with_context(|| {
+                format!(
+                    "Database error while fetching service configuration with ID `{}`",
+                    id
+                )
+            })
     }
 
     /// Saves a service configuration to the database.
@@ -78,7 +83,10 @@ impl ServiceConfigRepository<'_> {
                 run_command: Set(config.run_command.clone()),
             };
 
-            let result = active_model.insert(db).await.context("Database error while inserting new service configuration")?;
+            let result = active_model
+                .insert(db)
+                .await
+                .context("Database error while inserting new service configuration")?;
             config.id = result.id;
         } else {
             // Update existing record
@@ -90,7 +98,12 @@ impl ServiceConfigRepository<'_> {
                 run_command: Set(config.run_command.clone()),
             };
 
-            active_model.update(db).await.with_context(|| format!("Database error while updating service configuration with ID `{}`", original_id))?;
+            active_model.update(db).await.with_context(|| {
+                format!(
+                    "Database error while updating service configuration with ID `{}`",
+                    original_id
+                )
+            })?;
         }
 
         Ok(())
@@ -116,7 +129,12 @@ impl ServiceConfigRepository<'_> {
             .ok_or_else(|| anyhow!("Cannot delete service configuration: Service configuration with ID `{}` not found", id))?;
 
         let model: ServiceConfigActiveModel = config_to_delete.into();
-        model.delete(db).await.with_context(|| format!("Database error while deleting service configuration with ID `{}`", id))?;
+        model.delete(db).await.with_context(|| {
+            format!(
+                "Database error while deleting service configuration with ID `{}`",
+                id
+            )
+        })?;
 
         Ok(())
     }

@@ -1,7 +1,7 @@
 //! Common test utilities for nexsock-db.
 
-use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use migration::{Migrator, MigratorTrait}; // Assuming migration crate is accessible
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::time::Duration;
 
 /// Sets up an in-memory SQLite database for testing.

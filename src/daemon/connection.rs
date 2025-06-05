@@ -2,18 +2,21 @@ use crate::error;
 use crate::statics::{CONFIG_MANAGER, DEPENDENCY_MANAGER, PRE_HOOKS, SERVICE_MANAGER};
 use crate::traits::configuration_management::ConfigurationManagement;
 use crate::traits::dependency_management::DependencyManagement;
-use crate::traits::service_management::ServiceManagement;
 #[cfg(feature = "git")]
 use crate::traits::git_management::GitManagement;
+use crate::traits::service_management::ServiceManagement;
 use bincode::{Decode, Encode};
 use cfg_if::cfg_if;
 use nexsock_abi::PreHook;
 use nexsock_plugins::lua::manager::LuaPluginManager;
 use nexsock_protocol::commands::error::ErrorPayload;
 use nexsock_protocol::commands::extra::ExtraCommandPayload;
-use nexsock_protocol::commands::{Command, CommandPayload};
 #[cfg(feature = "git")]
-use nexsock_protocol::commands::git::{CheckoutPayload, GitCheckoutCommitPayload, GitPullPayload, GitLogPayload, GitListBranchesPayload};
+use nexsock_protocol::commands::git::{
+    CheckoutPayload, GitCheckoutCommitPayload, GitListBranchesPayload, GitLogPayload,
+    GitPullPayload,
+};
+use nexsock_protocol::commands::{Command, CommandPayload};
 use nexsock_protocol::header::MessageFlags;
 use nexsock_protocol::protocol::Protocol;
 use std::fmt::Debug;
@@ -247,29 +250,33 @@ where
             #[cfg(feature = "git")]
             Command::CheckoutBranch => {
                 let payload: CheckoutPayload = Self::read_req_payload(payload)?;
-                SERVICE_MANAGER.git_checkout_branch(&payload.service, &payload.branch, false).await?;
+                SERVICE_MANAGER
+                    .git_checkout_branch(&payload.service, &payload.branch, false)
+                    .await?;
                 Ok(CommandPayload::Empty)
             }
-            
+
             #[cfg(feature = "git")]
             Command::GitCheckoutCommit => {
                 let payload: GitCheckoutCommitPayload = Self::read_req_payload(payload)?;
-                SERVICE_MANAGER.git_checkout_commit(&payload.service, &payload.commit_hash).await?;
+                SERVICE_MANAGER
+                    .git_checkout_commit(&payload.service, &payload.commit_hash)
+                    .await?;
                 Ok(CommandPayload::Empty)
             }
-            
+
             #[cfg(feature = "git")]
             Command::GitPull => {
                 let payload: GitPullPayload = Self::read_req_payload(payload)?;
                 SERVICE_MANAGER.git_pull(&payload.service).await?;
                 Ok(CommandPayload::Empty)
             }
-            
+
             #[cfg(feature = "git")]
             Command::GetRepoStatus => {
                 let payload = Self::read_req_payload(payload)?;
                 let repo_info = SERVICE_MANAGER.git_status(&payload).await?;
-                
+
                 // Convert GitRepoInfo to RepoStatus
                 let status = nexsock_protocol::commands::git::RepoStatus {
                     current_branch: repo_info.current_branch,
@@ -280,18 +287,25 @@ where
                     ahead_count: repo_info.ahead_count,
                     behind_count: repo_info.behind_count,
                 };
-                
+
                 Ok(CommandPayload::GitStatus(status))
             }
-            
+
             #[cfg(feature = "git")]
             Command::GitLog => {
                 let payload: GitLogPayload = Self::read_req_payload(payload)?;
-                let commits = SERVICE_MANAGER.git_log(&payload.service, payload.max_count, payload.branch.as_deref()).await?;
-                
+                let commits = SERVICE_MANAGER
+                    .git_log(
+                        &payload.service,
+                        payload.max_count,
+                        payload.branch.as_deref(),
+                    )
+                    .await?;
+
                 // Convert GitCommit to GitCommitInfo
-                let commit_infos = commits.into_iter().map(|commit| {
-                    nexsock_protocol::commands::git::GitCommitInfo {
+                let commit_infos = commits
+                    .into_iter()
+                    .map(|commit| nexsock_protocol::commands::git::GitCommitInfo {
                         hash: commit.hash,
                         short_hash: commit.short_hash,
                         author_name: commit.author_name,
@@ -299,58 +313,59 @@ where
                         timestamp: commit.timestamp,
                         message: commit.message,
                         full_message: commit.full_message,
-                    }
-                }).collect();
-                
+                    })
+                    .collect();
+
                 let response = nexsock_protocol::commands::git::GitLogResponse {
                     commits: commit_infos,
                 };
-                
+
                 Ok(CommandPayload::GitLog(response))
             }
-            
+
             #[cfg(feature = "git")]
             Command::GitListBranches => {
                 let payload: GitListBranchesPayload = Self::read_req_payload(payload)?;
-                let branches = SERVICE_MANAGER.git_list_branches(&payload.service, payload.include_remote).await?;
-                
-                let response = nexsock_protocol::commands::git::GitListBranchesResponse {
-                    branches,
-                };
-                
+                let branches = SERVICE_MANAGER
+                    .git_list_branches(&payload.service, payload.include_remote)
+                    .await?;
+
+                let response =
+                    nexsock_protocol::commands::git::GitListBranchesResponse { branches };
+
                 Ok(CommandPayload::GitBranches(response))
             }
-            
+
             #[cfg(not(feature = "git"))]
             Command::CheckoutBranch => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::Unsupported,
                 "Git support not enabled in this build",
             ))),
-            
+
             #[cfg(not(feature = "git"))]
             Command::GetRepoStatus => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::Unsupported,
                 "Git support not enabled in this build",
             ))),
-            
+
             #[cfg(not(feature = "git"))]
             Command::GitCheckoutCommit => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::Unsupported,
                 "Git support not enabled in this build",
             ))),
-            
+
             #[cfg(not(feature = "git"))]
             Command::GitPull => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::Unsupported,
                 "Git support not enabled in this build",
             ))),
-            
+
             #[cfg(not(feature = "git"))]
             Command::GitLog => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::Unsupported,
                 "Git support not enabled in this build",
             ))),
-            
+
             #[cfg(not(feature = "git"))]
             Command::GitListBranches => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::Unsupported,

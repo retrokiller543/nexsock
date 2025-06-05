@@ -47,6 +47,6 @@ pub fn get_db_connection() -> &'static DatabaseConnection {
         .expect("Database connection not initialized")
 }
 
+mod error;
 #[cfg(test)]
 pub mod tests;
-mod error;
