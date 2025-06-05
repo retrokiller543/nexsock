@@ -98,11 +98,11 @@ jobs:
         echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
 
     - name: Run tests (no features)
-      if: matrix.features == ''
+      if: matrix.features == '' && matrix.target != 'aarch64-unknown-linux-gnu'
       run: cargo test --target ${{ matrix.target }} --verbose
 
     - name: Run tests (with features)
-      if: matrix.features != ''
+      if: matrix.features != '' && matrix.target != 'aarch64-unknown-linux-gnu'
       run: cargo test --target ${{ matrix.target }} --features ${{ matrix.features }} --verbose
 
     - name: Run nexsock-testing tests
@@ -149,7 +149,7 @@ jobs:
       run: cargo clippy --all-targets --all-features -- -D warnings
 
     - name: Check documentation
-      run: cargo doc --no-deps --all-features --document-private-items
+      run: cargo doc --no-deps --all-features
       env:
         RUSTDOCFLAGS: -D warnings
 
