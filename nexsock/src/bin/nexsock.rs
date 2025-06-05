@@ -8,6 +8,7 @@ use nexsock_protocol::commands::{CommandPayload, ServiceCommand};
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tracing::warn;
+use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand, GitCheckoutCommitCommand, GitListBranchesCommand, GitLogCommand, GitPullCommand};
 
 #[cfg(feature = "jemalloc")]
 #[global_allocator]
@@ -72,20 +73,31 @@ async fn main() -> anyhow::Result<()> {
 
     let response = match command {
         ServiceCommand::Stdout(cmd) => client.execute_command(cmd).await?,
+        
         ServiceCommand::Start(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Stop(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Restart(cmd) => client.execute_command(cmd).await?,
+        
         ServiceCommand::List(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Status(cmd) => client.execute_command(cmd).await?,
+        
         ServiceCommand::Add(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::Remove(cmd) => client.execute_command(cmd).await?,
+        
         ServiceCommand::ConfigGet(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::ConfigUpdate(cmd) => client.execute_command(cmd).await?,
+        
         ServiceCommand::DependencyAdd(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::DependencyRemove(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::DependencyList(cmd) => client.execute_command(cmd).await?,
+       
         ServiceCommand::GitCheckout(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::GitStatus(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::GitPull(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::GitCheckoutCommit(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::GitLog(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::GitListBranches(cmd) => client.execute_command(cmd).await?,
+        
         _ => bail!("Unknown command"),
     };
 
