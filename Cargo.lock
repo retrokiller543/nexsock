@@ -2278,6 +2278,7 @@ dependencies = [
  "migration",
  "nexsock-config",
  "nexsock-protocol",
+ "percent-encoding",
  "sea-orm",
  "serde",
  "serde_json",
@@ -2285,6 +2286,7 @@ dependencies = [
  "thiserror 2.0.12",
  "tokio",
  "tracing",
+ "url",
 ]
 
 [[package]]
