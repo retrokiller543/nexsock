@@ -19,7 +19,6 @@ use futures::future::try_join_all;
 use nexsock_protocol::commands::service_status::ServiceState;
 use port_selector::is_free_tcp;
 use std::collections::VecDeque;
-use std::process::Stdio;
 use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
 use tokio::io::AsyncReadExt;
 use tokio::sync::Mutex;

@@ -4,10 +4,6 @@ use nexsock::cli::{Cli, Commands, ToolCommands};
 use nexsock::commands::create_command;
 use nexsock_client::Client;
 use nexsock_config::NexsockConfig;
-use nexsock_protocol::commands::git::{
-    CheckoutCommand, GetRepoStatusCommand, GitCheckoutCommitCommand, GitListBranchesCommand,
-    GitLogCommand, GitPullCommand,
-};
 use nexsock_protocol::commands::{CommandPayload, ServiceCommand};
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};

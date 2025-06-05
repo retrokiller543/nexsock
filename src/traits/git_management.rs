@@ -207,5 +207,6 @@ pub(crate) trait GitManagement: Send + Sync {
     /// * Authentication fails for clone operations
     /// * Clone operation fails (network issues, invalid URL, etc.)
     /// * Path creation or access fails
+    #[allow(dead_code)]
     async fn git_ensure_repo(&self, service_ref: &ServiceRef) -> crate::error::Result<()>;
 }

@@ -72,12 +72,12 @@ impl GitRepoInfo {
 
     /// Returns true if the repository is ahead of its remote.
     pub fn is_ahead(&self) -> bool {
-        self.ahead_count.map_or(false, |count| count > 0)
+        self.ahead_count.is_some_and(|count| count > 0)
     }
 
     /// Returns true if the repository is behind its remote.
     pub fn is_behind(&self) -> bool {
-        self.behind_count.map_or(false, |count| count > 0)
+        self.behind_count.is_some_and(|count| count > 0)
     }
 }
 
