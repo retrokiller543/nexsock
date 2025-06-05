@@ -6,7 +6,10 @@ use nexsock_protocol::commands::config::{
 use nexsock_protocol::commands::dependency::{
     AddDependencyCommand, ListDependenciesCommand, RemoveDependencyCommand,
 };
-use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
+use nexsock_protocol::commands::git::{
+    CheckoutCommand, GetRepoStatusCommand, GitCheckoutCommitCommand, GitPullCommand, 
+    GitLogCommand, GitListBranchesCommand
+};
 use nexsock_protocol::commands::list_services::ListServicesCommand;
 use nexsock_protocol::commands::manage_service::{
     RemoveServiceCommand, RestartServiceCommand, ServiceRef, StartServiceCommand,
@@ -43,6 +46,8 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             repo_path,
             config,
             run_command,
+            git_branch,
+            git_auth,
         } => {
             let config = if let Some(config_path) = config {
                 let format = if config_path.extension().and_then(|s| s.to_str()) == Some("env") {
@@ -65,7 +70,9 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
                 None
             };
 
-            Ok(AddServiceCommand::new(name, repo_url, port, repo_path, config).into())
+            let git_auth_type = if git_auth == "none" { None } else { Some(git_auth) };
+            
+            Ok(AddServiceCommand::new(name, repo_url, port, repo_path, config, git_branch, git_auth_type).into())
         }
 
         Commands::Remove { service } => Ok(RemoveServiceCommand::new(service).into()),
@@ -99,10 +106,22 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
         },
 
         Commands::Git { command } => match command {
-            GitCommands::Checkout { service, branch } => {
+            GitCommands::Checkout { service, branch, create: _ } => {
                 Ok(CheckoutCommand::new(service, branch).into())
             }
+            GitCommands::CheckoutCommit { service, commit } => {
+                Ok(GitCheckoutCommitCommand::new(service, commit).into())
+            }
+            GitCommands::Pull { service } => {
+                Ok(GitPullCommand::new(service).into())
+            }
             GitCommands::Status { service } => Ok(GetRepoStatusCommand::new(service).into()),
+            GitCommands::Log { service, max_count, branch } => {
+                Ok(GitLogCommand::new(service, max_count, branch).into())
+            }
+            GitCommands::Branches { service, remote } => {
+                Ok(GitListBranchesCommand::new(service, remote).into())
+            }
         },
         _ => Err(anyhow::anyhow!("invalid command")),
     }

@@ -16,6 +16,7 @@ mod config_manager;
 pub mod daemon;
 mod dependency_manager;
 pub mod error;
+pub mod git;
 //mod models;
 mod plugins;
 pub mod prelude;

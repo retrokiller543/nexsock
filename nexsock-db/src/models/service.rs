@@ -33,6 +33,15 @@ pub struct Model {
     /// The current status of the service.
     #[sea_orm(column_type = "Text")]
     pub status: ServiceStatus,
+    /// The current Git branch name (if applicable).
+    #[sea_orm(column_type = "Text")]
+    pub git_branch: Option<String>,
+    /// The current Git commit hash (if applicable).
+    #[sea_orm(column_type = "Text")]
+    pub git_commit_hash: Option<String>,
+    /// The Git authentication type used for this service.
+    #[sea_orm(column_type = "Text")]
+    pub git_auth_type: Option<String>,
 }
 
 impl Model {
@@ -60,6 +69,45 @@ impl Model {
             port,
             repo_path,
             status: ServiceStatus::Stopped,
+            git_branch: None,
+            git_commit_hash: None,
+            git_auth_type: None,
+        }
+    }
+
+    /// Creates a new `Model` instance with Git information.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the service.
+    /// * `repo_url` - The URL of the service's repository.
+    /// * `port` - The port number the service will run on.
+    /// * `repo_path` - The path to the service's repository on the local filesystem.
+    /// * `config_id` - An optional foreign key referencing the service's configuration.
+    /// * `git_branch` - The current Git branch name.
+    /// * `git_commit_hash` - The current Git commit hash.
+    /// * `git_auth_type` - The Git authentication type.
+    pub fn new_with_git(
+        name: String,
+        repo_url: String,
+        port: i64,
+        repo_path: String,
+        config_id: Option<i64>,
+        git_branch: Option<String>,
+        git_commit_hash: Option<String>,
+        git_auth_type: Option<String>,
+    ) -> Self {
+        Self {
+            id: 0,
+            config_id,
+            name,
+            repo_url,
+            port,
+            repo_path,
+            status: ServiceStatus::Stopped,
+            git_branch,
+            git_commit_hash,
+            git_auth_type,
         }
     }
 
@@ -81,6 +129,9 @@ impl Model {
             repo_url: self.repo_url.clone(),
             repo_path: self.repo_path.clone(),
             dependencies: dependencies.into_iter().map(|d| d.into()).collect(),
+            git_branch: self.git_branch.clone(),
+            git_commit_hash: self.git_commit_hash.clone(),
+            git_auth_type: self.git_auth_type.clone(),
         }
     }
 }

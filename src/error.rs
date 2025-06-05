@@ -39,9 +39,9 @@ pub enum Error {
     Tracing(#[from] SetGlobalDefaultError),
     #[error(transparent)]
     Logging(#[from] tosic_utils::logging::LoggingError),
-    #[cfg(feature = "git")]
-    #[error(transparent)]
-    Git2(#[from] git2::Error),
+    // #[cfg(feature = "git")]
+    // #[error(transparent)]
+    // Git2(#[from] git2::Error),
     #[error(transparent)]
     Generic(#[from] anyhow::Error),
     #[error("Expected a payload to be present")]
@@ -93,8 +93,8 @@ impl Error {
             Error::Io(_) => 4,
             Error::Tracing(_) => 5,
             Error::Logging(_) => 6,
-            #[cfg(feature = "git")]
-            Error::Git2(_) => 7,
+            // #[cfg(feature = "git")]
+            // Error::Git2(_) => 7,
             Error::Generic(_) => 8,
             Error::ExpectedPayload => 9,
             Error::FailedToGetPayload => 10,

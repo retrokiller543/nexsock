@@ -17,7 +17,7 @@ use crate::commands::dependency::{
     RemoveDependencyCommand,
 };
 use crate::commands::error::ErrorPayload;
-use crate::commands::git::{CheckoutCommand, GetRepoStatusCommand};
+use crate::commands::git::{CheckoutCommand, GetRepoStatusCommand, GitCheckoutCommitCommand, GitPullCommand, GitLogCommand, GitListBranchesCommand, GitLogResponse, GitListBranchesResponse, RepoStatus};
 use crate::commands::list_services::{ListServicesCommand, ListServicesResponse};
 use crate::commands::manage_service::{
     RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand,
@@ -81,6 +81,10 @@ pub enum Command {
     // Repository operations
     CheckoutBranch = 30,
     GetRepoStatus = 31,
+    GitCheckoutCommit = 32,
+    GitPull = 33,
+    GitLog = 34,
+    GitListBranches = 35,
 
     // System operations
     Shutdown = 40,
@@ -110,6 +114,10 @@ pub enum CommandPayload {
     ServiceConfig(ServiceConfigPayload),
 
     Dependencies(ListDependenciesResponse),
+    
+    GitLog(GitLogResponse),
+    GitBranches(GitListBranchesResponse),
+    GitStatus(RepoStatus),
 
     Stdout(String),
 
@@ -142,7 +150,11 @@ pub enum ServiceCommand {
     DependencyList(ListDependenciesCommand),
 
     GitCheckout(CheckoutCommand),
+    GitCheckoutCommit(GitCheckoutCommitCommand),
+    GitPull(GitPullCommand),
     GitStatus(GetRepoStatusCommand),
+    GitLog(GitLogCommand),
+    GitListBranches(GitListBranchesCommand),
 }
 
 impl<T: Into<CommandPayload>> From<Option<T>> for CommandPayload {

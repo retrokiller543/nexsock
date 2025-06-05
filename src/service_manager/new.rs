@@ -6,6 +6,7 @@
 use super::ServiceProcess;
 use crate::traits::process_manager::{FullProcessManager, ProcessManager};
 use crate::traits::service_management::ServiceManagement;
+use crate::traits::git_management::GitManagement;
 use anyhow::anyhow;
 use dashmap::try_result::TryResult;
 use dashmap::DashMap;
@@ -198,6 +199,8 @@ impl ServiceManagement for ServiceManager {
             port,
             repo_path,
             config,
+            git_branch,
+            git_auth_type,
         } = payload;
 
         let id = if let Some(config) = config {
@@ -218,12 +221,15 @@ impl ServiceManagement for ServiceManager {
 
         dbg!(id);
 
-        let mut record = Service::new(
+        let mut record = Service::new_with_git(
             name.to_owned(),
             repo_url.to_owned(),
             *port,
             repo_path.to_owned(),
             id,
+            git_branch.clone(),
+            None, // git_commit_hash will be set when repository is cloned
+            git_auth_type.clone(),
         );
 
         dbg!(&record);
@@ -298,5 +304,264 @@ impl ServiceManagement for ServiceManager {
         });
 
         Ok(services)
+    }
+}
+
+#[cfg(feature = "git")]
+impl GitManagement for ServiceManager {
+    #[tracing::instrument(skip(self))]
+    async fn git_checkout_branch(
+        &self,
+        service_ref: &ServiceRef,
+        branch_name: &str,
+        create_if_missing: bool,
+    ) -> crate::error::Result<()> {
+        use crate::git::backends::SystemGitBackend;
+        use crate::git::GitAuth;
+        use crate::traits::git_backend::GitBackend;
+        use std::path::Path;
+
+        // Get service details
+        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
+        let service = self.service_repository.get_by_id(service_id).await?
+            .ok_or_else(|| anyhow!("Service not found"))?;
+
+        // Prepare Git authentication
+        let auth = match service.git_auth_type.as_deref() {
+            Some("ssh_agent") => GitAuth::ssh_agent("git"),
+            Some("token") => {
+                // In a real implementation, you'd retrieve the stored token securely
+                GitAuth::ssh_agent("git") // Fallback to SSH agent for now
+            }
+            _ => GitAuth::ssh_agent("git"), // Default to SSH agent
+        };
+
+        // Create Git backend
+        let backend = SystemGitBackend::new();
+        let repo_path = Path::new(&service.repo_path);
+
+        // Ensure repository exists
+        if !repo_path.exists() {
+            GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, None).await?;
+        }
+
+        // Checkout the branch
+        let repo_info = backend.checkout_branch(repo_path, branch_name, create_if_missing).await?;
+
+        // Update database with new Git information
+        self.service_repository.update_git_info(
+            service_id,
+            repo_info.current_branch.clone(),
+            Some(repo_info.current_commit.clone()),
+            service.git_auth_type.clone(),
+        ).await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn git_checkout_commit(
+        &self,
+        service_ref: &ServiceRef,
+        commit_hash: &str,
+    ) -> crate::error::Result<()> {
+        use crate::git::backends::SystemGitBackend;
+        use crate::git::GitAuth;
+        use crate::traits::git_backend::GitBackend;
+        use std::path::Path;
+
+        // Get service details
+        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
+        let service = self.service_repository.get_by_id(service_id).await?
+            .ok_or_else(|| anyhow!("Service not found"))?;
+
+        // Prepare Git authentication
+        let auth = match service.git_auth_type.as_deref() {
+            Some("ssh_agent") => GitAuth::ssh_agent("git"),
+            Some("token") => GitAuth::ssh_agent("git"), // Fallback for now
+            _ => GitAuth::ssh_agent("git"),
+        };
+
+        // Create Git backend and checkout commit
+        let backend = SystemGitBackend::new();
+        let repo_path = Path::new(&service.repo_path);
+
+        // Ensure repository exists
+        if !repo_path.exists() {
+            GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, None).await?;
+        }
+
+        let repo_info = backend.checkout_commit(repo_path, commit_hash).await?;
+
+        // Update database with new Git information (detached HEAD)
+        self.service_repository.update_git_info(
+            service_id,
+            None, // No branch in detached HEAD
+            Some(repo_info.current_commit.clone()),
+            service.git_auth_type.clone(),
+        ).await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn git_pull(&self, service_ref: &ServiceRef) -> crate::error::Result<()> {
+        use crate::git::backends::SystemGitBackend;
+        use crate::git::GitAuth;
+        use crate::traits::git_backend::GitBackend;
+        use std::path::Path;
+
+        // Get service details
+        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
+        let service = self.service_repository.get_by_id(service_id).await?
+            .ok_or_else(|| anyhow!("Service not found"))?;
+
+        // Prepare Git authentication
+        let auth = match service.git_auth_type.as_deref() {
+            Some("ssh_agent") => GitAuth::ssh_agent("git"),
+            Some("token") => GitAuth::ssh_agent("git"), // Fallback for now
+            _ => GitAuth::ssh_agent("git"),
+        };
+
+        // Create Git backend and pull changes
+        let backend = SystemGitBackend::new();
+        let repo_path = Path::new(&service.repo_path);
+
+        if !repo_path.exists() {
+            return Err(anyhow!("Repository does not exist: {}", service.repo_path).into());
+        }
+
+        let repo_info = backend.pull(repo_path, &auth).await?;
+
+        // Update database with new commit information
+        self.service_repository.update_git_info(
+            service_id,
+            repo_info.current_branch.clone(),
+            Some(repo_info.current_commit.clone()),
+            service.git_auth_type.clone(),
+        ).await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn git_status(&self, service_ref: &ServiceRef) -> crate::error::Result<crate::git::GitRepoInfo> {
+        use crate::git::backends::SystemGitBackend;
+        use crate::traits::git_backend::GitBackend;
+        use std::path::Path;
+
+        // Get service details
+        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
+        let service = self.service_repository.get_by_id(service_id).await?
+            .ok_or_else(|| anyhow!("Service not found"))?;
+
+        // Create Git backend and get status
+        let backend = SystemGitBackend::new();
+        let repo_path = Path::new(&service.repo_path);
+
+        if !repo_path.exists() {
+            return Err(anyhow!("Repository does not exist: {}", service.repo_path).into());
+        }
+
+        let repo_info = backend.status(repo_path).await?;
+        Ok(repo_info)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn git_log(
+        &self,
+        service_ref: &ServiceRef,
+        max_count: Option<usize>,
+        branch: Option<&str>,
+    ) -> crate::error::Result<Vec<crate::git::GitCommit>> {
+        use crate::git::backends::SystemGitBackend;
+        use crate::traits::git_backend::GitBackend;
+        use std::path::Path;
+
+        // Get service details
+        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
+        let service = self.service_repository.get_by_id(service_id).await?
+            .ok_or_else(|| anyhow!("Service not found"))?;
+
+        // Create Git backend and get log
+        let backend = SystemGitBackend::new();
+        let repo_path = Path::new(&service.repo_path);
+
+        if !repo_path.exists() {
+            return Err(anyhow!("Repository does not exist: {}", service.repo_path).into());
+        }
+
+        let commits = backend.log(repo_path, max_count, branch).await?;
+        Ok(commits)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn git_list_branches(
+        &self,
+        service_ref: &ServiceRef,
+        include_remote: bool,
+    ) -> crate::error::Result<Vec<String>> {
+        use crate::git::backends::SystemGitBackend;
+        use crate::traits::git_backend::GitBackend;
+        use std::path::Path;
+
+        // Get service details
+        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
+        let service = self.service_repository.get_by_id(service_id).await?
+            .ok_or_else(|| anyhow!("Service not found"))?;
+
+        // Create Git backend and list branches
+        let backend = SystemGitBackend::new();
+        let repo_path = Path::new(&service.repo_path);
+
+        if !repo_path.exists() {
+            return Err(anyhow!("Repository does not exist: {}", service.repo_path).into());
+        }
+
+        let branches = backend.list_branches(repo_path, include_remote).await?;
+        Ok(branches)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn git_ensure_repo(&self, service_ref: &ServiceRef) -> crate::error::Result<()> {
+        use crate::git::backends::SystemGitBackend;
+        use crate::git::GitAuth;
+        use crate::traits::git_backend::GitBackend;
+        use std::path::Path;
+
+        // Get service details
+        let service_id = self.service_repository.extract_valid_id_from_ref(service_ref).await?;
+        let service = self.service_repository.get_by_id(service_id).await?
+            .ok_or_else(|| anyhow!("Service not found"))?;
+
+        let repo_path = Path::new(&service.repo_path);
+
+        // Check if repository already exists and is valid
+        if repo_path.exists() && repo_path.join(".git").exists() {
+            return Ok(());
+        }
+
+        // Prepare Git authentication
+        let auth = match service.git_auth_type.as_deref() {
+            Some("ssh_agent") => GitAuth::ssh_agent("git"),
+            Some("token") => GitAuth::ssh_agent("git"), // Fallback for now
+            _ => GitAuth::ssh_agent("git"),
+        };
+
+        // Clone the repository
+        let backend = SystemGitBackend::new();
+        let target_branch = service.git_branch.as_deref();
+        
+        let repo_info = GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, target_branch).await?;
+
+        // Update database with initial Git information
+        self.service_repository.update_git_info(
+            service_id,
+            repo_info.current_branch.clone(),
+            Some(repo_info.current_commit.clone()),
+            service.git_auth_type.clone(),
+        ).await?;
+
+        Ok(())
     }
 }

@@ -42,6 +42,9 @@ impl From<DetailedServiceRecord> for ServiceStatus {
             repo_url: record.service.repo_url,
             config: record.config.map(Into::into),
             dependencies: record.dependencies.into_iter().map(Into::into).collect(),
+            git_branch: record.service.git_branch,
+            git_commit_hash: record.service.git_commit_hash,
+            git_auth_type: record.service.git_auth_type,
         }
     }
 }

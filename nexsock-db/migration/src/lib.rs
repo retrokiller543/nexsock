@@ -7,6 +7,7 @@
 pub use sea_orm_migration::prelude::*;
 
 mod m20220101_000001_create_base_service_tables;
+mod m20250605_000002_add_git_columns;
 
 /// The main migrator struct that collects all defined migrations.
 ///
@@ -22,8 +23,9 @@ impl MigratorTrait for Migrator {
     /// This method is called by the migration runner to discover and apply
     /// the defined migrations in order.
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        vec![Box::new(
-            m20220101_000001_create_base_service_tables::Migration,
-        )]
+        vec![
+            Box::new(m20220101_000001_create_base_service_tables::Migration),
+            Box::new(m20250605_000002_add_git_columns::Migration),
+        ]
     }
 }

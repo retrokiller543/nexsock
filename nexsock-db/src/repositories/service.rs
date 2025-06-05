@@ -273,6 +273,9 @@ impl ServiceRepository<'_> {
                 port: Set(service.port),
                 repo_path: Set(service.repo_path.clone()),
                 status: Set(service.status),
+                git_branch: Set(service.git_branch.clone()),
+                git_commit_hash: Set(service.git_commit_hash.clone()),
+                git_auth_type: Set(service.git_auth_type.clone()),
             };
 
             let result = active_model.insert(db).await.context("Database error while inserting new service")?;
@@ -288,6 +291,9 @@ impl ServiceRepository<'_> {
                 port: Set(service.port),
                 repo_path: Set(service.repo_path.clone()),
                 status: Set(service.status),
+                git_branch: Set(service.git_branch.clone()),
+                git_commit_hash: Set(service.git_commit_hash.clone()),
+                git_auth_type: Set(service.git_auth_type.clone()),
             };
 
             active_model.update(db).await.with_context(|| format!("Database error while updating service with ID `{}`", original_id))?;
@@ -406,5 +412,154 @@ impl ServiceRepository<'_> {
                 Ok(service.id)
             }
         }
+    }
+
+    /// Updates the Git information for a service.
+    ///
+    /// This method updates the Git branch, commit hash, and authentication type
+    /// for a service identified by its ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_id` - The ID of the service to update
+    /// * `git_branch` - The new Git branch name (or None to clear)
+    /// * `git_commit_hash` - The new Git commit hash (or None to clear)
+    /// * `git_auth_type` - The new Git authentication type (or None to clear)
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure of the update operation.
+    pub async fn update_git_info(
+        &self,
+        service_id: i64,
+        git_branch: Option<String>,
+        git_commit_hash: Option<String>,
+        git_auth_type: Option<String>,
+    ) -> anyhow::Result<()> {
+        let db = self.connection;
+        
+        let service = ServiceEntity::find_by_id(service_id)
+            .one(db)
+            .await
+            .with_context(|| format!("Database error while fetching service with ID `{}`", service_id))?
+            .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
+
+        let mut active_service: ServiceActiveModel = service.into();
+        active_service.git_branch = Set(git_branch);
+        active_service.git_commit_hash = Set(git_commit_hash);
+        active_service.git_auth_type = Set(git_auth_type);
+
+        active_service
+            .update(db)
+            .await
+            .with_context(|| format!("Failed to update Git information for service with ID `{}`", service_id))?;
+
+        Ok(())
+    }
+
+    /// Updates only the Git branch for a service.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_id` - The ID of the service to update
+    /// * `git_branch` - The new Git branch name (or None to clear)
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure of the update operation.
+    pub async fn update_git_branch(
+        &self,
+        service_id: i64,
+        git_branch: Option<String>,
+    ) -> anyhow::Result<()> {
+        let db = self.connection;
+        
+        let service = ServiceEntity::find_by_id(service_id)
+            .one(db)
+            .await
+            .with_context(|| format!("Database error while fetching service with ID `{}`", service_id))?
+            .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
+
+        let mut active_service: ServiceActiveModel = service.into();
+        active_service.git_branch = Set(git_branch);
+
+        active_service
+            .update(db)
+            .await
+            .with_context(|| format!("Failed to update Git branch for service with ID `{}`", service_id))?;
+
+        Ok(())
+    }
+
+    /// Updates only the Git commit hash for a service.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_id` - The ID of the service to update
+    /// * `git_commit_hash` - The new Git commit hash (or None to clear)
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure of the update operation.
+    pub async fn update_git_commit(
+        &self,
+        service_id: i64,
+        git_commit_hash: Option<String>,
+    ) -> anyhow::Result<()> {
+        let db = self.connection;
+        
+        let service = ServiceEntity::find_by_id(service_id)
+            .one(db)
+            .await
+            .with_context(|| format!("Database error while fetching service with ID `{}`", service_id))?
+            .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
+
+        let mut active_service: ServiceActiveModel = service.into();
+        active_service.git_commit_hash = Set(git_commit_hash);
+
+        active_service
+            .update(db)
+            .await
+            .with_context(|| format!("Failed to update Git commit hash for service with ID `{}`", service_id))?;
+
+        Ok(())
+    }
+
+    /// Finds all services using a specific Git branch.
+    ///
+    /// # Arguments
+    ///
+    /// * `branch_name` - The name of the Git branch to search for
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a vector of services that are on the specified branch.
+    pub async fn find_by_git_branch(&self, branch_name: &str) -> anyhow::Result<Vec<Service>> {
+        let db = self.connection;
+        
+        ServiceEntity::find()
+            .filter(ServiceColumn::GitBranch.eq(branch_name))
+            .all(db)
+            .await
+            .with_context(|| format!("Database error while searching for services on branch `{}`", branch_name))
+    }
+
+    /// Finds all services using a specific Git commit hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `commit_hash` - The Git commit hash to search for
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a vector of services that are on the specified commit.
+    pub async fn find_by_git_commit(&self, commit_hash: &str) -> anyhow::Result<Vec<Service>> {
+        let db = self.connection;
+        
+        ServiceEntity::find()
+            .filter(ServiceColumn::GitCommitHash.eq(commit_hash))
+            .all(db)
+            .await
+            .with_context(|| format!("Database error while searching for services on commit `{}`", commit_hash))
     }
 }

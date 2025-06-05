@@ -39,6 +39,12 @@ pub struct ServiceStatus {
     pub repo_url: String,
     pub repo_path: String,
     pub dependencies: Vec<DependencyInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub git_branch: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub git_commit_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub git_auth_type: Option<String>,
 }
 
 #[cfg_attr(feature = "savefile", derive(Savefile))]

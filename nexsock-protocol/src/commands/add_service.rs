@@ -24,6 +24,10 @@ pub struct AddServicePayload {
     pub repo_path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config: Option<ServiceConfigPayload>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub git_branch: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub git_auth_type: Option<String>,
 }
 
 service_command! {
@@ -32,6 +36,8 @@ service_command! {
         repo_url: String,
         port: i64,
         repo_path: String,
-        config: Option<ServiceConfigPayload>
+        config: Option<ServiceConfigPayload>,
+        git_branch: Option<String>,
+        git_auth_type: Option<String>
     }
 }

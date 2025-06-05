@@ -78,7 +78,7 @@ tracing.workspace = true
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-core = "0.1.33"
 tosic-utils = { workspace = true }
-git2 = { version = "0.20.0", optional = true }
+# git2 = { version = "0.20.0", optional = true, default-features = false, features = ["vendored", "https"] }
 serde = { version = "1.0.215", features = ["derive"] }
 paste = "1.0.15"
 futures = "0.3.31"
@@ -100,6 +100,8 @@ parking_lot = { version = "0.12.3", features = ["send_guard", "arc_lock"] }
 dashmap = { version = "6.1.0", features = ["rayon"] }
 rayon = "1.10.0"
 chrono = "0.4.39"
+base64 = "0.22.1"
+async-trait = "0.1.88"
 tokio_util_watchdog = { version = "0.1.2", optional = true }
 tikv-jemallocator = { workspace = true, optional = true }
 
@@ -122,7 +124,7 @@ codegen-units = 1
 #strip = "debuginfo"
 
 [features]
-default = []
-git = ["git2"]
+default = ["git"]
+git = []
 jemalloc = ["tikv-jemallocator"]
 watchdog = ["tokio_util_watchdog"]

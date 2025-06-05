@@ -16,6 +16,8 @@
 pub mod configuration_management;
 pub mod dependency_management;
 pub mod git_service;
+pub mod git_backend;
+pub mod git_management;
 pub mod process_manager;
 pub mod service_management;
 

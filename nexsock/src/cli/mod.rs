@@ -3,7 +3,7 @@ mod concurrent;
 use clap::{Parser, Subcommand};
 pub use concurrent::*;
 use derive_more::IsVariant;
-use nexsock_protocol::commands::git::{CheckoutCommand, GetRepoStatusCommand};
+// Git commands are handled in commands.rs
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::collections::HashMap;
 #[cfg(windows)]
@@ -109,6 +109,14 @@ pub enum Commands {
         /// Command to run the service
         #[arg(short, long)]
         run_command: Option<String>,
+
+        /// Git branch to checkout (defaults to repository default)
+        #[arg(long)]
+        git_branch: Option<String>,
+
+        /// Git authentication type (ssh_agent, token, none)
+        #[arg(long, default_value = "ssh_agent")]
+        git_auth: String,
     },
 
     /// Remove a service
@@ -236,6 +244,31 @@ pub enum GitCommands {
 
         /// Branch name
         branch: String,
+        
+        /// Create branch if it doesn't exist
+        #[arg(short, long)]
+        create: bool,
+    },
+
+    /// Checkout a specific commit
+    CheckoutCommit {
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+
+        /// Commit hash
+        commit: String,
+    },
+
+    /// Pull latest changes from remote
+    Pull {
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
     },
 
     /// Get repository status
@@ -245,6 +278,36 @@ pub enum GitCommands {
         /// The Parser will consider it a name if it fails to parse the text as an integer
         #[arg(value_parser = ServiceRef::from_str)]
         service: ServiceRef,
+    },
+
+    /// Show commit history
+    Log {
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+
+        /// Maximum number of commits to show
+        #[arg(short, long)]
+        max_count: Option<usize>,
+
+        /// Branch to show history for
+        #[arg(short, long)]
+        branch: Option<String>,
+    },
+
+    /// List branches
+    Branches {
+        /// The name or id of a service.
+        ///
+        /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+
+        /// Include remote branches
+        #[arg(short, long)]
+        remote: bool,
     },
 }
 
@@ -326,27 +389,7 @@ impl FromStr for ToolType {
     }
 }
 
-impl From<GitCommands> for CheckoutCommand {
-    fn from(value: GitCommands) -> Self {
-        match value {
-            GitCommands::Checkout { service, branch } => CheckoutCommand::new(service, branch),
-            GitCommands::Status { .. } => {
-                panic!("Can not create checkout command from a git status input")
-            }
-        }
-    }
-}
-
-impl From<GitCommands> for GetRepoStatusCommand {
-    fn from(value: GitCommands) -> Self {
-        match value {
-            GitCommands::Checkout { .. } => {
-                panic!("Can not create checkout command from a git status input")
-            }
-            GitCommands::Status { service } => GetRepoStatusCommand::new(service),
-        }
-    }
-}
+// Note: Git command conversion is handled directly in commands.rs
 
 impl Cli {
     pub fn parse_env_vars(env_vars: Vec<String>) -> HashMap<String, String> {
