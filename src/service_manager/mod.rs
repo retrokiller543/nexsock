@@ -121,7 +121,24 @@ impl ServiceProcess {
     ///
     /// This method will return an error if:
     /// * The process status cannot be determined
-    /// * System call to check process status fails
+    /// Asynchronously checks if the service process has exited and updates its state.
+    ///
+    /// If the process has exited, updates the internal state to `Stopped` on success or `Failed` on error.  
+    /// If the process is still running, leaves the state unchanged.
+    ///
+    /// # Returns
+    /// The current or updated `ServiceState` of the service process.
+    ///
+    /// # Errors
+    /// Returns an error if the system call to check the process status fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut service = ServiceProcess::spawn(...).await?;
+    /// let state = service.check_status().await?;
+    /// assert!(matches!(state, ServiceState::Running | ServiceState::Stopped | ServiceState::Failed));
+    /// ```
     pub(crate) async fn check_status(&mut self) -> crate::error::Result<ServiceState> {
         match self.process.try_wait()? {
             Some(status) => {

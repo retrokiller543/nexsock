@@ -49,7 +49,14 @@ use tracing_subscriber::EnvFilter;
 ///
 /// # Returns
 ///
-/// A configured [`StdoutLayerConfig`] ready for use with the tracing subscriber.
+/// Returns a configured `StdoutLayerConfig` for tracing with compact formatting, thread names, line numbers, log levels, and span close event tracking enabled.
+///
+/// # Examples
+///
+/// ```
+/// let layer = tracing_std_layer();
+/// assert!(layer.thread_names);
+/// ```
 fn tracing_std_layer() -> StdoutLayerConfig {
     StdoutLayerConfig::default()
         .file(false)
@@ -67,7 +74,7 @@ fn tracing_std_layer() -> StdoutLayerConfig {
 ///
 /// # Returns
 ///
-/// An [`EnvFilter`] configured to use environment variables for log level control.
+/// ```
 fn tracing_env_filter() -> EnvFilter {
     FilterConfig::default().use_env(true).build()
 }
@@ -100,6 +107,21 @@ fn tracing_env_filter() -> EnvFilter {
 ///
 /// let _guards = tracing().expect("Failed to initialize tracing");
 /// // Keep guards alive for the duration of the program
+/// Initializes the global tracing subscriber with non-blocking stdout logging.
+///
+/// Configures tracing to output logs to stdout with compact formatting, thread names, line numbers, log levels, and span close event tracking. Applies environment-based filtering. Returns a vector of `WorkerGuard` objects that must be kept alive to ensure logging remains active.
+///
+/// # Returns
+/// A vector of `WorkerGuard` objects for maintaining the logging output.
+///
+/// # Errors
+/// Returns an error if the tracing subscriber is already initialized or if logging setup fails.
+///
+/// # Examples
+///
+/// ```
+/// let guards = tracing().expect("Failed to initialize tracing");
+/// // Keep `guards` alive for the duration of the application.
 /// ```
 pub fn tracing() -> Result<Vec<WorkerGuard>> {
     let (log_writer, guard) = tracing_appender::non_blocking(std::io::stdout());
@@ -147,6 +169,19 @@ pub fn tracing() -> Result<Vec<WorkerGuard>> {
 /// * Server socket binding fails
 /// * Plugin manager initialization fails
 #[tracing::instrument(err)]
+/// Concurrently initializes the database (with migrations) and creates a new `DaemonServer`.
+///
+/// Returns the fully initialized `DaemonServer` instance upon success.
+///
+/// # Errors
+///
+/// Returns an error if database initialization, migration, or server creation fails.
+///
+/// # Examples
+///
+/// ```
+/// let server = tokio::runtime::Runtime::new().unwrap().block_on(setup()).unwrap();
+/// ```
 async fn setup() -> Result<DaemonServer> {
     // loads the database static variable and runs migrations while at the same time we initialize the server
     let (_, server) = try_join!(
@@ -179,6 +214,24 @@ async fn setup() -> Result<DaemonServer> {
 /// * Server shutdown operations fail
 #[inline]
 #[tracing::instrument(name = "nexsockd", err)]
+/// Runs the Nexsock daemon server asynchronously until completion or error.
+///
+/// Initializes the server and manages its lifecycle, including graceful shutdown on failure. Logs the outcome of the server run.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the server completes successfully or shuts down gracefully. Returns an error if setup or shutdown fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use nexsock_daemon::run_daemon;
+/// # #[tokio::main]
+/// # async fn main() -> anyhow::Result<()> {
+/// run_daemon().await?;
+/// # Ok(())
+/// # }
+/// ```
 pub async fn run_daemon() -> Result<()> {
     let mut server = setup().await?;
 
@@ -224,6 +277,25 @@ pub async fn run_daemon() -> Result<()> {
 /// let result = timed_run_daemon(Duration::from_secs(30)).await;
 /// ```
 #[inline]
+/// Runs the Nexsock daemon for a specified duration or until completion, whichever occurs first.
+///
+/// If the daemon completes before the timeout, its result is returned. If the timeout is reached, the function returns success.
+///
+/// # Parameters
+/// - `duration`: The maximum time to allow the daemon to run.
+///
+/// # Returns
+/// Returns `Ok(())` if the daemon completes successfully or the timeout is reached. Returns an error if the daemon fails before the timeout.
+///
+/// # Examples
+///
+/// ```
+/// use std::time::Duration;
+/// # tokio_test::block_on(async {
+/// let result = nexsock::timed_run_daemon(Duration::from_secs(10)).await;
+/// assert!(result.is_ok());
+/// # });
+/// ```
 pub async fn timed_run_daemon(duration: Duration) -> Result<()> {
     match timeout(duration, run_daemon()).await {
         Ok(res) => res,

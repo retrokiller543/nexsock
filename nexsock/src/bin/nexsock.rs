@@ -13,6 +13,22 @@ use tracing::warn;
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
+/// Handles tool management subcommands for nexsock.
+///
+/// Currently, this function logs a warning that tool management is unsupported and does not implement any functionality for the provided command.
+///
+/// # Parameters
+/// - `command`: The tool management subcommand to handle.
+///
+/// # Returns
+/// Returns an error indicating that tool management is not supported.
+///
+/// # Examples
+///
+/// ```
+/// let result = handle_tool_commands(ToolCommands::List {});
+/// assert!(result.is_err());
+/// ```
 pub fn handle_tool_commands(command: ToolCommands) -> anyhow::Result<()> {
     warn!("Downloading and managing nexsock tools is currently unsupported");
     match command {
@@ -24,6 +40,23 @@ pub fn handle_tool_commands(command: ToolCommands) -> anyhow::Result<()> {
 }
 
 #[tokio::main]
+/// Entry point for the nexsock CLI application.
+///
+/// Parses command-line arguments, loads configuration, determines the appropriate socket or address,
+/// connects to the nexsock service, and executes the requested command. Handles both service and tool-related commands,
+/// printing command output or debugging information as appropriate.
+///
+/// # Errors
+///
+/// Returns an error if configuration loading, socket/address resolution, client connection, or command execution fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// // Run the CLI application from the command line:
+/// // $ nexsock start my-service
+/// tokio::runtime::Runtime::new().unwrap().block_on(main()).unwrap();
+/// ```
 async fn main() -> anyhow::Result<()> {
     // Initialize logging
     tracing_subscriber::fmt::init();

@@ -56,6 +56,9 @@ pub enum Relation {
 }
 
 impl Related<Service> for Entity {
+    /// Returns the relation definition linking a service dependency to its parent service.
+    ///
+    /// This defines the foreign key relationship from the dependency record to the parent service entity.
     fn to() -> RelationDef {
         Relation::ParentService.def()
     }
@@ -64,6 +67,20 @@ impl Related<Service> for Entity {
 impl ActiveModelBehavior for ActiveModel {}
 
 impl From<JoinedDependency> for DependencyInfo {
+    /// Converts a `JoinedDependency` into a `DependencyInfo`.
+    ///
+    /// Maps the dependent service's ID, name, tunnel status, and status into the corresponding fields of `DependencyInfo`. The `state` field is derived from the `status` of the dependency.
+    #[allow(clippy::from_over_into)]
+    impl From<JoinedDependency> for DependencyInfo {
+        fn from(value: JoinedDependency) -> Self {
+            Self {
+                id: value.dependent_service_id,
+                name: value.name,
+                tunnel_enabled: value.tunnel_enabled,
+                state: value.status.into(),
+            }
+        }
+    }
     fn from(value: JoinedDependency) -> Self {
         Self {
             id: value.dependent_service_id,
@@ -85,7 +102,18 @@ impl JoinedDependency {
     ///
     /// * `parent_service_id` - The ID of the service that has this dependency.
     /// * `dependent_service_id` - The ID of the service that is the dependency.
-    /// * `tunnel_enabled` - Indicates whether a tunnel is enabled for this dependency.
+    /// Creates a new `JoinedDependency` instance with the specified parent and dependent service IDs and tunnel status.
+    ///
+    /// Fields such as `name`, `repo_url`, `port`, `repo_path`, and `status` are initialized with default values and are expected to be populated later, typically from database queries.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let dep = JoinedDependency::new(1, 2, true);
+    /// assert_eq!(dep.service_id, 1);
+    /// assert_eq!(dep.dependent_service_id, 2);
+    /// assert!(dep.tunnel_enabled);
+    /// ```
     pub fn new(parent_service_id: i64, dependent_service_id: i64, tunnel_enabled: bool) -> Self {
         Self {
             id: 0,

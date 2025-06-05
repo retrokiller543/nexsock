@@ -23,6 +23,21 @@ pub struct App {
     timeout: u64,
 }
 
+/// Entry point for the nexsockd daemon service application.
+///
+/// Initializes environment variables, logging, and command-line argument parsing. Builds and runs a multi-threaded Tokio runtime, optionally enabling a watchdog thread if the feature is enabled. Depending on the `dry_run` flag, runs the daemon for a limited duration or indefinitely.
+///
+/// # Returns
+/// Returns a `Result` indicating success or failure of the daemon execution.
+///
+/// # Examples
+///
+/// ```
+/// // Run the daemon with default settings
+/// fn main() -> nexsockd::prelude::Result<()> {
+///     // ... function body ...
+/// }
+/// ```
 fn main() -> nexsockd::prelude::Result<()> {
     //setup_periodic_heap_dumps();
 

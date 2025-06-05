@@ -15,7 +15,19 @@ use std::time::Duration;
 /// # Returns
 ///
 /// A `Result` containing the `DatabaseConnection` on success, or an `anyhow::Error`
-/// if any step fails.
+/// Creates and initializes an in-memory SQLite database connection for testing.
+///
+/// Establishes a new SQLite database in memory, applies all pending migrations to set up the schema, and returns the ready-to-use connection. Useful for isolated and repeatable test environments.
+///
+/// # Returns
+/// A `DatabaseConnection` to the in-memory SQLite database if successful; otherwise, an error.
+///
+/// # Examples
+///
+/// ```
+/// let db = setup_in_memory_db().await.unwrap();
+/// // Use `db` for test queries...
+/// ```
 pub async fn setup_in_memory_db() -> anyhow::Result<DatabaseConnection> {
     let db_url = "sqlite::memory:"; // Standard DSN for in-memory SQLite
 

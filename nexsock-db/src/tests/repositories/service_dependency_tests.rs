@@ -5,6 +5,16 @@ mod tests {
     use crate::repositories::{ServiceDependencyRepository, ServiceRepository};
     use crate::tests::common::setup_in_memory_db;
 
+    /// Asynchronously creates and saves two test service records in the repository.
+    ///
+    /// Returns a tuple containing the two newly created `Service` instances with their assigned IDs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let (service1, service2) = setup_services_for_test(&repo).await;
+    /// assert!(service1.id > 0 && service2.id > 0);
+    /// ```
     async fn setup_services_for_test(repo: &ServiceRepository<'_>) -> (Service, Service) {
         let mut service1 = Service::new(
             "test_service_dep_1".to_string(),
@@ -31,6 +41,11 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests saving a new service dependency and retrieving it by its assigned ID.
+    ///
+    /// This test verifies that a new `ServiceDependency` can be saved to the repository,
+    /// that the database assigns a non-zero ID, and that the dependency can be fetched
+    /// by ID with all fields matching the original data.
     async fn test_save_new_and_get_by_id() {
         let db = setup_in_memory_db()
             .await
@@ -70,6 +85,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests updating an existing service dependency and verifies that changes persist while the ID remains unchanged.
+    ///
+    /// This test saves a new service dependency, updates its `tunnel_enabled` field, and asserts that the update is correctly persisted in the database without altering the dependency's ID.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_save_update_existing().await;
+    /// });
+    /// ```
     async fn test_save_update_existing() {
         let db = setup_in_memory_db()
             .await
@@ -115,6 +141,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests deleting a service dependency by its ID and verifies correct error handling for non-existent IDs.
+    ///
+    /// This test saves a new service dependency, deletes it by its assigned ID, and asserts that it is no longer retrievable. It also attempts to delete a non-existent dependency and checks that an error is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_delete_by_id().await;
+    /// });
+    /// ```
     async fn test_delete_by_id() {
         let db = setup_in_memory_db()
             .await
@@ -162,6 +199,9 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests retrieving service dependencies by service ID.
+    ///
+    /// Verifies that querying dependencies for a given service returns only the correct dependencies, and that services with no dependencies return an empty list. Also checks that the `tunnel_enabled` flag is correctly associated with each dependency.
     async fn test_get_by_service_id() {
         // Corresponds to test_get_all_for_service
         let db = setup_in_memory_db()
@@ -239,6 +279,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests deleting multiple service dependencies by their IDs and verifies only the specified dependencies are removed.
+    ///
+    /// This test creates three service dependencies, deletes two of them using their IDs, and asserts that the deleted dependencies no longer exist while the unaffected dependency remains.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_delete_many().await;
+    /// });
+    /// ```
     async fn test_delete_many() {
         let db = setup_in_memory_db()
             .await
@@ -317,6 +368,9 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests retrieval of service dependencies with additional service information.
+    ///
+    /// This test verifies that dependencies for a given service can be retrieved along with related service details, such as name, tunnel status, and state. It asserts correct results for services with multiple dependencies and for services with none.
     async fn test_get_dependencies_with_service_info() {
         let db = setup_in_memory_db()
             .await
@@ -407,6 +461,9 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests that the dependencies response for a service includes the correct service name and dependency details, and verifies that a service with no dependencies returns an empty list.
+    ///
+    /// This test saves two services and a dependency from the first to the second. It asserts that the response structure contains the expected service name and dependency information, and that querying a service with no dependencies yields an empty dependencies list.
     async fn test_get_dependencies_response() {
         let db = setup_in_memory_db()
             .await

@@ -23,7 +23,13 @@ impl<'a> ServiceDependencyRepository<'a> {
     ///
     /// # Arguments
     ///
-    /// * `connection` - A reference to an active `DatabaseConnection`.
+    /// Creates a new `ServiceDependencyRepository` with the provided database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceDependencyRepository::new(&db_connection);
+    /// ```
     pub fn new(connection: &'a DatabaseConnection) -> Self {
         Self { connection }
     }
@@ -33,7 +39,13 @@ impl ServiceDependencyRepository<'static> {
     /// Creates a new `ServiceDependencyRepository` using a globally available static database connection.
     ///
     /// This method is typically used when a `'static` lifetime is required for the repository.
-    /// It internally calls `get_db_connection()` to obtain the connection.
+    /// Creates a new repository instance using a globally available static database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceDependencyRepository::new_from_static();
+    /// ```
     pub fn new_from_static() -> Self {
         let connection = get_db_connection();
 
@@ -53,7 +65,19 @@ impl ServiceDependencyRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing an `Option<ServiceDependency>` which is `Some` if the
-    /// dependency is found, `None` otherwise, or an error if there's a database issue.
+    /// Retrieves a service dependency by its ID, including dependent service details if available.
+    ///
+    /// Returns `Ok(Some(ServiceDependency))` if the dependency exists, `Ok(None)` if not found, or an error if the database query fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceDependencyRepository::new(&db_connection);
+    /// let result = repo.get_by_id(42).await?;
+    /// if let Some(dependency) = result {
+    ///     // Use the dependency
+    /// }
+    /// ```
     pub async fn get_by_id(&self, id: i64) -> anyhow::Result<Option<ServiceDependency>> {
         let db = self.connection;
         let dependency = ServiceDependencyEntity::find_by_id(id)
@@ -81,7 +105,25 @@ impl ServiceDependencyRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing a vector of `JoinedDependency` structs, or an error
-    /// if there's a database issue.
+    /// Retrieves all dependencies for a given service, including details of each dependent service.
+    ///
+    /// Returns a vector of `JoinedDependency` containing dependency records joined with dependent service information such as name, repository URL, port, repository path, and status.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_id` - The ID of the service whose dependencies are to be fetched.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `JoinedDependency` structs on success, or an error if the database query fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceDependencyRepository::new(&connection);
+    /// let dependencies = repo.get_by_service_id(42).await?;
+    /// assert!(!dependencies.is_empty());
+    /// ```
     pub async fn get_by_service_id(
         &self,
         service_id: i64,
@@ -130,7 +172,26 @@ impl ServiceDependencyRepository<'_> {
     ///
     /// # Returns
     ///
-    /// An `anyhow::Result<()>` indicating success or failure.
+    /// Inserts a new service dependency or updates an existing one in the database.
+    ///
+    /// If the provided `ServiceDependency` has an ID of 0, a new record is inserted and its ID is updated with the generated value. Otherwise, the existing record is updated with the current field values.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database insert or update operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut dependency = ServiceDependency {
+    ///     id: 0,
+    ///     service_id: 1,
+    ///     dependent_service_id: 2,
+    ///     tunnel_enabled: false,
+    /// };
+    /// repo.save(&mut dependency).await?;
+    /// assert!(dependency.id > 0);
+    /// ```
     pub async fn save(&self, dependency: &mut ServiceDependency) -> anyhow::Result<()> {
         let db = self.connection;
 
@@ -177,7 +238,16 @@ impl ServiceDependencyRepository<'_> {
     /// # Returns
     ///
     /// An `anyhow::Result<()>` indicating success or failure. Returns an error
-    /// if the service dependency with the given ID is not found.
+    /// Deletes a service dependency by its ID.
+    ///
+    /// Returns an error if the service dependency does not exist or if a database operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceDependencyRepository::new(&db);
+    /// repo.delete_by_id(42).await?;
+    /// ```
     pub async fn delete_by_id(&self, id: i64) -> anyhow::Result<()> {
         let db = self.connection;
 
@@ -218,7 +288,20 @@ impl ServiceDependencyRepository<'_> {
     ///
     /// # Returns
     ///
-    /// An `anyhow::Result<()>` indicating success or failure.
+    /// Deletes multiple service dependencies by their IDs within a single database transaction.
+    ///
+    /// If any deletion fails, the transaction is rolled back and an error is returned. On success, all specified dependencies are removed atomically.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use nexsock_db::repositories::service_dependency::ServiceDependencyRepository;
+    /// # async fn run(repo: ServiceDependencyRepository<'_>) -> anyhow::Result<()> {
+    /// let ids_to_delete = vec![1, 2, 3];
+    /// repo.delete_many(ids_to_delete).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn delete_many(&self, ids: Vec<i64>) -> anyhow::Result<()> {
         let db = self.connection;
 
@@ -247,7 +330,17 @@ impl ServiceDependencyRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing a vector of `DependencyInfo` structs, or an error
-    /// if there's a database issue.
+    /// Retrieves detailed dependency information for all dependencies of a given service.
+    ///
+    /// Returns a vector of `DependencyInfo` containing joined data from the service dependency and related service tables.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceDependencyRepository::new(&db_connection);
+    /// let dependencies = repo.get_dependencies_with_service_info(42).await.unwrap();
+    /// assert!(!dependencies.is_empty());
+    /// ```
     pub async fn get_dependencies_with_service_info(
         &self,
         service_id: i64,
@@ -282,7 +375,24 @@ impl ServiceDependencyRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing a `ListDependenciesResponse`, or an error if
-    /// there's a database issue.
+    /// Constructs a `ListDependenciesResponse` containing the service name and detailed dependency information for the specified service.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_id` - The ID of the service whose dependencies are to be listed.
+    /// * `service_name` - The name of the service for which the response is generated.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `ListDependenciesResponse` with the service name and its dependencies, or an error if dependency information cannot be retrieved.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceDependencyRepository::new(&db_connection);
+    /// let response = repo.get_dependencies_response(1, "my-service".to_string()).await?;
+    /// assert_eq!(response.service_name, "my-service");
+    /// ```
     pub async fn get_dependencies_response(
         &self,
         service_id: i64,

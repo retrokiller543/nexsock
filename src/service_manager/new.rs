@@ -59,13 +59,32 @@ impl ServiceManager {
     ///
     /// # Returns
     ///
-    /// A `LazyLock<ServiceManager>` that initializes the manager on first access.
+    /// Returns a lazily initialized static instance of `ServiceManager`.
+    ///
+    /// The manager is created on first access using the default implementation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ServiceManager::new_const();
+    /// // Use `manager` to manage services.
+    /// ```
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Default::default)
     }
 }
 
 impl Default for ServiceManager {
+    /// Creates a new `ServiceManager` instance with empty service state and initialized repositories.
+    ///
+    /// Initializes the running services map, shutdown broadcast channel, and static-backed repositories for services, dependencies, and configurations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ServiceManager::default();
+    /// assert!(manager.running_services().is_empty());
+    /// ```
     fn default() -> Self {
         let (shutdown_tx, _) = broadcast::channel(1);
         Self {
@@ -79,10 +98,30 @@ impl Default for ServiceManager {
 }
 
 impl ProcessManager for ServiceManager {
+    /// Returns a reference to the concurrent map of currently running service processes.
+    ///
+    /// The map keys are service IDs, and the values are `ServiceProcess` instances representing active processes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ServiceManager::default();
+    /// let running = manager.running_services();
+    /// assert!(running.is_empty());
+    /// ```
     fn running_services(&self) -> &Arc<DashMap<i64, ServiceProcess>> {
         &self.running_services
     }
 
+    /// Returns a reference to the broadcast channel sender used for shutdown signaling.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ServiceManager::default();
+    /// let sender = manager.shutdown_tx();
+    /// sender.send(()).unwrap();
+    /// ```
     fn shutdown_tx(&self) -> &broadcast::Sender<()> {
         &self.shutdown_tx
     }
@@ -90,6 +129,20 @@ impl ProcessManager for ServiceManager {
 
 impl ServiceManagement for ServiceManager {
     #[tracing::instrument]
+    /// Starts a service by launching its process with the specified environment variables.
+    ///
+    /// Checks that the service exists, is not already running, and that its configured port is available. Retrieves the service's configuration and run command, then spawns the service process and tracks it as running.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service does not exist, is already running, lacks configuration or a run command, or if the port is in use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let payload = StartServicePayload { service: ServiceRef::Id(42), env_vars: None };
+    /// service_manager.start(&payload).await?;
+    /// ```
     async fn start(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
         let StartServicePayload { service, env_vars } = payload;
 
@@ -136,6 +189,17 @@ impl ServiceManagement for ServiceManager {
     }
 
     #[tracing::instrument]
+    /// Stops a running service identified by the given reference.
+    ///
+    /// Attempts to terminate the process associated with the specified service. Returns an error if the service does not exist or if the process cannot be stopped.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ServiceManager::default();
+    /// let service_ref = ServiceRef::from_id(42);
+    /// manager.stop(&service_ref).await?;
+    /// ```
     async fn stop(&self, payload: &ServiceRef) -> crate::error::Result<()> {
         let service = self
             .service_repository
@@ -149,6 +213,23 @@ impl ServiceManagement for ServiceManager {
     }
 
     #[tracing::instrument]
+    /// Restarts a running service with the specified environment variables.
+    ///
+    /// If the service is running, it stops the service and then starts it again, using the provided environment variables. If no environment variables are provided in the payload and the service is running, it reuses the existing environment variables from the running process. If the service is not running, the function returns successfully without performing any action.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service cannot be found, if there is a lock contention on the running services map, or if stopping or starting the service fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let payload = StartServicePayload {
+    ///     service: ServiceRef::from_id(42),
+    ///     env_vars: HashMap::new(),
+    /// };
+    /// service_manager.restart(&payload).await?;
+    /// ```
     async fn restart(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
         let service = self
             .service_repository
@@ -190,6 +271,30 @@ impl ServiceManagement for ServiceManager {
     }
 
     #[tracing::instrument]
+    /// Adds a new service to the manager, optionally saving its configuration.
+    ///
+    /// If a configuration is provided, it is saved and associated with the new service. The service record is then created with the specified Git and configuration details and persisted in the service repository.
+    ///
+    /// # Parameters
+    /// - `payload`: Contains the service's name, repository information, port, optional configuration, Git branch, and authentication type.
+    ///
+    /// # Errors
+    /// Returns an error if saving the configuration or service record fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let payload = AddServicePayload {
+    ///     name: "example".to_string(),
+    ///     repo_url: "https://github.com/example/repo.git".to_string(),
+    ///     port: 8080,
+    ///     repo_path: "/services/example".to_string(),
+    ///     config: None,
+    ///     git_branch: Some("main".to_string()),
+    ///     git_auth_type: Some(GitAuthType::SshAgent),
+    /// };
+    /// service_manager.add_service(&payload).await?;
+    /// ```
     async fn add_service(&self, payload: &AddServicePayload) -> crate::error::Result<()> {
         dbg!(&payload);
 
@@ -240,6 +345,24 @@ impl ServiceManagement for ServiceManager {
     }
 
     #[tracing::instrument]
+    /// Removes a service and its associated resources.
+    ///
+    /// Stops the service if it is running or starting, deletes all related dependencies, removes the service record from the repository, and deletes its configuration if present.
+    ///
+    /// # Arguments
+    ///
+    /// * `payload` - Reference to the service to be removed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service does not exist or if any step in the removal process fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let service_ref = ServiceRef::from_id(42);
+    /// service_manager.remove_service(&service_ref).await?;
+    /// ```
     async fn remove_service(&self, payload: &ServiceRef) -> crate::error::Result<()> {
         let service = self
             .service_repository
@@ -285,6 +408,19 @@ impl ServiceManagement for ServiceManager {
     }
 
     #[tracing::instrument]
+    /// Retrieves the current status of a service, updating its state with the latest runtime information.
+    ///
+    /// # Returns
+    /// The status of the specified service, including its current runtime state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ServiceManager::default();
+    /// let service_ref = ServiceRef::from_id(1);
+    /// let status = tokio_test::block_on(manager.get_status(&service_ref)).unwrap();
+    /// assert_eq!(status.id, 1);
+    /// ```
     async fn get_status(&self, payload: &ServiceRef) -> crate::error::Result<ServiceStatus> {
         let mut service_status = self.service_repository.get_status(payload).await?;
 
@@ -294,6 +430,17 @@ impl ServiceManagement for ServiceManager {
     }
 
     #[tracing::instrument]
+    /// Retrieves all services along with their dependencies and updates each service's state to reflect its current runtime status.
+    ///
+    /// # Returns
+    /// A `ListServicesResponse` containing all services with their dependencies and up-to-date state information.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let response = service_manager.get_all().await?;
+    /// assert!(!response.services.is_empty());
+    /// ```
     async fn get_all(&self) -> crate::error::Result<ListServicesResponse> {
         let mut services = self.service_repository.get_all_with_dependencies().await?;
 
@@ -310,6 +457,26 @@ impl ServiceManagement for ServiceManager {
 #[cfg(feature = "git")]
 impl GitManagement for ServiceManager {
     #[tracing::instrument(skip(self))]
+    /// Checks out the specified branch in the service's Git repository, creating it if requested.
+    ///
+    /// If the repository does not exist locally, it is cloned first. Updates the service record with the current branch and commit after checkout.
+    ///
+    /// # Parameters
+    /// - `service_ref`: Reference to the target service.
+    /// - `branch_name`: Name of the branch to check out.
+    /// - `create_if_missing`: Whether to create the branch if it does not exist.
+    ///
+    /// # Errors
+    /// Returns an error if the service is not found, the repository cannot be cloned or accessed, or the branch checkout fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use your_crate::{ServiceManager, ServiceRef};
+    /// # async fn example(manager: ServiceManager, service_ref: ServiceRef) {
+    /// manager.git_checkout_branch(&service_ref, "feature/new-branch", true).await.unwrap();
+    /// # }
+    /// ```
     async fn git_checkout_branch(
         &self,
         service_ref: &ServiceRef,
@@ -370,6 +537,23 @@ impl GitManagement for ServiceManager {
     }
 
     #[tracing::instrument(skip(self))]
+    /// Checks out a specific commit in the service's Git repository, detaching HEAD.
+    ///
+    /// If the repository does not exist locally, it is cloned first. After checkout, the service's Git metadata is updated in the database to reflect the new commit state.
+    ///
+    /// # Parameters
+    /// - `service_ref`: Reference to the target service.
+    /// - `commit_hash`: The commit hash to check out.
+    ///
+    /// # Errors
+    /// Returns an error if the service is not found, the repository cannot be cloned or checked out, or if database updates fail.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let service_ref = ServiceRef::from_id(42);
+    /// manager.git_checkout_commit(&service_ref, "abc123def456").await?;
+    /// ```
     async fn git_checkout_commit(
         &self,
         service_ref: &ServiceRef,
@@ -423,6 +607,20 @@ impl GitManagement for ServiceManager {
     }
 
     #[tracing::instrument(skip(self))]
+    /// Pulls the latest changes from the remote Git repository for the specified service.
+    ///
+    /// Returns an error if the repository does not exist or if the pull operation fails. Updates the service record with the latest branch and commit information after a successful pull.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use crate::ServiceManager;
+    /// # use crate::ServiceRef;
+    /// # async fn example(manager: ServiceManager, service_ref: ServiceRef) {
+    /// let result = manager.git_pull(&service_ref).await;
+    /// assert!(result.is_ok());
+    /// # }
+    /// ```
     async fn git_pull(&self, service_ref: &ServiceRef) -> crate::error::Result<()> {
         use crate::git::backends::SystemGitBackend;
         use crate::git::GitAuth;
@@ -471,6 +669,17 @@ impl GitManagement for ServiceManager {
     }
 
     #[tracing::instrument(skip(self))]
+    /// Retrieves the current status of the Git repository associated with the specified service.
+    ///
+    /// Returns repository information such as the current branch, commit, and working tree state.
+    /// Returns an error if the service or its repository does not exist.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let status = service_manager.git_status(&service_ref).await?;
+    /// println!("Current branch: {}", status.current_branch);
+    /// ```
     async fn git_status(
         &self,
         service_ref: &ServiceRef,
@@ -503,6 +712,17 @@ impl GitManagement for ServiceManager {
     }
 
     #[tracing::instrument(skip(self))]
+    /// Retrieves the commit log for a service's Git repository.
+    ///
+    /// Returns a list of commits from the specified branch, limited by `max_count` if provided.  
+    /// Returns an error if the service or its repository does not exist.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let commits = service_manager.git_log(&service_ref, Some(10), Some("main")).await?;
+    /// assert!(!commits.is_empty());
+    /// ```
     async fn git_log(
         &self,
         service_ref: &ServiceRef,
@@ -537,6 +757,16 @@ impl GitManagement for ServiceManager {
     }
 
     #[tracing::instrument(skip(self))]
+    /// Lists the branches in the service's Git repository.
+    ///
+    /// Returns a vector of branch names for the specified service. Optionally includes remote branches if `include_remote` is true. Returns an error if the repository does not exist or cannot be accessed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let branches = service_manager.git_list_branches(&service_ref, true).await?;
+    /// assert!(branches.contains(&"main".to_string()));
+    /// ```
     async fn git_list_branches(
         &self,
         service_ref: &ServiceRef,
@@ -570,6 +800,21 @@ impl GitManagement for ServiceManager {
     }
 
     #[tracing::instrument(skip(self))]
+    /// Ensures that the service's Git repository exists locally, cloning it if necessary.
+    ///
+    /// If the repository does not exist at the expected path, this function clones it using the service's configured authentication and branch. Updates the service record with the initial Git branch and commit information after cloning.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service cannot be found, if cloning fails, or if updating the service's Git information in the repository fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ServiceManager::default();
+    /// let service_ref = ServiceRef::from_id(42);
+    /// manager.git_ensure_repo(&service_ref).await.unwrap();
+    /// ```
     async fn git_ensure_repo(&self, service_ref: &ServiceRef) -> crate::error::Result<()> {
         use crate::git::backends::SystemGitBackend;
         use crate::git::GitAuth;

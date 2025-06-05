@@ -61,7 +61,19 @@ impl DaemonServer {
     ///
     /// This function will return an error if:
     /// * Daemon initialization fails
-    /// * Configuration validation fails
+    /// Initializes a new `DaemonServer` instance with the global configuration.
+    ///
+    /// Loads the static Nexsock configuration, creates a new daemon, and prepares the server for handling connections and periodic cleanup.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if daemon initialization or configuration loading fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut server = DaemonServer::new().await?;
+    /// ```
     pub async fn new() -> Result<Self> {
         let config = &*NEXSOCK_CONFIG;
 
@@ -80,6 +92,11 @@ impl DaemonServer {
     }
 
     #[inline]
+    /// Gracefully shuts down the server, awaiting all active connections and terminating services.
+    ///
+    /// Awaits completion of all active connection handlers, saves the current configuration,
+    /// and concurrently shuts down the daemon and all managed services. Returns an error if any
+    /// shutdown step fails.
     pub async fn shutdown(&mut self) -> Result<()> {
         self.complete_connections().await?;
 
@@ -89,7 +106,16 @@ impl DaemonServer {
         Ok(())
     }
 
-    //#[allow(clippy::await_holding_lock)]
+    /// Awaits completion of all active connection handler tasks and logs any errors encountered during shutdown.
+    ///
+    /// This method drains the current list of connection handler tasks, waits for each to finish, and logs errors from any handlers that failed.
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// // Inside an async context with a DaemonServer instance:
+    /// server.complete_connections().await?;
+    /// ```
     async fn complete_connections(&mut self) -> Result<()> {
         let connections = {
             let mut connections_guard = self.connections.lock();
@@ -111,6 +137,26 @@ impl DaemonServer {
         Ok(())
     }
 
+    /// Cleans up completed connection handler tasks from the shared connections vector.
+    ///
+    /// Iterates through the list of active connection handler tasks, removes those that have finished,
+    /// and awaits their completion. Logs any errors encountered during task completion and reports the
+    /// number of active and cleaned connections.
+    ///
+    /// # Arguments
+    ///
+    /// * `connections` - Shared, thread-safe vector of connection handler task handles.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if cleanup completes successfully, or an error if awaiting a task fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let connections = Arc::new(Mutex::new(Vec::new()));
+    /// cleanup_completed_connections(&connections).await.unwrap();
+    /// ```
     async fn cleanup_completed_connections(
         connections: &Arc<Mutex<Vec<JoinHandle<()>>>>,
     ) -> Result<()> {
@@ -163,7 +209,23 @@ impl DaemonServer {
     /// This function will return an error if:
     /// * Connection acceptance fails critically
     /// * Shutdown operations fail
-    /// * Service management operations fail
+    /// Runs the main server loop and the background cleanup task concurrently, coordinating their shutdown.
+    ///
+    /// Starts the server task to accept connections and the cleanup task to periodically remove completed connections and old services. Waits for either task to complete, ensuring graceful shutdown when triggered.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the server shuts down cleanly, or an error if any task fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use your_crate::DaemonServer;
+    /// # tokio_test::block_on(async {
+    /// let mut server = DaemonServer::new().await.unwrap();
+    /// server.run().await.unwrap();
+    /// # });
+    /// ```
     pub async fn run(&mut self) -> Result<()> {
         let (cleanup_stop_tx, cleanup_stop_rx) = oneshot::channel::<()>();
 
@@ -178,6 +240,24 @@ impl DaemonServer {
         Ok(())
     }
 
+    /// Runs the main server loop, accepting new connections and handling shutdown signals.
+    ///
+    /// Accepts incoming connections from the daemon, spawning a new asynchronous task for each connection handler and tracking their join handles. On receiving a Ctrl-C signal, initiates a graceful shutdown by signaling the cleanup task to stop and awaiting shutdown procedures.
+    ///
+    /// # Returns
+    /// Returns `Ok(())` if the server loop exits cleanly, or an error if shutdown or signaling fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use nexsock::daemon::server::DaemonServer;
+    /// # use tokio::sync::oneshot;
+    /// # async fn example(mut server: DaemonServer) {
+    /// let (tx, _rx) = oneshot::channel();
+    /// let result = server.server_task(tx).await;
+    /// assert!(result.is_ok());
+    /// # }
+    /// ```
     async fn server_task(&mut self, cleanup_stop_tx: oneshot::Sender<()>) -> Result<()> {
         loop {
             select! {
@@ -209,6 +289,20 @@ impl DaemonServer {
         Ok(())
     }
 
+    /// Spawns a background task that periodically cleans up completed connection handlers and old services.
+    ///
+    /// The task runs until it receives a stop signal via the provided oneshot receiver. Cleanup occurs at the configured interval, and the task sleeps briefly between checks to avoid busy waiting. Errors during service cleanup are logged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let (tx, rx) = tokio::sync::oneshot::channel();
+    /// let server = DaemonServer::new().await.unwrap();
+    /// let handle = server.cleanup_task(rx);
+    /// // ... later, signal shutdown:
+    /// tx.send(()).unwrap();
+    /// handle.await.unwrap().unwrap();
+    /// ```
     fn cleanup_task(&self, cleanup_stop_rx: oneshot::Receiver<()>) -> JoinHandle<Result<()>> {
         let connections_arc = Arc::clone(&self.connections);
         let cleanup_interval = self.cleanup_interval;

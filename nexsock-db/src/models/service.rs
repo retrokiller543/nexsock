@@ -53,7 +53,27 @@ impl Model {
     /// * `repo_url` - The URL of the service's repository.
     /// * `port` - The port number the service will run on.
     /// * `repo_path` - The path to the service's repository on the local filesystem.
-    /// * `config_id` - An optional foreign key referencing the service's configuration.
+    /// Creates a new service model with the specified basic information and default status `Stopped`.
+    ///
+    /// # Parameters
+    /// - `config_id`: Optional foreign key referencing the service's configuration.
+    ///
+    /// # Returns
+    /// A `Model` instance representing a service with the provided details and no Git metadata.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let service = Model::new(
+    ///     "my-service".to_string(),
+    ///     "https://github.com/example/repo.git".to_string(),
+    ///     8080,
+    ///     "/srv/my-service".to_string(),
+    ///     Some(1),
+    /// );
+    /// assert_eq!(service.status, ServiceStatus::Stopped);
+    /// assert_eq!(service.git_branch, None);
+    /// ```
     pub fn new(
         name: String,
         repo_url: String,
@@ -86,7 +106,25 @@ impl Model {
     /// * `config_id` - An optional foreign key referencing the service's configuration.
     /// * `git_branch` - The current Git branch name.
     /// * `git_commit_hash` - The current Git commit hash.
-    /// * `git_auth_type` - The Git authentication type.
+    /// Creates a new `Model` instance with the specified fields, including optional Git metadata.
+    ///
+    /// Initializes a service with the provided name, repository URL, port, repository path, optional configuration ID, and optional Git branch, commit hash, and authentication type. The service status is set to `Stopped` by default.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let service = Model::new_with_git(
+    ///     "example".to_string(),
+    ///     "https://github.com/example/repo.git".to_string(),
+    ///     8080,
+    ///     "/srv/example".to_string(),
+    ///     Some(1),
+    ///     Some("main".to_string()),
+    ///     Some("abc123".to_string()),
+    ///     Some("ssh".to_string()),
+    /// );
+    /// assert_eq!(service.status, ServiceStatus::Stopped);
+    /// ```
     pub fn new_with_git(
         name: String,
         repo_url: String,
@@ -115,7 +153,22 @@ impl Model {
     ///
     /// # Arguments
     ///
-    /// * `dependencies` - A vector of `JoinedDependency` instances representing the service's dependencies.
+    /// Converts the service model into a protocol-level `ServiceStatus` struct, including its dependencies.
+    ///
+    /// # Parameters
+    /// - `dependencies`: A vector of joined dependency records to include in the status.
+    ///
+    /// # Returns
+    /// A `ServiceStatus` struct representing the current state and metadata of the service, suitable for protocol communication.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let model = Model::new("svc".to_string(), "https://repo".to_string(), 8080, "/path".to_string(), None);
+    /// let deps = vec![];
+    /// let status = model.to_status(deps);
+    /// assert_eq!(status.name, "svc");
+    /// ```
     pub fn to_status(
         &self,
         dependencies: Vec<JoinedDependency>,
@@ -151,6 +204,14 @@ pub enum Relation {
 }
 
 impl Related<super::service_config::Entity> for Entity {
+    /// Returns the relation definition for the "belongs to" association with the `service_config` entity.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let relation_def = Entity::to();
+    /// assert_eq!(relation_def.to_string(), "service_config");
+    /// ```
     fn to() -> RelationDef {
         Relation::ServiceConfig.def()
     }
@@ -175,6 +236,15 @@ pub enum ServiceStatus {
 }
 
 impl From<ServiceState> for ServiceStatus {
+    /// Converts a `ServiceState` from the protocol into the corresponding `ServiceStatus`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::{ServiceStatus, ServiceState};
+    /// let status = ServiceStatus::from(ServiceState::Running);
+    /// assert_eq!(status, ServiceStatus::Running);
+    /// ```
     fn from(value: ServiceState) -> Self {
         match value {
             ServiceState::Starting => Self::Starting,
@@ -187,6 +257,16 @@ impl From<ServiceState> for ServiceStatus {
 }
 
 impl From<ServiceStatus> for ServiceState {
+    /// Converts a `ServiceStatus` into the corresponding `ServiceState`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::{ServiceStatus, ServiceState};
+    /// let status = ServiceStatus::Running;
+    /// let state: ServiceState = ServiceState::from(status);
+    /// assert_eq!(state, ServiceState::Running);
+    /// ```
     fn from(value: ServiceStatus) -> Self {
         match value {
             ServiceStatus::Starting => Self::Starting,
@@ -199,6 +279,20 @@ impl From<ServiceStatus> for ServiceState {
 }
 
 impl ValueType for ServiceStatus {
+    /// Attempts to convert a database `Value` into a `ServiceStatus`.
+    ///
+    /// Returns `Ok(ServiceStatus)` if the string value matches a known service status; otherwise, returns `Err(ValueTypeErr)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sea_orm::Value;
+    /// let status = ServiceStatus::try_from(Value::String(Some("Running".to_string())));
+    /// assert_eq!(status.unwrap(), ServiceStatus::Running);
+    ///
+    /// let invalid = ServiceStatus::try_from(Value::String(Some("Unknown".to_string())));
+    /// assert!(invalid.is_err());
+    /// ```
     fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
         match v {
             Value::String(Some(x)) => match x.as_str() {
@@ -213,26 +307,55 @@ impl ValueType for ServiceStatus {
         }
     }
 
+    /// Returns the type name as a string for use in database integration.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let name = type_name();
+    /// assert_eq!(name, "ServiceStatus");
+    /// ```
     fn type_name() -> String {
         "ServiceStatus".to_string()
     }
 
+    /// This specifies that `ServiceStatus` is represented as an array of strings in the database.
     fn array_type() -> ArrayType {
         ArrayType::String
     }
 
+    /// Returns the database column type used to store the enum as an unbounded string.
     fn column_type() -> ColumnType {
         ColumnType::String(StringLen::None)
     }
 }
 
 impl From<ServiceStatus> for Value {
+    /// Converts a `ServiceStatus` enum variant into a `Value::String` for database storage.
+    ///
+    /// The resulting string represents the name of the status variant.
     fn from(state: ServiceStatus) -> Self {
         Value::String(Some(Box::new(state.to_string())))
     }
 }
 
 impl TryGetable for ServiceStatus {
+    /// Attempts to extract a `ServiceStatus` enum from a database query result by matching a string value.
+    ///
+    /// Returns an error if the value does not correspond to a known `ServiceStatus` variant.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `TryGetError` if the database value is not a valid `ServiceStatus` string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sea_orm::QueryResult;
+    /// // Assume `res` is a QueryResult with a valid ServiceStatus string at column 0
+    /// let status = ServiceStatus::try_get_by(&res, 0)?;
+    /// assert!(matches!(status, ServiceStatus::Running | ServiceStatus::Stopped | ServiceStatus::Starting | ServiceStatus::Stopping | ServiceStatus::Failed));
+    /// ```
     fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
         let val: String = res.try_get_by(index)?;
 

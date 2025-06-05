@@ -25,7 +25,13 @@ pub struct SystemGitBackend {
 }
 
 impl SystemGitBackend {
-    /// Creates a new SystemGitBackend instance.
+    /// Creates a new `SystemGitBackend` with default environment variables that disable global and system Git configuration files.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// ```
     pub fn new() -> Self {
         let mut env_vars = HashMap::new();
 
@@ -36,13 +42,51 @@ impl SystemGitBackend {
         Self { env_vars }
     }
 
-    /// Creates a new SystemGitBackend with custom environment variables.
+    /// Creates a new `SystemGitBackend` instance using the provided environment variables.
+    ///
+    /// The given environment variables will be set for all Git commands executed by this backend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    /// use your_crate::SystemGitBackend;
+    ///
+    /// let mut env = HashMap::new();
+    /// env.insert("GIT_TRACE".to_string(), "1".to_string());
+    /// let backend = SystemGitBackend::with_env_vars(env);
+    /// ```
     pub fn with_env_vars(env_vars: HashMap<String, String>) -> Self {
         Self { env_vars }
     }
 
     /// Executes a git command with the given arguments.
     #[instrument(skip(self), level = "debug")]
+    /// Executes a git command asynchronously with optional working directory and authentication.
+    ///
+    /// Runs the specified git command with provided arguments, applying configured environment variables and authentication settings if given. Captures and returns the trimmed standard output on success, or returns an error containing the command, stderr, and stdout if the command fails.
+    ///
+    /// # Arguments
+    ///
+    /// - `args`: Arguments to pass to the git command.
+    /// - `cwd`: Optional working directory for the command.
+    /// - `auth`: Optional authentication configuration.
+    ///
+    /// # Returns
+    ///
+    /// The trimmed standard output from the git command on success.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the git command fails to execute or exits with a non-zero status.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// let output = backend.run_git_command(&["--version"], None, None).await?;
+    /// assert!(output.starts_with("git version"));
+    /// ```
     async fn run_git_command(
         &self,
         args: &[&str],
@@ -86,7 +130,26 @@ impl SystemGitBackend {
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
     }
 
-    /// Configures authentication for a Git command.
+    /// Sets up authentication environment variables for a Git command based on the specified authentication method.
+    ///
+    /// Supports SSH agent, SSH key, token-based, and username/password authentication. For SSH key authentication, a provided passphrase is ignored and a warning is issued; users should add the key to the SSH agent if a passphrase is required.
+    ///
+    /// # Arguments
+    ///
+    /// * `cmd` - The command to configure for authentication.
+    /// * `auth` - The authentication method to apply.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if authentication is configured successfully.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut cmd = std::process::Command::new("git");
+    /// let auth = GitAuth::SshAgent { username: None };
+    /// backend.configure_auth(&mut cmd, &auth)?;
+    /// ```
     fn configure_auth(&self, cmd: &mut Command, auth: &GitAuth) -> crate::error::Result<()> {
         match auth {
             GitAuth::None => {
@@ -125,12 +188,32 @@ impl SystemGitBackend {
         Ok(())
     }
 
-    /// Parses the output of `git status --porcelain` to determine if the repo is dirty.
+    /// Returns true if the repository has uncommitted changes based on `git status --porcelain` output.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let dirty = backend.is_repo_dirty(" M src/main.rs\n");
+    /// assert!(dirty);
+    ///
+    /// let clean = backend.is_repo_dirty("");
+    /// assert!(!clean);
+    /// ```
     fn is_repo_dirty(&self, status_output: &str) -> bool {
         !status_output.trim().is_empty()
     }
 
-    /// Parses the output of `git branch -a` to extract branch names.
+    /// Extracts branch names from the output of `git branch` or `git branch -a`.
+    ///
+    /// Filters out empty lines, symbolic references, and lines containing arrows (`->`).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let output = "* main\n  dev\n  remotes/origin/main\n  remotes/origin/dev\n";
+    /// let branches = backend.parse_branches(output);
+    /// assert_eq!(branches, vec!["main", "dev", "remotes/origin/main", "remotes/origin/dev"]);
+    /// ```
     fn parse_branches(&self, branch_output: &str) -> Vec<String> {
         branch_output
             .lines()
@@ -150,7 +233,34 @@ impl SystemGitBackend {
             .collect()
     }
 
-    /// Parses the output of `git log --format=...` to extract commit information.
+    /// Parses the output of a formatted `git log` command into a vector of `GitCommit` objects.
+    ///
+    /// Expects the log output to use `\n---COMMIT---\n` as a delimiter between commits, with each commit entry containing at least five lines: hash, author name, author email, timestamp, and message.
+    ///
+    /// # Returns
+    /// A vector of `GitCommit` instances, one for each parsed commit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let log_output = "\
+    /// abc123
+    /// Alice
+    /// alice@example.com
+    /// 1710000000
+    ///Initial commit
+    ///\n---COMMIT---\n\
+    ///def456
+    ///Bob
+    ///bob@example.com
+    ///1710001000
+    ///Added feature
+    ///";
+    /// let commits = backend.parse_commits(log_output);
+    /// assert_eq!(commits.len(), 2);
+    /// assert_eq!(commits[0].author_name, "Alice");
+    /// assert_eq!(commits[1].message, "Added feature");
+    /// ```
     fn parse_commits(&self, log_output: &str) -> Vec<GitCommit> {
         log_output
             .split("\n---COMMIT---\n")
@@ -174,6 +284,13 @@ impl SystemGitBackend {
 }
 
 impl Default for SystemGitBackend {
+    /// Creates a new `SystemGitBackend` instance with default environment variables.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::default();
+    /// ```
     fn default() -> Self {
         Self::new()
     }
@@ -182,6 +299,31 @@ impl Default for SystemGitBackend {
 #[async_trait]
 impl GitBackend for SystemGitBackend {
     #[instrument(skip(self), level = "debug")]
+    /// Clones a Git repository to a local path, optionally checking out a specific branch.
+    ///
+    /// If a branch is specified, the repository is cloned with that branch checked out. Authentication is handled according to the provided `GitAuth`.
+    ///
+    /// # Returns
+    /// Repository information for the newly cloned repository.
+    ///
+    /// # Errors
+    /// Returns an error if the clone operation fails or if the local path is invalid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// let repo_info = backend
+    ///     .clone(
+    ///         "https://github.com/example/repo.git",
+    ///         Path::new("/tmp/repo"),
+    ///         &GitAuth::None,
+    ///         Some("main"),
+    ///     )
+    ///     .await
+    ///     .unwrap();
+    /// assert_eq!(repo_info.current_branch.as_deref(), Some("main"));
+    /// ```
     async fn clone(
         &self,
         remote_url: &str,
@@ -209,6 +351,17 @@ impl GitBackend for SystemGitBackend {
     }
 
     #[instrument(skip(self), level = "debug")]
+    /// Retrieves the current status of a Git repository, including branch, commit, remote URL, dirty state, branches, and ahead/behind counts.
+    ///
+    /// Returns a `GitRepoInfo` struct containing the current branch (if not in detached HEAD), current commit hash, remote origin URL, whether the working directory has uncommitted changes, a list of all branches, and the number of commits ahead or behind the upstream branch if available.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// let info = tokio_test::block_on(backend.status(Path::new("/path/to/repo"))).unwrap();
+    /// assert!(info.current_commit.len() > 0);
+    /// ```
     async fn status(&self, repo_path: &Path) -> crate::error::Result<GitRepoInfo> {
         // Get current branch
         let current_branch = match self
@@ -287,6 +440,31 @@ impl GitBackend for SystemGitBackend {
     }
 
     #[instrument(skip(self), level = "debug")]
+    /// Checks out the specified branch in the given Git repository, optionally creating it if it does not exist.
+    ///
+    /// If `create_if_missing` is true, the branch will be created or reset to the current HEAD if it does not already exist. Returns the updated repository status after the operation.
+    ///
+    /// # Parameters
+    /// - `repo_path`: Path to the local Git repository.
+    /// - `branch_name`: Name of the branch to check out.
+    /// - `create_if_missing`: If true, creates the branch if it does not exist.
+    ///
+    /// # Returns
+    /// Repository status information after checking out the branch.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::path::Path;
+    /// # use your_crate::{SystemGitBackend, GitAuth};
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let backend = SystemGitBackend::new();
+    /// let repo_path = Path::new("/path/to/repo");
+    /// let info = backend.checkout_branch(repo_path, "feature-branch", true).await?;
+    /// assert_eq!(info.current_branch.as_deref(), Some("feature-branch"));
+    /// # Ok(())
+    /// # }
+    /// ```
     async fn checkout_branch(
         &self,
         repo_path: &Path,
@@ -308,6 +486,26 @@ impl GitBackend for SystemGitBackend {
     }
 
     #[instrument(skip(self), level = "debug")]
+    /// Checks out the specified commit in the given repository and returns the updated repository status.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo_path` - Path to the local Git repository.
+    /// * `commit_hash` - The hash of the commit to check out.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `GitRepoInfo` struct representing the repository's status after checking out the commit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// let repo_path = Path::new("/path/to/repo");
+    /// let commit_hash = "abc123def456";
+    /// let info = backend.checkout_commit(repo_path, commit_hash).await?;
+    /// assert_eq!(info.current_commit, Some(commit_hash.to_string()));
+    /// ```
     async fn checkout_commit(
         &self,
         repo_path: &Path,
@@ -321,6 +519,23 @@ impl GitBackend for SystemGitBackend {
     }
 
     #[instrument(skip(self), level = "debug")]
+    /// Pulls the latest changes from the remote repository into the specified local repository.
+    ///
+    /// Updates the local repository at `repo_path` by fetching and merging changes from its configured remote. Authentication is applied according to the provided `auth` method. Returns the updated repository status after the pull operation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use your_crate::{SystemGitBackend, GitAuth};
+    /// # use std::path::Path;
+    /// # tokio_test::block_on(async {
+    /// let backend = SystemGitBackend::new();
+    /// let repo_path = Path::new("/path/to/repo");
+    /// let auth = GitAuth::None;
+    /// let info = backend.pull(repo_path, &auth).await.unwrap();
+    /// assert!(info.current_commit.is_some());
+    /// # });
+    /// ```
     async fn pull(&self, repo_path: &Path, auth: &GitAuth) -> crate::error::Result<GitRepoInfo> {
         self.run_git_command(&["pull"], Some(repo_path), Some(auth))
             .await?;
@@ -330,6 +545,17 @@ impl GitBackend for SystemGitBackend {
     }
 
     #[instrument(skip(self), level = "debug")]
+    /// Fetches updates from the remote repository for the specified local repository path.
+    ///
+    /// This method performs a `git fetch` operation using the provided authentication method and returns the updated repository status.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// let repo_info = backend.fetch(Path::new("/path/to/repo"), &GitAuth::None).await?;
+    /// println!("Current branch: {:?}", repo_info.current_branch);
+    /// ```
     async fn fetch(&self, repo_path: &Path, auth: &GitAuth) -> crate::error::Result<GitRepoInfo> {
         self.run_git_command(&["fetch"], Some(repo_path), Some(auth))
             .await?;
@@ -339,6 +565,17 @@ impl GitBackend for SystemGitBackend {
     }
 
     #[instrument(skip(self), level = "debug")]
+    /// Retrieves the commit history for a repository, optionally limited by count and branch.
+    ///
+    /// Returns a vector of `GitCommit` objects parsed from the repository's log output. If `max_count` is provided, limits the number of commits returned. If `branch` is specified, retrieves the log for that branch; otherwise, uses the current branch.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// let commits = backend.log(Path::new("/path/to/repo"), Some(10), Some("main")).await?;
+    /// assert!(!commits.is_empty());
+    /// ```
     async fn log(
         &self,
         repo_path: &Path,
@@ -364,6 +601,26 @@ impl GitBackend for SystemGitBackend {
     }
 
     #[instrument(skip(self), level = "debug")]
+    /// Lists the branches in a Git repository.
+    ///
+    /// Returns a vector of branch names, including remote branches if `include_remote` is true.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo_path` - Path to the local Git repository.
+    /// * `include_remote` - If true, includes remote branches in the result.
+    ///
+    /// # Returns
+    ///
+    /// A vector of branch names present in the repository.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let backend = SystemGitBackend::new();
+    /// let branches = backend.list_branches(Path::new("/path/to/repo"), true).await.unwrap();
+    /// assert!(branches.contains(&"main".to_string()));
+    /// ```
     async fn list_branches(
         &self,
         repo_path: &Path,

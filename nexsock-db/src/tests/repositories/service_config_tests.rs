@@ -39,6 +39,9 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests updating an existing `ServiceConfig` in the repository.
+    ///
+    /// Saves an initial config, updates its fields, saves it again, and verifies that the ID remains unchanged and the updated fields are persisted correctly.
     async fn test_save_update_existing() {
         let db = setup_in_memory_db()
             .await
@@ -78,6 +81,19 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests deleting a `ServiceConfig` by ID and verifies correct repository behavior.
+    ///
+    /// This test saves a new config, deletes it by its ID, and asserts that it can no longer be retrieved.
+    /// It also checks that attempting to delete a non-existent config returns an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # tokio_test::block_on(async {
+    /// test_delete_by_id().await;
+    /// # });
+    /// ```
+    async fn test_delete_by_id() {
     async fn test_delete_by_id() {
         let db = setup_in_memory_db()
             .await

@@ -92,7 +92,15 @@ impl Daemon {
     /// # Platform-specific behavior
     ///
     /// * On Unix: Creates a Unix domain socket and removes any existing socket file
-    /// * On Windows: Creates a TCP socket
+    /// Initializes a new daemon instance, binding the socket listener and loading Lua plugins.
+    ///
+    /// On Unix, removes any existing socket file before binding a Unix domain socket. On Windows, binds a TCP socket. Loads all available Lua plugins into the plugin manager. Returns an error if socket binding or plugin loading fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let daemon = Daemon::new().await?;
+    /// ```
     pub async fn new() -> Result<Self> {
         let config = &*NEXSOCK_CONFIG;
         let listener = Self::get_listener(config.socket()).await?;
@@ -114,6 +122,18 @@ impl Daemon {
     }
 
     #[cfg(unix)]
+    /// Removes an existing Unix socket file if the provided socket reference is a filesystem path.
+    ///
+    /// Returns an error if the socket reference is not a path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nexsock_daemon::daemon::SocketRef;
+    /// # use nexsock_daemon::daemon::Daemon;
+    /// let socket_ref = SocketRef::Path("/tmp/nexsock.sock".into());
+    /// Daemon::clear_old_socket(&socket_ref)?;
+    /// ```
     fn clear_old_socket(socket_ref: &SocketRef) -> Result<()> {
         if let SocketRef::Path(path) = socket_ref {
             if path.exists() {
@@ -130,6 +150,15 @@ impl Daemon {
         }
     }
 
+    /// Creates and binds a new socket listener for the daemon.
+    ///
+    /// On Unix, removes any existing socket file before binding to avoid conflicts.  
+    /// On Windows, binds a TCP listener asynchronously.  
+    /// Returns the listener wrapped in an `Arc`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the socket reference is invalid, the socket file cannot be removed (Unix), or the listener fails to bind.
     async fn get_listener(socket_ref: &SocketRef) -> Result<Arc<Listener>> {
         #[cfg(unix)]
         Self::clear_old_socket(socket_ref)?;
@@ -163,6 +192,20 @@ impl Daemon {
     /// * The socket accept operation fails
     /// * Connection initialization fails
     #[tracing::instrument(level = "debug", skip_all)]
+    /// Asynchronously accepts an incoming client connection and returns a new `Connection` instance.
+    ///
+    /// Waits for a client to connect to the daemon's socket listener, then wraps the accepted stream and the Lua plugin manager in a `Connection`.
+    ///
+    /// # Returns
+    /// A `Connection` representing the accepted client stream and associated plugin manager.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let daemon = Daemon::new().await?;
+    /// let mut conn = daemon.accept().await?;
+    /// // Use `conn` to interact with the client.
+    /// ```
     pub async fn accept(&self) -> Result<Connection<OwnedReadHalf, OwnedWriteHalf>> {
         let (stream, addr) = self.listener.accept().await?;
 
@@ -186,7 +229,16 @@ impl Daemon {
     /// # Platform-specific behavior
     ///
     /// * On Unix: Removes the socket file if it exists
-    /// * On Windows: Simply closes the TCP listener
+    /// Shuts down the daemon and performs platform-specific cleanup.
+    ///
+    /// On Unix, removes the socket file if it exists. On Windows, closes the TCP listener by dropping it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let daemon = Daemon::new().await?;
+    /// daemon.shutdown().await?;
+    /// ```
     pub async fn shutdown(self) -> Result<()> {
         info!("Shutting down daemon...");
 

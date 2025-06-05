@@ -20,6 +20,13 @@ pub struct Model {
 }
 
 impl From<Model> for ServiceConfig {
+    /// Converts a `Model` instance into a `ServiceConfig`, mapping each field to its corresponding optional value.
+    ///
+    /// # Parameters
+    /// - `config`: The `Model` representing a service configuration to convert.
+    ///
+    /// # Returns
+    /// A `ServiceConfig` with fields populated from the provided `Model`.
     fn from(config: Model) -> Self {
         Self {
             id: Some(config.id),
@@ -39,6 +46,7 @@ pub enum Relation {
 }
 
 impl Related<ServiceEntity> for Entity {
+    /// Returns the relation definition for the "Services" association.
     fn to() -> RelationDef {
         Relation::Services.def()
     }
@@ -54,7 +62,23 @@ impl Model {
     ///
     /// * `filename` - The name of the configuration file.
     /// * `format` - The format of the configuration file.
-    /// * `run_command` - An optional command to run the service.
+    /// Creates a new `Model` instance representing a service configuration.
+    ///
+    /// The `id` field is initialized to 0 and is intended to be set by the database.
+    ///
+    /// # Parameters
+    /// - `filename`: The name of the configuration file.
+    /// - `format`: The format of the configuration file.
+    /// - `run_command`: An optional command to run the service.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let config = Model::new("service.yaml".to_string(), ConfigFormat::Yaml, Some("run.sh".to_string()));
+    /// assert_eq!(config.filename, "service.yaml");
+    /// assert_eq!(config.format, ConfigFormat::Yaml);
+    /// assert_eq!(config.run_command, Some("run.sh".to_string()));
+    /// ```
     pub fn new(filename: String, format: ConfigFormat, run_command: Option<String>) -> Self {
         Self {
             id: 0, // Will be set by the database
@@ -68,7 +92,24 @@ impl Model {
     ///
     /// # Arguments
     ///
-    /// * `service` - A reference to the service associated with this configuration.
+    /// Converts the service configuration model into a protocol payload for configuration commands.
+    ///
+    /// Creates a `ServiceConfigPayload` using the current model's data and the provided service reference. If the run command is not set, an empty string is used.
+    ///
+    /// # Parameters
+    /// - `service`: The reference to the service associated with this configuration.
+    ///
+    /// # Returns
+    /// A `ServiceConfigPayload` containing the service reference, filename, format, and run command.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let model = Model::new("config.yaml".to_string(), ConfigFormat::Yaml, Some("run.sh".to_string()));
+    /// let service_ref = ServiceRef::from_id(1);
+    /// let payload = model.to_payload(service_ref);
+    /// assert_eq!(payload.filename, "config.yaml");
+    /// ```
     pub fn to_payload(
         &self,
         service: nexsock_protocol::commands::manage_service::ServiceRef,

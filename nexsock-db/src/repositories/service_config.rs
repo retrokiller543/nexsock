@@ -16,7 +16,13 @@ impl<'a> ServiceConfigRepository<'a> {
     ///
     /// # Arguments
     ///
-    /// * `connection` - A reference to an active `DatabaseConnection`.
+    /// Creates a new `ServiceConfigRepository` with the given database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceConfigRepository::new(&db_connection);
+    /// ```
     pub fn new(connection: &'a DatabaseConnection) -> Self {
         Self { connection }
     }
@@ -26,7 +32,13 @@ impl ServiceConfigRepository<'static> {
     /// Creates a new `ServiceConfigRepository` using a globally available static database connection.
     ///
     /// This method is typically used when a `'static` lifetime is required for the repository.
-    /// It internally calls `get_db_connection()` to obtain the connection.
+    /// Creates a new repository instance using a globally available static database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceConfigRepository::new_from_static();
+    /// ```
     pub fn new_from_static() -> Self {
         let connection = get_db_connection();
 
@@ -44,7 +56,19 @@ impl ServiceConfigRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing an `Option<ServiceConfig>` which is `Some` if the
-    /// configuration is found, `None` otherwise, or an error if there's a database issue.
+    /// Retrieves a service configuration by its ID.
+    ///
+    /// Returns `Ok(Some(ServiceConfig))` if a configuration with the specified ID exists, `Ok(None)` if not found, or an error if a database issue occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceConfigRepository::new(&db_connection);
+    /// let config = repo.get_by_id(42).await?;
+    /// if let Some(cfg) = config {
+    ///     // Use the configuration
+    /// }
+    /// ```
     pub async fn get_by_id(&self, id: i64) -> anyhow::Result<Option<ServiceConfig>> {
         let db = self.connection;
         ServiceConfigEntity::find_by_id(id)
@@ -70,7 +94,26 @@ impl ServiceConfigRepository<'_> {
     ///
     /// # Returns
     ///
-    /// An `anyhow::Result<()>` indicating success or failure.
+    /// Inserts a new `ServiceConfig` into the database or updates an existing one.
+    ///
+    /// If the provided `ServiceConfig` has an `id` of 0, a new record is inserted and its `id` is updated with the generated value. Otherwise, the existing record with the matching `id` is updated.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut config = ServiceConfig {
+    ///     id: 0,
+    ///     filename: "service.yaml".to_string(),
+    ///     format: ConfigFormat::Yaml,
+    ///     run_command: "run-service".to_string(),
+    /// };
+    /// repo.save(&mut config).await?;
+    /// assert!(config.id > 0); // ID is set after insert
+    /// ```
     pub async fn save(&self, config: &mut ServiceConfig) -> anyhow::Result<()> {
         let db = self.connection;
 
@@ -118,7 +161,16 @@ impl ServiceConfigRepository<'_> {
     /// # Returns
     ///
     /// An `anyhow::Result<()>` indicating success or failure. Returns an error
-    /// if the service configuration with the given ID is not found.
+    /// Deletes a service configuration by its ID.
+    ///
+    /// Returns an error if the configuration does not exist or if a database error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceConfigRepository::new(&db);
+    /// repo.delete_by_id(42).await?;
+    /// ```
     pub async fn delete_by_id(&self, id: i64) -> anyhow::Result<()> {
         let db = self.connection;
 

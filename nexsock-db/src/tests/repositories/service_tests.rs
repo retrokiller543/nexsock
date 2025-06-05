@@ -6,6 +6,19 @@ mod tests {
     use nexsock_protocol::commands::manage_service::ServiceRef;
 
     #[tokio::test]
+    /// Tests saving a new service and retrieving it by ID, name, and service reference.
+    ///
+    /// This test verifies that a newly created service is assigned an ID upon saving,
+    /// and can be retrieved using its ID, name, or a `ServiceRef` variant. It asserts
+    /// that all retrieval methods return the correct service.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_save_new_and_get_by_id_or_name().await;
+    /// });
+    /// ```
     async fn test_save_new_and_get_by_id_or_name() {
         let db = setup_in_memory_db()
             .await
@@ -67,6 +80,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests updating an existing service and verifies that its ID remains unchanged while updated fields are persisted.
+    ///
+    /// Saves a new service, modifies its port and status, saves the updates, and asserts that the service ID is unchanged and the updated fields are correctly stored.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_save_update_existing().await;
+    /// });
+    /// ```
     async fn test_save_update_existing() {
         let db = setup_in_memory_db()
             .await
@@ -108,6 +132,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests deleting a service by ID and verifies correct error handling for non-existent IDs.
+    ///
+    /// Saves a service, deletes it by its ID, and asserts it is no longer retrievable. Also checks that attempting to delete a non-existent service ID returns an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_delete_by_id().await;
+    /// });
+    /// ```
     async fn test_delete_by_id() {
         let db = setup_in_memory_db()
             .await
@@ -151,6 +186,9 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests that all saved services can be retrieved from the repository.
+    ///
+    /// Saves two distinct services and verifies that both are present in the result of `get_all`. Asserts that the correct number of services is returned and that their IDs and names match the saved entities.
     async fn test_get_all() {
         let db = setup_in_memory_db()
             .await
@@ -191,6 +229,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests retrieving detailed service information by both ID and name reference.
+    ///
+    /// Saves a service without configuration or dependencies, then verifies that detailed retrieval by both `ServiceRef::Id` and `ServiceRef::Name` returns the correct service with no config and no dependencies.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # tokio_test::block_on(async {
+    /// test_get_detailed_by_ref().await;
+    /// # });
+    /// ```
     async fn test_get_detailed_by_ref() {
         let db = setup_in_memory_db()
             .await
@@ -238,6 +287,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests retrieving the status of a saved service by its ID.
+    ///
+    /// Saves a service with a specific status, retrieves its status using a `ServiceRef::Id`, and asserts that the returned status matches the saved value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_get_status().await;
+    /// });
+    /// ```
     async fn test_get_status() {
         let db = setup_in_memory_db()
             .await
@@ -268,6 +328,19 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests retrieving all services along with their dependency information.
+    ///
+    /// Saves two services with different statuses, retrieves all services with dependency flags,
+    /// and asserts that both services are present with correct names, states, ports, and no dependencies.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// #[tokio::test]
+    /// async fn test_get_all_with_dependencies() {
+    ///     // ... (see function body for full example)
+    /// }
+    /// ```
     async fn test_get_all_with_dependencies() {
         let db = setup_in_memory_db()
             .await
@@ -336,6 +409,17 @@ mod tests {
     }
 
     #[tokio::test]
+    /// Tests extracting a valid service ID from both `ServiceRef::Id` and `ServiceRef::Name` variants.
+    ///
+    /// Verifies that the correct ID is returned for existing services and that an error is returned when extracting from a non-existent service name.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// tokio_test::block_on(async {
+    ///     test_extract_valid_id_from_ref().await;
+    /// });
+    /// ```
     async fn test_extract_valid_id_from_ref() {
         let db = setup_in_memory_db()
             .await

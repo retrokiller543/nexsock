@@ -41,13 +41,29 @@ impl DependencyManager {
     ///
     /// # Returns
     ///
-    /// A `LazyLock<DependencyManager>` that initializes the manager on first access.
+    /// Returns a lazily initialized static instance of `DependencyManager`.
+    ///
+    /// The manager is created on first access using the default constructor.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = DependencyManager::new_const();
+    /// // The manager is initialized only when accessed.
+    /// ```
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Default::default)
     }
 }
 
 impl Default for DependencyManager {
+    /// Creates a new `DependencyManager` with repositories initialized from static contexts.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = DependencyManager::default();
+    /// ```
     fn default() -> Self {
         Self {
             service_repository: ServiceRepository::new_from_static(),
@@ -57,6 +73,24 @@ impl Default for DependencyManager {
 }
 
 impl DependencyManagement for DependencyManager {
+    /// Adds a dependency between two services.
+    ///
+    /// Creates a new dependency record linking the specified parent and dependent services, with an optional tunnel flag, and saves it to the database.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if either service reference is invalid or if saving the dependency fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let payload = AddDependencyPayload {
+    ///     service: ServiceRef::Name("service-a".to_string()),
+    ///     dependent_service: ServiceRef::Name("service-b".to_string()),
+    ///     tunnel_enabled: false,
+    /// };
+    /// dependency_manager.add_dependency(&payload).await?;
+    /// ```
     async fn add_dependency(&self, payload: &AddDependencyPayload) -> crate::error::Result<()> {
         let AddDependencyPayload {
             service,
@@ -85,6 +119,19 @@ impl DependencyManagement for DependencyManager {
         Ok(())
     }
 
+    /// Removes a dependency between two services.
+    ///
+    /// Attempts to delete the dependency where the specified service depends on the given dependent service. Returns an error if no such dependency exists.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let payload = RemoveDependencyPayload {
+    ///     service: ServiceRef::from_id("service-a"),
+    ///     dependent_service: ServiceRef::from_id("service-b"),
+    /// };
+    /// manager.remove_dependency(&payload).await?;
+    /// ```
     async fn remove_dependency(
         &self,
         payload: &RemoveDependencyPayload,
@@ -121,6 +168,18 @@ impl DependencyManagement for DependencyManager {
         Err(anyhow!("No dependency found for this service").into())
     }
 
+    /// Retrieves a structured list of dependencies for the specified service.
+    ///
+    /// Returns an error if the service cannot be found by the provided reference.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = DependencyManager::default();
+    /// let service_ref = ServiceRef::from_id("service-123");
+    /// let dependencies = tokio_test::block_on(manager.list_dependencies(&service_ref)).unwrap();
+    /// assert!(dependencies.dependencies.len() >= 0);
+    /// ```
     async fn list_dependencies(
         &self,
         payload: &ServiceRef,

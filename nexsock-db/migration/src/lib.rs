@@ -21,7 +21,19 @@ impl MigratorTrait for Migrator {
     /// Returns a vector of all migration modules.
     ///
     /// This method is called by the migration runner to discover and apply
-    /// the defined migrations in order.
+    /// Returns the list of database migrations to be applied, in sequential order.
+    ///
+    /// The migrations are boxed and ordered to ensure correct application by the migration runner.
+    ///
+    /// # Returns
+    /// A vector of boxed migration instances implementing `MigrationTrait`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let migrations = Migrator::migrations();
+    /// assert!(!migrations.is_empty());
+    /// ```
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m20220101_000001_create_base_service_tables::Migration),
