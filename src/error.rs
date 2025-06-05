@@ -84,7 +84,18 @@ impl Error {
     /// - `10` - Payload parsing errors
     /// - `11` - Configuration errors
     /// - `13` - Channel send errors
-    /// - `0xFFFF` - Unknown/unmapped errors
+    /// Returns a numeric code representing the type of error.
+    ///
+    /// Each error variant is mapped to a unique `u32` code for programmatic handling. Unmapped or unknown errors return `0xFFFF`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nexsockd::error::{Error, Result};
+    ///
+    /// let err = Error::Io(std::io::Error::from(std::io::ErrorKind::Other));
+    /// assert_eq!(err.kind(), 4);
+    /// ```
     pub fn kind(&self) -> u32 {
         match self {
             /*Error::Sqlx(_) => 1,

@@ -17,6 +17,25 @@ pub mod prelude {
 static DB_CONNECTION: OnceLock<DatabaseConnection> = OnceLock::new();
 
 #[tracing::instrument(level = "debug", err)]
+/// Initializes the global database connection and optionally runs migrations.
+///
+/// Establishes a singleton database connection using configuration settings. If `run_migrations` is true, applies all pending migrations before making the connection available.
+///
+/// # Parameters
+/// - `run_migrations`: If true, runs database migrations after connecting.
+///
+/// # Returns
+/// A reference to the initialized global database connection.
+///
+/// # Errors
+/// Returns an error if the connection or migrations fail.
+///
+/// # Examples
+///
+/// ```
+/// let db = initialize_db(true).await?;
+/// // Use `db` for database operations
+/// ```
 pub async fn initialize_db(run_migrations: bool) -> anyhow::Result<&'static DatabaseConnection> {
     let url = NEXSOCK_CONFIG.database().path.display().to_string();
 
@@ -41,6 +60,19 @@ pub async fn initialize_db(run_migrations: bool) -> anyhow::Result<&'static Data
     Ok(db)
 }
 
+/// Returns a reference to the initialized global database connection.
+///
+/// # Panics
+///
+/// Panics if the database connection has not been initialized by `initialize_db`.
+///
+/// # Examples
+///
+/// ```
+/// // Ensure initialize_db has been called before this
+/// let conn = get_db_connection();
+/// // Use `conn` for database operations
+/// ```
 pub fn get_db_connection() -> &'static DatabaseConnection {
     DB_CONNECTION
         .get()

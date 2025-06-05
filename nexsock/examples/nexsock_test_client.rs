@@ -16,6 +16,21 @@ use tokio::time::{Duration, Instant};
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
+/// Executes a service command using a pooled client and measures request latency.
+///
+/// Attempts to acquire a client from the connection pool and execute the provided service command asynchronously. On success, increments the success counter and returns the elapsed time in microseconds. On failure to acquire a client or execute the command, increments the failure counter and returns `None`.
+///
+/// # Returns
+/// The request latency in microseconds if successful, or `None` on failure.
+///
+/// # Examples
+///
+/// ```
+/// let latency = execute_request(&pool, command, &success_count, &failure_count).await;
+/// if let Some(micros) = latency {
+///     println!("Request completed in {} µs", micros);
+/// }
+/// ```
 async fn execute_request<C>(
     pool: &Pool<ClientManager>,
     payload: C,
@@ -51,6 +66,21 @@ where
 }
 
 #[tokio::main]
+/// Runs a concurrent load test against a network service using the nexsock client, reporting throughput and latency statistics.
+///
+/// Parses command-line arguments for concurrency, pool size, request count, and duration. Initializes a connection pool and dispatches concurrent requests in batches, collecting latency metrics and tracking successes and failures. Prints progress updates and a summary of test results, including throughput and latency percentiles.
+///
+/// # Errors
+///
+/// Returns an error if the connection pool cannot be created.
+///
+/// # Examples
+///
+/// ```no_run
+/// // Run from the command line with appropriate arguments:
+/// // cargo run --release -- --pool-size 16 --concurrency 8 --total-requests 10000
+/// tokio::runtime::Runtime::new().unwrap().block_on(main()).unwrap();
+/// ```
 async fn main() -> anyhow::Result<()> {
     let args = ConcurrentArgs::parse();
 
@@ -164,6 +194,25 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Returns the latency value at the specified percentile from a sorted list.
+///
+/// If the input slice is empty, returns 0. The percentile is computed using rounding to the nearest index.
+///
+/// # Parameters
+/// - `latencies`: A sorted slice of latency values in microseconds.
+/// - `p`: The desired percentile (0–100).
+///
+/// # Returns
+/// The latency value at the specified percentile, or 0 if the input is empty.
+///
+/// # Examples
+///
+/// ```
+/// let latencies = vec![10, 20, 30, 40, 50];
+/// assert_eq!(percentile(&latencies, 90), 50);
+/// assert_eq!(percentile(&latencies, 50), 30);
+/// assert_eq!(percentile(&[], 99), 0);
+/// ```
 fn percentile(latencies: &[u64], p: usize) -> u64 {
     if latencies.is_empty() {
         return 0;

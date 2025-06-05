@@ -40,7 +40,13 @@ impl ConfigManager {
     ///
     /// # Returns
     ///
-    /// A new `ConfigManager` instance ready for configuration operations.
+    /// Creates a new `ConfigManager` with repositories initialized from a static database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let manager = ConfigManager::new();
+    /// ```
     pub fn new() -> Self {
         let service_repository = ServiceRepository::new_from_static();
         let config_repository = ServiceConfigRepository::new_from_static();
@@ -58,13 +64,30 @@ impl ConfigManager {
     ///
     /// # Returns
     ///
-    /// A `LazyLock<ConfigManager>` that initializes the manager on first access.
+    /// Returns a lazily initialized static instance of `ConfigManager`.
+    ///
+    /// The manager is created on first access and can be used as a global singleton.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// static CONFIG_MANAGER: LazyLock<ConfigManager> = ConfigManager::new_const();
+    /// let manager = &*CONFIG_MANAGER;
+    /// ```
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Self::new)
     }
 }
 
 impl ConfigurationManagement for ConfigManager {
+    /// Updates or creates the configuration for a given service.
+    ///
+    /// If the service already has an associated configuration, updates its filename, format, and run command.
+    /// If not, creates a new configuration and associates it with the service.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service or its configuration cannot be found, or if database operations fail.
     async fn update_config(&self, payload: &ServiceConfigPayload) -> Result<()> {
         let ServiceConfigPayload {
             service,
@@ -109,6 +132,16 @@ impl ConfigurationManagement for ConfigManager {
         Ok(())
     }
 
+    /// Retrieves the configuration payload for a given service reference.
+    ///
+    /// Returns an error if the service does not exist, has no associated configuration, or if the configuration cannot be found.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let service_ref = ServiceRef::new("example-service");
+    /// let config_payload = config_manager.get_config(&service_ref).await?;
+    /// ```
     async fn get_config(&self, payload: &ServiceRef) -> crate::error::Result<ServiceConfigPayload> {
         let service_model = self
             .service_repository

@@ -19,6 +19,21 @@ use nexsock_protocol::commands::service_status::GetServiceStatus;
 use nexsock_protocol::commands::stdout::GetServiceStdout;
 use nexsock_protocol::commands::ServiceCommand;
 
+/// Converts a parsed CLI command into the corresponding service command.
+///
+/// Matches the provided `Commands` enum variant and constructs the appropriate `ServiceCommand` for execution. Returns an error if the command is invalid or unsupported.
+///
+/// # Returns
+/// 
+/// An `Ok(ServiceCommand)` representing the requested operation, or an error if the command is invalid.
+///
+/// # Examples
+///
+/// ```
+/// let cli_command = Commands::List;
+/// let cmd = create_command(cli_command).unwrap();
+/// // `cmd` is a `ServiceCommand` that lists all services.
+/// ```
 pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
     match cli {
         Commands::Stdout { service } => Ok(GetServiceStdout::new(service).into()),

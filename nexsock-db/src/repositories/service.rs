@@ -27,7 +27,14 @@ impl<'a> ServiceRepository<'a> {
     ///
     /// # Arguments
     ///
-    /// * `connection` - A reference to an active `DatabaseConnection`.
+    /// Creates a new `ServiceRepository` with the provided database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let db_conn = get_test_db_connection();
+    /// let repo = ServiceRepository::new(&db_conn);
+    /// ```
     pub fn new(connection: &'a DatabaseConnection) -> Self {
         Self { connection }
     }
@@ -37,7 +44,15 @@ impl ServiceRepository<'static> {
     /// Creates a new `ServiceRepository` using a globally available static database connection.
     ///
     /// This method is typically used when a `'static` lifetime is required for the repository.
-    /// It internally calls `get_db_connection()` to obtain the connection.
+    /// Creates a new `ServiceRepository` using a globally available static database connection.
+    ///
+    /// This method is intended for use cases where a shared, application-wide database connection is required.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new_from_static();
+    /// ```
     pub fn new_from_static() -> Self {
         let connection = get_db_connection();
 
@@ -47,14 +62,48 @@ impl ServiceRepository<'static> {
     /// Creates a new `ServiceRepository` wrapped in a `LazyLock` using a globally available static database connection.
     ///
     /// This allows for lazy initialization of the repository with a `'static` lifetime.
-    /// The repository is created by calling `Self::new_from_static()` when first accessed.
+    /// Returns a lazily initialized static instance of the repository.
+    ///
+    /// This method is intended for use as a global or constant repository instance that is initialized on first access.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// static REPO: LazyLock<ServiceRepository<'static>> = ServiceRepository::new_const();
+    /// let repo = &*REPO;
+    /// ```
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Self::new_from_static)
     }
 }
 
 impl ServiceRepository<'_> {
-    /// Helper function to fetch dependencies and construct DetailedServiceRecord.
+    /// Constructs a `DetailedServiceRecord` for a service, including its configuration and all dependencies.
+    ///
+    /// Returns an error with the provided message if the service is not found.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_and_config` - An optional tuple containing a `Service` and its optional `ServiceConfig`. If `None`, an error is returned.
+    /// * `error_message` - The error message to use if the service is not found.
+    ///
+    /// # Returns
+    ///
+    /// A `DetailedServiceRecord` containing the service, its configuration, and a list of its dependencies.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service is not found or if a database error occurs while fetching dependencies.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db);
+    /// let service = repo.get_by_id(1).await?;
+    /// let config = None;
+    /// let detailed = repo._get_detailed_service_record(Some((service.unwrap(), config)), "Service not found").await?;
+    /// assert_eq!(detailed.service.id, 1);
+    /// ```
     async fn _get_detailed_service_record(
         &self,
         service_and_config: Option<(Service, Option<ServiceConfig>)>,
@@ -102,7 +151,17 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing the `DetailedServiceRecord` if found, or an error
-    /// if the service does not exist or if there's a database issue.
+    /// Retrieves a detailed service record by its ID, including its configuration and dependencies.
+    ///
+    /// Returns an error if the service does not exist or if a database error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_connection);
+    /// let detailed = repo.get_detailed_by_id(42).await?;
+    /// assert_eq!(detailed.service.id, 42);
+    /// ```
     pub async fn get_detailed_by_id(&self, id: i64) -> anyhow::Result<DetailedServiceRecord> {
         let db = self.connection;
 
@@ -136,7 +195,17 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing the `DetailedServiceRecord` if found, or an error
-    /// if the service does not exist or if there's a database issue.
+    /// Retrieves a detailed service record by service name, including its configuration and dependencies.
+    ///
+    /// Returns an error if the service does not exist or if a database error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_connection);
+    /// let detailed = repo.get_detailed_by_name("my-service").await?;
+    /// assert_eq!(detailed.service.name, "my-service");
+    /// ```
     pub async fn get_detailed_by_name(
         &self,
         name: impl AsRef<str>,
@@ -175,7 +244,17 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing the `DetailedServiceRecord` if found, or an error
-    /// if the service does not exist or if there's a database issue.
+    /// Retrieves a detailed service record, including configuration and dependencies, by service reference.
+    ///
+    /// The service reference can be either an ID or a name. Returns an error if the service does not exist or if a database error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_conn);
+    /// let detailed = repo.get_detailed_by_ref(&ServiceRef::Id(42)).await?;
+    /// assert_eq!(detailed.service.id, 42);
+    /// ```
     pub async fn get_detailed_by_ref(
         &self,
         service_ref: &ServiceRef,
@@ -197,7 +276,23 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing a vector of `Service` models, or an error
-    /// if there's a database issue.
+    /// Retrieves all services from the database.
+    ///
+    /// # Returns
+    ///
+    /// A vector containing all `Service` records.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_connection);
+    /// let services = repo.get_all().await?;
+    /// assert!(!services.is_empty());
+    /// ```
     pub async fn get_all(&self) -> anyhow::Result<Vec<Service>> {
         let db = self.connection;
         let services = ServiceEntity::find().all(db).await?;
@@ -213,7 +308,17 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing an `Option<Service>` which is `Some` if the service
-    /// is found, `None` otherwise, or an error if there's a database issue.
+    /// Retrieves a service by its ID.
+    ///
+    /// Returns `Ok(Some(Service))` if a service with the specified ID exists, `Ok(None)` if not found, or an error if a database issue occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db);
+    /// let service = repo.get_by_id(42).await?;
+    /// assert!(service.is_none() || service.unwrap().id == 42);
+    /// ```
     pub async fn get_by_id(&self, id: i64) -> anyhow::Result<Option<Service>> {
         let db = self.connection;
         let service = ServiceEntity::find_by_id(id).one(db).await?;
@@ -229,7 +334,19 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing an `Option<Service>` which is `Some` if the service
-    /// is found, `None` otherwise, or an error if there's a database issue.
+    /// Retrieves a service by its name.
+    ///
+    /// Returns `Ok(Some(Service))` if a service with the specified name exists, `Ok(None)` if not found, or an error if a database issue occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db);
+    /// let service = repo.get_by_name("my-service").await?;
+    /// if let Some(svc) = service {
+    ///     assert_eq!(svc.name, "my-service");
+    /// }
+    /// ```
     pub async fn get_by_name(&self, name: &str) -> anyhow::Result<Option<Service>> {
         let db = self.connection;
         let service = ServiceEntity::find()
@@ -251,7 +368,17 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing an `Option<Service>` which is `Some` if the service
-    /// is found, `None` otherwise, or an error if there's a database issue.
+    /// Retrieves a service by its reference, which can be either an ID or a name.
+    ///
+    /// Returns `Ok(Some(Service))` if the service is found, `Ok(None)` if not found, or an error if a database issue occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db);
+    /// let service = repo.get_by_service_ref(&ServiceRef::Id(1)).await?;
+    /// assert!(service.is_some());
+    /// ```
     pub async fn get_by_service_ref(
         &self,
         service_ref: &ServiceRef,
@@ -274,7 +401,22 @@ impl ServiceRepository<'_> {
     ///
     /// # Returns
     ///
-    /// An `anyhow::Result<()>` indicating success or failure.
+    /// Inserts a new service or updates an existing one in the database.
+    ///
+    /// If the service's `id` is zero, a new record is inserted and the `id` field is updated with the generated value. Otherwise, the existing service record is updated with the provided data.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_connection);
+    /// let mut service = Service::default();
+    /// repo.save(&mut service).await?;
+    /// assert!(service.id > 0);
+    /// ```
     pub async fn save(&self, service: &mut Service) -> anyhow::Result<()> {
         let db = self.connection;
 
@@ -334,7 +476,16 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// An `anyhow::Result<()>` indicating success or failure. Returns an error
-    /// if the service with the given ID is not found.
+    /// Deletes a service from the database by its ID.
+    ///
+    /// Returns an error if the service does not exist or if a database operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db);
+    /// repo.delete_by_id(42).await?;
+    /// ```
     pub async fn delete_by_id(&self, id: i64) -> anyhow::Result<()> {
         let db = self.connection;
 
@@ -365,7 +516,21 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing the `ServiceStatus` or an error if the service
-    /// is not found or if there's a database issue.
+    /// Retrieves the status of a service identified by the given reference.
+    ///
+    /// Fetches the detailed service record (including configuration and dependencies) for the specified service reference and converts it into a `ServiceStatus`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service does not exist or if a database error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new_from_static();
+    /// let status = repo.get_status(&ServiceRef::Id(1)).await?;
+    /// println!("{:?}", status);
+    /// ```
     pub async fn get_status(&self, service_ref: &ServiceRef) -> anyhow::Result<ServiceStatus> {
         let service = self.get_detailed_by_ref(service_ref).await?;
 
@@ -379,7 +544,19 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing a `ListServicesResponse` which includes a vector of
-    /// `ServiceInfo` objects, or an error if there's a database issue.
+    /// Retrieves all services with a flag indicating whether each service has dependencies.
+    ///
+    /// Returns a `ListServicesResponse` containing a list of `ServiceInfo` objects, where each entry includes service details and a boolean indicating if the service has any dependencies. Returns an error if a database operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_connection);
+    /// let response = repo.get_all_with_dependencies().await?;
+    /// for service in response.services {
+    ///     println!("Service {} has dependencies: {}", service.name, service.has_dependencies);
+    /// }
+    /// ```
     pub async fn get_all_with_dependencies(&self) -> anyhow::Result<ListServicesResponse> {
         let db = self.connection;
 
@@ -432,7 +609,20 @@ impl ServiceRepository<'_> {
     /// # Returns
     ///
     /// A `Result` containing the service ID if found, or an error if the service
-    /// referred to by name does not exist or if there's a database issue.
+    /// Resolves a `ServiceRef` to a valid service ID.
+    ///
+    /// If the reference is already an ID, returns it directly. If it is a name, looks up the corresponding service and returns its ID. Returns an error if the service name does not exist or if a database error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_conn);
+    /// let id = repo.extract_valid_id_from_ref(&ServiceRef::Id(42)).await.unwrap();
+    /// assert_eq!(id, 42);
+    ///
+    /// let id_by_name = repo.extract_valid_id_from_ref(&ServiceRef::Name("my-service".to_string())).await.unwrap();
+    /// assert!(id_by_name > 0);
+    /// ```
     pub async fn extract_valid_id_from_ref(&self, service_ref: &ServiceRef) -> anyhow::Result<i64> {
         match service_ref {
             ServiceRef::Id(id) => Ok(*id),
@@ -469,7 +659,16 @@ impl ServiceRepository<'_> {
     ///
     /// # Returns
     ///
-    /// A `Result` indicating success or failure of the update operation.
+    /// Updates the Git branch, commit hash, and authentication type for a service by its ID.
+    ///
+    /// Returns an error if the service does not exist or if the database update fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_connection);
+    /// repo.update_git_info(42, Some("main".to_string()), Some("abc123".to_string()), Some("ssh".to_string())).await?;
+    /// ```
     pub async fn update_git_info(
         &self,
         service_id: i64,
@@ -514,7 +713,16 @@ impl ServiceRepository<'_> {
     ///
     /// # Returns
     ///
-    /// A `Result` indicating success or failure of the update operation.
+    /// Updates the Git branch for a service identified by its ID.
+    ///
+    /// If the service does not exist, returns an error. The Git branch is set to the provided value, which may be `None` to clear the branch.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db);
+    /// repo.update_git_branch(42, Some("main".to_string())).await?;
+    /// ```
     pub async fn update_git_branch(
         &self,
         service_id: i64,
@@ -555,7 +763,16 @@ impl ServiceRepository<'_> {
     ///
     /// # Returns
     ///
-    /// A `Result` indicating success or failure of the update operation.
+    /// Updates the Git commit hash for a service by its ID.
+    ///
+    /// Returns an error if the service does not exist or if the database update fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db);
+    /// repo.update_git_commit(42, Some("abc123".to_string())).await?;
+    /// ```
     pub async fn update_git_commit(
         &self,
         service_id: i64,
@@ -595,7 +812,23 @@ impl ServiceRepository<'_> {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of services that are on the specified branch.
+    /// Returns all services that use the specified Git branch.
+    ///
+    /// # Arguments
+    ///
+    /// * `branch_name` - The name of the Git branch to search for.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `Service` instances that are associated with the given Git branch.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let repo = ServiceRepository::new(&db_connection);
+    /// let services = repo.find_by_git_branch("main").await?;
+    /// assert!(services.iter().all(|s| s.git_branch.as_deref() == Some("main")));
+    /// ```
     pub async fn find_by_git_branch(&self, branch_name: &str) -> anyhow::Result<Vec<Service>> {
         let db = self.connection;
 
@@ -619,7 +852,22 @@ impl ServiceRepository<'_> {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of services that are on the specified commit.
+    /// Returns all services that use the specified Git commit hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `commit_hash` - The Git commit hash to search for.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `Service` entities that are associated with the given commit hash.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let services = repo.find_by_git_commit("abc123").await?;
+    /// assert!(!services.is_empty());
+    /// ```
     pub async fn find_by_git_commit(&self, commit_hash: &str) -> anyhow::Result<Vec<Service>> {
         let db = self.connection;
 

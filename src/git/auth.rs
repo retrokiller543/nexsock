@@ -59,7 +59,23 @@ pub enum GitAuth {
 }
 
 impl GitAuth {
-    /// Returns true if this authentication method requires credentials to be stored.
+    /// Indicates whether this authentication method requires persistent credential storage.
+    ///
+    /// Returns `true` for authentication methods that involve storing sensitive credentials,
+    /// such as SSH keys, tokens, or username/password combinations; returns `false` for methods
+    /// that do not require stored credentials.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::git::auth::GitAuth;
+    ///
+    /// let auth = GitAuth::Token { username: "user".into(), token: "abc123".into() };
+    /// assert!(auth.requires_storage());
+    ///
+    /// let auth = GitAuth::None;
+    /// assert!(!auth.requires_storage());
+    /// ```
     pub fn requires_storage(&self) -> bool {
         matches!(
             self,
@@ -67,7 +83,16 @@ impl GitAuth {
         )
     }
 
-    /// Returns the authentication type as a string for database storage.
+    /// Returns a string identifier representing the authentication type.
+    ///
+    /// The returned string can be used for database storage or serialization purposes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let auth = GitAuth::ssh_agent("alice");
+    /// assert_eq!(auth.auth_type(), "ssh_agent");
+    /// ```
     pub fn auth_type(&self) -> &'static str {
         match self {
             GitAuth::None => "none",
@@ -78,19 +103,43 @@ impl GitAuth {
         }
     }
 
-    /// Creates a GitAuth::None instance.
+    /// Returns a `GitAuth` variant representing unauthenticated access to public repositories.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let auth = GitAuth::none();
+    /// matches!(auth, GitAuth::None);
+    /// ```
     pub fn none() -> Self {
         GitAuth::None
     }
 
-    /// Creates a GitAuth::SshAgent instance with the given username.
+    /// Returns a `GitAuth` variant for SSH authentication using an external SSH agent with the specified username.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let auth = GitAuth::ssh_agent("gituser");
+    /// matches!(auth, GitAuth::SshAgent { username } if username == "gituser");
+    /// ```
     pub fn ssh_agent(username: impl Into<String>) -> Self {
         GitAuth::SshAgent {
             username: username.into(),
         }
     }
 
-    /// Creates a GitAuth::Token instance.
+    /// Creates a `GitAuth::Token` variant for HTTPS authentication using a personal access token.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let auth = GitAuth::token("user", "mytoken123");
+    /// if let GitAuth::Token { username, token } = auth {
+    ///     assert_eq!(username, "user");
+    ///     assert_eq!(token, "mytoken123");
+    /// }
+    /// ```
     pub fn token(username: impl Into<String>, token: impl Into<String>) -> Self {
         GitAuth::Token {
             username: username.into(),

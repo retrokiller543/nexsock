@@ -28,7 +28,17 @@ impl MigrationTrait for Migration {
     /// This method adds the following columns to the `service` table:
     /// - `git_branch`: Optional text field storing the current Git branch name
     /// - `git_commit_hash`: Optional text field storing the current commit SHA
-    /// - `git_auth_type`: Optional text field storing the authentication method
+    /// Applies the migration to add Git-related columns and indexes to the `service` table.
+    ///
+    /// Adds nullable columns for `git_branch`, `git_commit_hash`, and `git_auth_type` (with a constraint on allowed values) to the `service` table. Also creates indexes on the `git_branch` and `git_commit_hash` columns to optimize query performance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sea_orm_migration::SchemaManager;
+    /// let migration = Migration;
+    /// migration.up(&schema_manager).await.unwrap();
+    /// ```
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         add_column!(
             manager,
@@ -83,7 +93,16 @@ impl MigrationTrait for Migration {
 
     /// Reverts the migration, removing Git columns from the service table.
     ///
-    /// This method drops the Git-related columns and their associated indexes.
+    /// Reverts the migration by removing Git-related columns and their indexes from the `service` table.
+    ///
+    /// Drops the indexes on `git_commit_hash` and `git_branch`, then removes the `git_auth_type`, `git_commit_hash`, and `git_branch` columns from the `service` table.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Revert the migration
+    /// migration.down(&manager).await?;
+    /// ```
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Drop indexes first
         manager

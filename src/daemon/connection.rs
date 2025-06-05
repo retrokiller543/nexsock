@@ -51,6 +51,17 @@ pub struct Connection<R, W> {
 }
 
 impl Connection<OwnedReadHalf, OwnedWriteHalf> {
+    /// Creates a new `Connection` by splitting the provided stream into buffered read and write halves and initializing protocol and Lua plugin management.
+    ///
+    /// The stream is split into owned read and write halves, each wrapped with an 8 KB buffer. The protocol is set to its default state, and the provided Lua plugin manager is associated with the connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let stream = get_platform_stream(); // Returns a TcpStream or UnixStream depending on platform
+    /// let lua_plugin_manager = Arc::new(LuaPluginManager::new());
+    /// let connection = Connection::new(stream, lua_plugin_manager);
+    /// ```
     pub fn new(stream: Stream, lua_plugin_manager: Arc<LuaPluginManager>) -> Self {
         let (reader, writer) = stream.into_split();
 
@@ -87,7 +98,24 @@ where
     /// This function will return an error if:
     /// * Protocol errors occur
     /// * Command handling fails
-    /// * I/O errors occur
+    /// Handles incoming client messages in a loop until disconnection or a fatal error occurs.
+    ///
+    /// Processes each message by delegating to `handle_single_message`. Exits cleanly on client disconnect, or returns an error on other I/O failures.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the client disconnects normally, or an error if a non-recoverable I/O error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use crate::{Connection, LuaPluginManager};
+    /// # async fn example(mut conn: Connection<_, _>) {
+    /// let result = conn.handle().await;
+    /// assert!(result.is_ok() || result.is_err());
+    /// # }
+    /// ```
     pub async fn handle(&mut self) -> error::Result<()> {
         info!("handling request");
 
@@ -109,6 +137,19 @@ where
         Ok(())
     }
 
+    /// Processes a single client message by reading, dispatching, and responding to a command.
+    ///
+    /// Reads a message from the client, executes the corresponding command handler, and sends either a success or error response based on the outcome.
+    ///
+    /// # Returns
+    /// An I/O result indicating success or failure of the message handling operation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Inside an async context with a Connection instance `conn`
+    /// conn.handle_single_message().await?;
+    /// ```
     async fn handle_single_message(&mut self) -> io::Result<()> {
         // Read the incoming message
         let (header, payload) = self.protocol.read_message(&mut self.reader).await?;
@@ -138,6 +179,24 @@ where
     }
 
     #[tracing::instrument(skip(self, payload))]
+    /// Handles a single protocol command by dispatching it to the appropriate service, configuration, dependency, or plugin manager.
+    ///
+    /// Executes pre-command hooks, decodes the payload if required, and performs the requested operation asynchronously. Returns a protocol payload with the result or an error if the command is unsupported or fails. Git-related commands are only available if the "git" feature is enabled.
+    ///
+    /// # Returns
+    /// A `CommandPayload` containing the result of the command execution.
+    ///
+    /// # Errors
+    /// Returns an error if the command is unsupported, the payload is invalid, or the underlying operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Example usage within an async context:
+    /// let payload = Some(vec![/* encoded payload bytes */]);
+    /// let result = connection.handle_command(Command::Ping, payload).await?;
+    /// assert!(matches!(result, CommandPayload::Empty));
+    /// ```
     async fn handle_command(
         &mut self,
         command: Command,
@@ -407,6 +466,20 @@ where
         }
     }
 
+    /// Decodes and returns a request payload of the expected type.
+    ///
+    /// Returns an error if the payload is missing or cannot be decoded.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::ExpectedPayload` if the payload is `None`, or `Error::FailedToGetPayload` if decoding fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let payload_bytes = Some(vec![/* encoded bytes */]);
+    /// let result: Result<MyType, _> = read_req_payload(payload_bytes);
+    /// ```
     fn read_req_payload<T: Decode<()>>(payload: Option<Vec<u8>>) -> error::Result<T> {
         let payload = if let Some(payload) = payload {
             payload

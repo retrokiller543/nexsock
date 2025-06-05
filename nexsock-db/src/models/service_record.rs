@@ -32,6 +32,9 @@ pub struct DetailedServiceRecord {
 }
 
 impl From<DetailedServiceRecord> for ServiceStatus {
+    /// Converts a `DetailedServiceRecord` into a `ServiceStatus`.
+    ///
+    /// Transfers service details, optional configuration, and dependencies from the detailed record into a protocol-level status representation, converting fields as needed.
     fn from(record: DetailedServiceRecord) -> Self {
         Self {
             id: record.service.id,

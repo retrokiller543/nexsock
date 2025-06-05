@@ -380,6 +380,20 @@ pub enum ToolType {
 impl FromStr for ToolType {
     type Err = String;
 
+    /// Parses a string into a `ToolType`, accepting common aliases.
+    ///
+    /// Returns `Ok(ToolType)` if the input matches a supported tool type, or an error message if not.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use your_crate::ToolType;
+    /// use std::str::FromStr;
+    ///
+    /// assert_eq!(ToolType::from_str("nexsockd").unwrap(), ToolType::Daemon);
+    /// assert_eq!(ToolType::from_str("web").unwrap(), ToolType::Web);
+    /// assert!(ToolType::from_str("unknown").is_err());
+    /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "nexsockd" | "daemon" => Ok(ToolType::Daemon),
@@ -392,6 +406,23 @@ impl FromStr for ToolType {
 // Note: Git command conversion is handled directly in commands.rs
 
 impl Cli {
+    /// Parses a list of environment variable strings in `KEY=VALUE` format into a map.
+    ///
+    /// Ignores entries that do not contain an '=' character.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let vars = vec![
+    ///     "FOO=bar".to_string(),
+    ///     "BAZ=qux".to_string(),
+    ///     "INVALID".to_string(),
+    /// ];
+    /// let map = parse_env_vars(vars);
+    /// assert_eq!(map.get("FOO"), Some(&"bar".to_string()));
+    /// assert_eq!(map.get("BAZ"), Some(&"qux".to_string()));
+    /// assert!(!map.contains_key("INVALID"));
+    /// ```
     pub fn parse_env_vars(env_vars: Vec<String>) -> HashMap<String, String> {
         env_vars
             .into_iter()

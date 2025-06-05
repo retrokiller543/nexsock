@@ -14,6 +14,16 @@ impl Linked for ServiceToDependencies {
     type FromEntity = Service;
     type ToEntity = ServiceDependency;
 
+    /// Returns the reversed link definition representing the relationship from a service to its dependencies.
+    ///
+    /// This method defines how a `Service` entity is linked to its associated `ServiceDependency` entities by reversing the `ParentService` relation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let link_defs = ServiceToDependencies.link();
+    /// assert!(!link_defs.is_empty());
+    /// ```
     fn link(&self) -> Vec<LinkDef> {
         vec![ServiceDependencyRelation::ParentService.def().rev()]
     }
@@ -29,6 +39,14 @@ impl Linked for DependencyToService {
     type FromEntity = ServiceDependency;
     type ToEntity = Service;
 
+    /// Returns the link definition connecting a service dependency to its dependent service entity.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let link_defs = DependencyToService.link();
+    /// assert!(!link_defs.is_empty());
+    /// ```
     fn link(&self) -> Vec<LinkDef> {
         vec![ServiceDependencyRelation::DependentService.def()]
     }

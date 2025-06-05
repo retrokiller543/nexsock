@@ -31,6 +31,20 @@ pub static NEXSOCK_CONFIG: LazyLock<NexsockConfig> =
 pub static DATABASE_PATH: LazyLock<PathBuf> =
     LazyLock::new(|| get_database_path().expect("Unable to get database path"));
 
+/// Determines the database file path from the `DATABASE_URL` environment variable or defaults to a standard location, creating the parent directory if necessary.
+///
+/// Returns the resolved database file path, ensuring its parent directory exists. If the environment variable is not set, the path defaults to "db/state.db" within the project's data directory.
+///
+/// # Errors
+///
+/// Returns an error if the parent directory cannot be created.
+///
+/// # Examples
+///
+/// ```
+/// let db_path = get_database_path().unwrap();
+/// assert!(db_path.ends_with("state.db"));
+/// ```
 fn get_database_path() -> anyhow::Result<PathBuf> {
     let path = std::env::var("DATABASE_URL")
         .map(Into::into)
@@ -76,6 +90,23 @@ pub enum SocketRef {
 }
 
 impl Display for SocketRef {
+    /// Formats the `SocketRef` as a port number or a filesystem path for display purposes.
+    ///
+    /// Displays the port number for `SocketRef::Port` or the path string for `SocketRef::Path`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::fmt::Write;
+    /// let port_ref = SocketRef::Port(8080);
+    /// let path_ref = SocketRef::Path(std::path::PathBuf::from("/tmp/socket.sock"));
+    /// let mut s = String::new();
+    /// write!(&mut s, "{port_ref}").unwrap();
+    /// assert_eq!(s, "8080");
+    /// s.clear();
+    /// write!(&mut s, "{path_ref}").unwrap();
+    /// assert_eq!(s, "/tmp/socket.sock");
+    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             SocketRef::Port(port) => port.fmt(f),
@@ -91,6 +122,16 @@ pub struct ServerConfig {
 }
 
 impl Default for ServerConfig {
+    /// Returns the default server configuration with a 300-second cleanup interval and a platform-specific socket reference.
+    ///
+    /// On Unix systems, the socket is a Unix domain socket in the system temporary directory; on other platforms, it defaults to TCP port 50505.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let config = ServerConfig::default();
+    /// assert_eq!(config.cleanup_interval, 300);
+    /// ```
     fn default() -> Self {
         Self {
             cleanup_interval: 300,
@@ -104,6 +145,18 @@ impl Default for ServerConfig {
 }
 
 impl From<ServerConfig> for Value {
+    /// Converts a `ServerConfig` into a `config::Value` table containing the cleanup interval and socket configuration.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::{ServerConfig, SocketRef};
+    /// use config::Value;
+    ///
+    /// let server_config = ServerConfig::default();
+    /// let value: Value = server_config.into();
+    /// assert!(matches!(value, Value::Table(_)));
+    /// ```
     fn from(val: ServerConfig) -> Self {
         Self::new(
             None,
@@ -121,6 +174,15 @@ pub struct DatabaseConfig {
 }
 
 impl From<DatabaseConfig> for Value {
+    /// Converts a `DatabaseConfig` into a `config::Value` table containing the database path as a string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let db_config = DatabaseConfig { path: PathBuf::from("/tmp/db.sqlite") };
+    /// let value: config::Value = db_config.into();
+    /// assert_eq!(value["path"].to_string(), "/tmp/db.sqlite");
+    /// ```
     fn from(val: DatabaseConfig) -> Self {
         Self::new(
             None,
@@ -133,6 +195,16 @@ impl From<DatabaseConfig> for Value {
 }
 
 impl Default for DatabaseConfig {
+    /// Returns a `DatabaseConfig` with the database path set to the default location.
+    ///
+    /// The path is determined by the `DATABASE_URL` environment variable if set, or falls back to a standard location within the project data directory. Panics if the path cannot be determined.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let config = DatabaseConfig::default();
+    /// assert!(config.path.exists() || !config.path.as_os_str().is_empty());
+    /// ```
     fn default() -> Self {
         Self {
             path: get_database_path().expect("Unable to get database path"),
@@ -149,6 +221,16 @@ pub struct AppConfig {
 }
 
 impl Default for AppConfig {
+    /// Returns the default application configuration with platform-specific socket, logging, server, and database settings.
+    ///
+    /// On Unix systems, the socket is set to a temporary file path; on other platforms, it defaults to port 50505. Logging and sub-configurations use their respective defaults.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let config = AppConfig::default();
+    /// assert!(matches!(config.socket, SocketRef::Path(_) | SocketRef::Port(_)));
+    /// ```
     fn default() -> Self {
         Self {
             socket: if cfg!(unix) {
@@ -179,6 +261,22 @@ impl NexsockConfig {
         Self::from_file(None)
     }
 
+    /// Loads configuration from a file, applying defaults and creating the config directory if needed.
+    ///
+    /// If a path is provided, loads the configuration from that directory; otherwise, uses the default project config directory.
+    /// Applies default values for all configuration fields, and merges values from "config.toml" if it exists.
+    /// Returns a `NexsockConfig` instance containing the loaded configuration and the directory path.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the config directory cannot be created, the configuration file is invalid, or deserialization fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let config = NexsockConfig::from_file(None).unwrap();
+    /// assert!(config.server().cleanup_interval > 0);
+    /// ```
     pub fn from_file(path: Option<&Path>) -> ConfigResult<Self> {
         let config_path = path.unwrap_or_else(|| PROJECT_DIRECTORIES.config_dir());
 
@@ -216,6 +314,13 @@ impl NexsockConfig {
         })
     }
 
+    /// Saves the current configuration to a "config.toml" file in the project's configuration directory.
+    ///
+    /// Creates the configuration directory if it does not exist. Overwrites any existing configuration file with the current settings.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the configuration directory cannot be created, the configuration cannot be serialized, or the file cannot be written.
     pub fn save(&self) -> ConfigResult<()> {
         let project_dirs =
             ProjectDirs::from("com", "tosic", "nexsock").ok_or(NexsockConfigError::ProjectDirs)?;
@@ -245,14 +350,17 @@ impl NexsockConfig {
         &self.inner.socket
     }
 
+    /// Returns a reference to the server configuration.
     pub fn server(&self) -> &ServerConfig {
         &self.inner.server
     }
 
+    /// Returns a reference to the database configuration.
     pub fn database(&self) -> &DatabaseConfig {
         &self.inner.database
     }
 
+    /// Returns the path to the configuration directory used by this configuration instance.
     pub fn config_dir(&self) -> &Path {
         &self.config_dir
     }

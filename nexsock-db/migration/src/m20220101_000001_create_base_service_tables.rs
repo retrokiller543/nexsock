@@ -20,7 +20,18 @@ impl MigrationTrait for Migration {
     ///
     /// This method is executed when migrating "up" to this version.
     /// It creates the `ServiceConfig`, `Service`, and `ServiceDependency` tables
-    /// in the correct order to satisfy foreign key constraints.
+    /// Applies the initial database schema for the nexsock system.
+    ///
+    /// Creates the `service_config`, `service`, and `service_dependency` tables with their respective columns, constraints, foreign keys, and indexes. Ensures tables are created in an order that satisfies foreign key dependencies.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sea_orm_migration::prelude::*;
+    /// let migration = Migration;
+    /// let schema_manager = SchemaManager::new(&db_connection);
+    /// migration.up(&schema_manager).await.unwrap();
+    /// ```
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .create_table(
@@ -215,7 +226,16 @@ impl MigrationTrait for Migration {
     ///
     /// This method is executed when migrating "down" from this version.
     /// It drops the `ServiceDependency`, `Service`, and `ServiceConfig` tables
-    /// in the reverse order of their creation to avoid foreign key constraint issues.
+    /// Reverts the migration by dropping the `service_dependency`, `service`, and `service_config` tables in reverse order of creation.
+    ///
+    /// This ensures that foreign key constraints are not violated during table removal.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // In a migration runner context:
+    /// migration.down(&schema_manager).await?;
+    /// ```
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .drop_table(Table::drop().table(ServiceDependency::Table).to_owned())

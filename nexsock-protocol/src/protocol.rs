@@ -95,6 +95,28 @@ impl Protocol {
     }
 
     #[tracing::instrument(level = "debug", skip(reader))]
+    /// Asynchronously reads a protocol message header and optional payload from the given reader.
+    ///
+    /// Validates the protocol magic bytes, deserializes the message header, and reads the payload if present.
+    /// Returns the parsed message header and an optional payload as a byte vector.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the magic bytes are invalid, if header or payload deserialization fails, or if I/O operations fail.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use your_crate::{Protocol, MessageHeader};
+    /// # use tokio::io::BufReader;
+    /// # async fn example() -> std::io::Result<()> {
+    /// let mut protocol = Protocol::new(1);
+    /// let data: &[u8] = /* some valid protocol message bytes */;
+    /// let mut reader = BufReader::new(data);
+    /// let (header, payload) = protocol.read_message(&mut reader).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn read_message<R>(
         &mut self,
         reader: &mut R,
@@ -134,6 +156,22 @@ impl Protocol {
         Ok((header, payload))
     }
 
+    /// Decodes a payload byte slice into an optional value of type `T`.
+    ///
+    /// Returns `Ok(Some(data))` if the payload is non-empty and successfully decoded, `Ok(None)` if the payload is empty, or an error if decoding fails.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type to decode the payload into. Must implement `Decode<()>`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use your_crate::Protocol;
+    /// use your_crate::YourType; // YourType must implement Decode<()>
+    /// let payload: &[u8] = /* some encoded bytes */;
+    /// let result: std::io::Result<Option<YourType>> = Protocol::read_payload(payload);
+    /// ```
     pub fn read_payload<T: Decode<()>>(payload: &[u8]) -> io::Result<Option<T>> {
         let config = bincode::config::standard();
 
