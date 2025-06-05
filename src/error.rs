@@ -4,7 +4,7 @@
 //! errors from various subsystems including I/O, configuration, database operations,
 //! tracing setup, and plugin management.
 //!
-//! The [`Error`] enum uses `thiserror` for automatic error trait implementations and
+//! The [`Error`](crate::Error) enum uses [`thiserror`] for automatic error trait implementations and
 //! provides error kind classification for programmatic error handling.
 
 use nexsock_config::NexsockConfigError;
@@ -21,7 +21,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 /// This enum consolidates all possible errors that can occur during daemon operation,
 /// from I/O and configuration errors to plugin and database failures. Each variant
 /// wraps the underlying error type and provides automatic error trait implementations
-/// via `thiserror`.
+/// via [`thiserror`].
 ///
 /// Error kinds are assigned numeric codes via the [`Error::kind`] method for
 /// programmatic error handling and API responses.

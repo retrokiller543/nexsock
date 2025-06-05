@@ -7,10 +7,6 @@
 //! - Process state tracking and health monitoring
 //! - Graceful and forceful process termination
 //! - Log collection and management for running processes
-//!
-//! The module includes two main traits:
-//! - [`ProcessManager`] - Basic process management interface
-//! - [`FullProcessManager`] - Extended interface with detailed process control
 
 use anyhow::{anyhow, Context as _};
 use command_group::AsyncCommandGroup as _;

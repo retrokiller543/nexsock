@@ -293,6 +293,7 @@ impl NexsockConfig {
         let builder = Config::builder()
             .set_default("socket", defaults.socket)?
             .set_default("server", defaults.server)?
+            .set_default("log_str", defaults.log_str)?
             .set_default("database", defaults.database)?;
 
         let builder = if config_file.exists() {
