@@ -70,17 +70,6 @@ impl From<JoinedDependency> for DependencyInfo {
     /// Converts a `JoinedDependency` into a `DependencyInfo`.
     ///
     /// Maps the dependent service's ID, name, tunnel status, and status into the corresponding fields of `DependencyInfo`. The `state` field is derived from the `status` of the dependency.
-    #[allow(clippy::from_over_into)]
-    impl From<JoinedDependency> for DependencyInfo {
-        fn from(value: JoinedDependency) -> Self {
-            Self {
-                id: value.dependent_service_id,
-                name: value.name,
-                tunnel_enabled: value.tunnel_enabled,
-                state: value.status.into(),
-            }
-        }
-    }
     fn from(value: JoinedDependency) -> Self {
         Self {
             id: value.dependent_service_id,
