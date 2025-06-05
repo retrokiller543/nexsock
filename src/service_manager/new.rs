@@ -1,3 +1,8 @@
+//! # Service Manager Implementation
+//!
+//! This module contains the concrete implementation of service management
+//! functionality, providing process lifecycle management and service operations.
+
 use super::ServiceProcess;
 use crate::traits::process_manager::{FullProcessManager, ProcessManager};
 use crate::traits::service_management::ServiceManagement;
@@ -18,6 +23,24 @@ use std::sync::{Arc, LazyLock};
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
 
+/// Service manager for lifecycle operations and process management.
+///
+/// The `ServiceManager` provides comprehensive service lifecycle management including
+/// starting, stopping, and restarting services. It maintains running process state,
+/// handles service dependencies, and provides process monitoring capabilities.
+///
+/// # Examples
+///
+/// ```rust
+/// use nexsockd::service_manager::ServiceManager;
+/// use nexsock_protocol::commands::manage_service::StartServicePayload;
+///
+/// let manager = ServiceManager::default();
+/// // Start a service
+/// manager.start(&start_payload).await?;
+/// // Check service status
+/// let status = manager.get_status(&service_ref).await?;
+/// ```
 #[derive(Debug)]
 pub struct ServiceManager {
     running_services: Arc<DashMap<i64, ServiceProcess>>,
@@ -28,6 +51,14 @@ pub struct ServiceManager {
 }
 
 impl ServiceManager {
+    /// Creates a lazy-initialized service manager for use as a static.
+    ///
+    /// This method returns a `LazyLock` that will initialize the service manager
+    /// on first access, making it suitable for use as a global static variable.
+    ///
+    /// # Returns
+    ///
+    /// A `LazyLock<ServiceManager>` that initializes the manager on first access.
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Default::default)
     }

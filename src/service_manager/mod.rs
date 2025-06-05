@@ -1,3 +1,12 @@
+//! # Service Manager Module
+//!
+//! This module provides comprehensive service process management including process
+//! spawning, monitoring, logging, and lifecycle control. It contains:
+//! - Service process abstractions and state management
+//! - Log collection and buffering for running processes
+//! - Process health monitoring and status tracking
+//! - Integration with the service management traits
+
 #![allow(dead_code)]
 
 pub(crate) mod new;
@@ -12,7 +21,27 @@ use tokio::process::{ChildStderr, ChildStdin, ChildStdout};
 use tokio::sync::Mutex;
 use tracing::warn;
 
-// Track running processes and their states
+/// Represents a running service process with its associated resources and state.
+///
+/// This struct encapsulates all the information and resources associated with a
+/// running service process including the process handle, I/O streams, environment
+/// variables, logging infrastructure, and state tracking.
+///
+/// # Type Parameters
+///
+/// * `Out` - The stdout stream type (defaults to `ChildStdout`)
+/// * `In` - The stdin stream type (defaults to `ChildStdin`) 
+/// * `Err` - The stderr stream type (defaults to `ChildStderr`)
+///
+/// # Examples
+///
+/// ```rust
+/// use nexsockd::service_manager::ServiceProcess;
+/// use nexsock_protocol::commands::service_status::ServiceState;
+///
+/// // ServiceProcess is typically created by the process manager
+/// // and not constructed directly by user code
+/// ```
 #[derive(Debug)]
 pub(crate) struct ServiceProcess<Out = ChildStdout, In = ChildStdin, Err = ChildStderr>
 where
@@ -20,23 +49,79 @@ where
     In: AsyncWrite,
     Err: AsyncRead,
 {
+    /// The underlying process group handle for the service.
     pub(crate) process: AsyncGroupChild,
+    
+    /// The current state of the service process.
     pub(crate) state: ServiceState,
+    
+    /// Environment variables that were set when the process was spawned.
     pub(crate) env_vars: HashMap<String, String>,
+    
+    /// Optional stdout stream from the process.
     pub(crate) stdout: Option<Out>,
+    
+    /// Optional stdin stream to the process.
     pub(crate) stdin: Option<In>,
+    
+    /// Optional stderr stream from the process.
     pub(crate) stderr: Option<Err>,
-    pub(crate) stdout_logs: Arc<Mutex<VecDeque<LogEntry>>>, // Add this to store logs
+    
+    /// Circular buffer storing collected stdout logs with timestamps.
+    /// Limited to prevent memory exhaustion from long-running processes.
+    pub(crate) stdout_logs: Arc<Mutex<VecDeque<LogEntry>>>,
+    
+    /// Handles for the background tasks collecting and processing logs.
+    /// Tuple contains (log processing task, stdout reading task).
     pub(crate) log_task_handle: Option<(tokio::task::JoinHandle<()>, tokio::task::JoinHandle<()>)>,
 }
 
+/// Represents a single log entry from a service process.
+///
+/// Each log entry contains a timestamp indicating when the log was captured
+/// and the actual log content. Log entries are stored in a circular buffer
+/// to maintain a history of process output while preventing memory exhaustion.
+///
+/// # Examples
+///
+/// ```rust
+/// use nexsockd::service_manager::LogEntry;
+/// use chrono::Utc;
+///
+/// let entry = LogEntry {
+///     timestamp: Utc::now(),
+///     content: "Server started on port 3000".to_string(),
+/// };
+/// ```
 #[derive(Debug, Clone)]
 pub(crate) struct LogEntry {
+    /// The UTC timestamp when this log entry was captured.
     pub(crate) timestamp: chrono::DateTime<chrono::Utc>,
+    
+    /// The actual log content captured from the process stdout.
     pub(crate) content: String,
 }
 
 impl ServiceProcess {
+    /// Checks the current status of the service process.
+    ///
+    /// This method performs a non-blocking check of the process status to determine
+    /// if it's still running, has completed successfully, or has failed. It updates
+    /// the internal state based on the process exit status.
+    ///
+    /// # Returns
+    ///
+    /// Returns [`Result<ServiceState>`] which is:
+    /// * `Ok(ServiceState::Running)` - Process is still running
+    /// * `Ok(ServiceState::Stopped)` - Process exited successfully
+    /// * `Ok(ServiceState::Failed)` - Process exited with an error
+    /// * `Err(Error)` - If status checking fails
+    ///
+    /// # Errors
+    ///
+    /// This method will return an error if:
+    /// * The process status cannot be determined
+    /// * System call to check process status fails
     pub(crate) async fn check_status(&mut self) -> crate::error::Result<ServiceState> {
         match self.process.try_wait()? {
             Some(status) => {

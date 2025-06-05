@@ -1,3 +1,8 @@
+//! # Configuration Manager Implementation
+//!
+//! This module contains the concrete implementation of configuration management
+//! functionality, providing database-backed configuration storage and retrieval.
+
 use crate::prelude::*;
 use crate::traits::configuration_management::ConfigurationManagement;
 use anyhow::anyhow;
@@ -6,12 +11,36 @@ use nexsock_protocol::commands::config::ServiceConfigPayload;
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::sync::LazyLock;
 
-pub struct ConfigManager2 {
+/// Configuration manager for service configuration operations.
+///
+/// The `ConfigManager` provides database-backed configuration management including
+/// creating, updating, and retrieving service configuration data. It handles both
+/// service metadata and configuration file information.
+///
+/// # Examples
+///
+/// ```rust
+/// use nexsockd::config_manager::ConfigManager;
+/// use nexsock_protocol::commands::config::ServiceConfigPayload;
+///
+/// let manager = ConfigManager::new();
+/// // Update configuration for a service
+/// manager.update_config(&config_payload).await?;
+/// ```
+pub struct ConfigManager {
     service_repository: ServiceRepository<'static>,
     config_repository: ServiceConfigRepository<'static>,
 }
 
-impl ConfigManager2 {
+impl ConfigManager {
+    /// Creates a new configuration manager instance.
+    ///
+    /// Initializes the manager with repository connections to the static database
+    /// for both service and configuration data.
+    ///
+    /// # Returns
+    ///
+    /// A new `ConfigManager` instance ready for configuration operations.
     pub fn new() -> Self {
         let service_repository = ServiceRepository::new_from_static();
         let config_repository = ServiceConfigRepository::new_from_static();
@@ -22,12 +51,20 @@ impl ConfigManager2 {
         }
     }
 
+    /// Creates a lazy-initialized configuration manager for use as a static.
+    ///
+    /// This method returns a `LazyLock` that will initialize the configuration manager
+    /// on first access, making it suitable for use as a global static variable.
+    ///
+    /// # Returns
+    ///
+    /// A `LazyLock<ConfigManager>` that initializes the manager on first access.
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Self::new)
     }
 }
 
-impl ConfigurationManagement for ConfigManager2 {
+impl ConfigurationManagement for ConfigManager {
     async fn update_config(&self, payload: &ServiceConfigPayload) -> Result<()> {
         let ServiceConfigPayload {
             service,

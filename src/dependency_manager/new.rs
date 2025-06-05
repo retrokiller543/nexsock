@@ -1,3 +1,8 @@
+//! # Dependency Manager Implementation
+//!
+//! This module contains the concrete implementation of dependency management
+//! functionality, providing database-backed dependency tracking and operations.
+
 use crate::traits::dependency_management::DependencyManagement;
 use anyhow::anyhow;
 use nexsock_db::prelude::*;
@@ -7,18 +12,42 @@ use nexsock_protocol::commands::dependency::{
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use std::sync::LazyLock;
 
-pub struct DependencyManager2 {
+/// Dependency manager for service dependency operations.
+///
+/// The `DependencyManager` provides database-backed dependency management including
+/// adding, removing, and listing service dependencies. It manages relationships
+/// between services to ensure proper startup ordering and dependency resolution.
+///
+/// # Examples
+///
+/// ```rust
+/// use nexsockd::dependency_manager::DependencyManager;
+/// use nexsock_protocol::commands::dependency::AddDependencyPayload;
+///
+/// let manager = DependencyManager::default();
+/// // Add a dependency relationship
+/// manager.add_dependency(&dependency_payload).await?;
+/// ```
+pub struct DependencyManager {
     service_repository: ServiceRepository<'static>,
     dependency_repository: ServiceDependencyRepository<'static>,
 }
 
-impl DependencyManager2 {
+impl DependencyManager {
+    /// Creates a lazy-initialized dependency manager for use as a static.
+    ///
+    /// This method returns a `LazyLock` that will initialize the dependency manager
+    /// on first access, making it suitable for use as a global static variable.
+    ///
+    /// # Returns
+    ///
+    /// A `LazyLock<DependencyManager>` that initializes the manager on first access.
     pub const fn new_const() -> LazyLock<Self> {
         LazyLock::new(Default::default)
     }
 }
 
-impl Default for DependencyManager2 {
+impl Default for DependencyManager {
     fn default() -> Self {
         Self {
             service_repository: ServiceRepository::new_from_static(),
@@ -27,7 +56,7 @@ impl Default for DependencyManager2 {
     }
 }
 
-impl DependencyManagement for DependencyManager2 {
+impl DependencyManagement for DependencyManager {
     async fn add_dependency(&self, payload: &AddDependencyPayload) -> crate::error::Result<()> {
         let AddDependencyPayload {
             service,

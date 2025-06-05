@@ -1,11 +1,30 @@
+//! # Error Handling for Nexsock Daemon
+//!
+//! This module provides a unified error type for the Nexsock daemon that consolidates
+//! errors from various subsystems including I/O, configuration, database operations,
+//! tracing setup, and plugin management.
+//!
+//! The [`Error`] enum uses `thiserror` for automatic error trait implementations and
+//! provides error kind classification for programmatic error handling.
+
 use nexsock_config::NexsockConfigError;
 use std::borrow::Cow;
 use thiserror::Error;
 use tokio::task::JoinError;
 use tracing_core::dispatcher::SetGlobalDefaultError;
 
+/// Type alias for `Result<T, Error>` to reduce boilerplate.
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
+/// Unified error type for the Nexsock daemon.
+///
+/// This enum consolidates all possible errors that can occur during daemon operation,
+/// from I/O and configuration errors to plugin and database failures. Each variant
+/// wraps the underlying error type and provides automatic error trait implementations
+/// via `thiserror`.
+///
+/// Error kinds are assigned numeric codes via the [`Error::kind`] method for
+/// programmatic error handling and API responses.
 #[derive(Error, Debug)]
 pub enum Error {
     /*#[error(transparent)]
@@ -48,6 +67,24 @@ pub enum Error {
 }
 
 impl Error {
+    /// Returns a numeric error kind for programmatic error handling.
+    ///
+    /// Each error variant is assigned a unique numeric identifier that can be
+    /// used in API responses, logging, or client-side error handling.
+    ///
+    /// # Returns
+    ///
+    /// A `u32` error code where:
+    /// - `4` - I/O errors
+    /// - `5` - Tracing initialization errors
+    /// - `6` - Logging configuration errors
+    /// - `7` - Git operations (if enabled)
+    /// - `8` - Generic/wrapped errors
+    /// - `9` - Missing payload errors
+    /// - `10` - Payload parsing errors
+    /// - `11` - Configuration errors
+    /// - `13` - Channel send errors
+    /// - `0xFFFF` - Unknown/unmapped errors
     pub fn kind(&self) -> u32 {
         match self {
             /*Error::Sqlx(_) => 1,
