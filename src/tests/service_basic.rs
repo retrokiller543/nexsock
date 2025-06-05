@@ -4,6 +4,7 @@ use crate::traits::service_management::ServiceManagement;
 use anyhow::Result;
 use nexsock_protocol::commands::{add_service::AddServicePayload, manage_service::ServiceRef};
 use nexsock_testing::generate_test_port;
+use tracing::debug;
 
 #[tokio::test]
 async fn test_service_manager_access() -> Result<()> {
@@ -79,13 +80,16 @@ async fn test_service_error_handling() -> Result<()> {
 
     // These should fail gracefully without panicking
     let status_result = service_manager.get_status(&service_ref).await;
+    debug!(status_result = ?status_result, "Attempt to get status of non-existent service");
     assert!(status_result.is_err());
 
     let remove_result = service_manager.remove_service(&service_ref).await;
+    debug!(remove_result = ?remove_result, "Attempt to remove non-existent service");
     assert!(remove_result.is_err());
 
     // System should still be functional after errors
     let list_result = service_manager.get_all().await;
+    debug!(list_result = ?list_result, "List all services after error handling");
     assert!(list_result.is_ok());
 
     Ok(())

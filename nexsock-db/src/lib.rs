@@ -1,7 +1,6 @@
 use crate::error::DatabaseError;
 use anyhow::Context;
 use migration::{Migrator, MigratorTrait};
-use nexsock_config::NEXSOCK_CONFIG;
 use sea_orm::ConnectOptions;
 use sea_orm::{Database, DatabaseConnection};
 use std::fmt::Debug;
