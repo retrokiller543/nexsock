@@ -4,7 +4,7 @@ use crate::traits::service_management::ServiceManagement;
 use anyhow::Result;
 use nexsock_protocol::commands::{add_service::AddServicePayload, manage_service::ServiceRef};
 use nexsock_testing::generate_test_port;
-use tracing::debug;
+use tracing::{debug, error};
 
 #[tokio::test]
 async fn test_service_manager_access() -> Result<()> {
@@ -15,6 +15,7 @@ async fn test_service_manager_access() -> Result<()> {
 
     // Test basic operations (should not panic)
     let services_result = service_manager.get_all().await;
+    debug!(services_result = ?services_result, "Fetching all services");
     assert!(services_result.is_ok());
 
     Ok(())
@@ -62,8 +63,10 @@ async fn test_service_creation_attempt() -> Result<()> {
                 let _ = service_manager.remove_service(&service_ref).await;
             }
         }
-        Err(_) => {
+        Err(err) => {
             // Service creation failed, which is acceptable in test environment
+            error!(err = ?err, "Failed to create service");
+            panic!("Failed to create service");
         }
     }
 
