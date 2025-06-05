@@ -1,7 +1,7 @@
 pub mod traits;
 
 use anyhow::Context;
-use config::{Config, File, Map, Value, ValueKind};
+use config::{Config, Environment, File, Map, Value, ValueKind};
 use derive_more::{
     AsMut, AsRef, Deref, DerefMut, From, Into, IsVariant, TryFrom, TryInto, TryUnwrap, Unwrap,
 };
@@ -46,6 +46,10 @@ pub static DATABASE_PATH: LazyLock<PathBuf> =
 /// assert!(db_path.ends_with("state.db"));
 /// ```
 fn get_database_path() -> anyhow::Result<PathBuf> {
+    if cfg!(test) {
+        return Ok(PathBuf::new().join("sqlite:memory"));
+    }
+
     let path = std::env::var("DATABASE_URL")
         .map(Into::into)
         .unwrap_or_else(|_| {
@@ -293,6 +297,7 @@ impl NexsockConfig {
         let builder = Config::builder()
             .set_default("socket", defaults.socket)?
             .set_default("server", defaults.server)?
+            .set_default("log_str", defaults.log_str)?
             .set_default("database", defaults.database)?;
 
         let builder = if config_file.exists() {
@@ -301,7 +306,7 @@ impl NexsockConfig {
             builder
         };
 
-        let config = builder.build()?;
+        let config = builder.add_source(Environment::default()).build()?;
 
         let inner: AppConfig = config.clone().try_deserialize()?;
 
@@ -363,6 +368,10 @@ impl NexsockConfig {
     /// Returns the path to the configuration directory used by this configuration instance.
     pub fn config_dir(&self) -> &Path {
         &self.config_dir
+    }
+
+    pub fn config(&self) -> &Config {
+        &self.config
     }
 }
 

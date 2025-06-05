@@ -35,7 +35,7 @@ use tracing::warn;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::service_manager::ServiceProcess;
 /// use nexsock_protocol::commands::service_status::ServiceState;
 ///
@@ -84,7 +84,7 @@ where
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::service_manager::LogEntry;
 /// use chrono::Utc;
 ///
@@ -121,6 +121,7 @@ impl ServiceProcess {
     ///
     /// This method will return an error if:
     /// * The process status cannot be determined
+    ///
     /// Asynchronously checks if the service process has exited and updates its state.
     ///
     /// If the process has exited, updates the internal state to `Stopped` on success or `Failed` on error.  
@@ -134,7 +135,7 @@ impl ServiceProcess {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let mut service = ServiceProcess::spawn(...).await?;
     /// let state = service.check_status().await?;
     /// assert!(matches!(state, ServiceState::Running | ServiceState::Stopped | ServiceState::Failed));

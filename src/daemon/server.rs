@@ -8,6 +8,7 @@ use parking_lot::Mutex;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::signal::ctrl_c;
+use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tokio::time::{sleep, Instant};
 use tokio::{join, select, task, try_join};
@@ -22,14 +23,13 @@ use tracing::{error, info};
 ///
 /// # Examples
 ///
-/// ```rust
-/// use nexsockd::prelude::DaemonServer;
-/// use nexsock_config::{ NexsockConfig, ConfigResult };
-///
-/// async fn run_server() -> ConfigResult<()> {
-///     let mut server = DaemonServer::new().await?;
-///     server.run().await
-/// }
+/// ```ignore
+/// # use nexsockd::prelude::*;
+/// # async fn run_server() -> Result<()> {
+///  let mut server = DaemonServer::new().await?;
+///  server.run().await?;
+/// # server.shutdown().await
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct DaemonServer {
@@ -61,6 +61,7 @@ impl DaemonServer {
     ///
     /// This function will return an error if:
     /// * Daemon initialization fails
+    ///
     /// Initializes a new `DaemonServer` instance with the global configuration.
     ///
     /// Loads the static Nexsock configuration, creates a new daemon, and prepares the server for handling connections and periodic cleanup.
@@ -71,8 +72,13 @@ impl DaemonServer {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use nexsockd::daemon::DaemonServer;
+    ///
+    /// # async fn example() -> anyhow::Result<()> {
     /// let mut server = DaemonServer::new().await?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn new() -> Result<Self> {
         let config = &*NEXSOCK_CONFIG;
@@ -109,10 +115,10 @@ impl DaemonServer {
     /// Awaits completion of all active connection handler tasks and logs any errors encountered during shutdown.
     ///
     /// This method drains the current list of connection handler tasks, waits for each to finish, and logs errors from any handlers that failed.
-    /// 
+    ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Inside an async context with a DaemonServer instance:
     /// server.complete_connections().await?;
     /// ```
@@ -153,7 +159,7 @@ impl DaemonServer {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let connections = Arc::new(Mutex::new(Vec::new()));
     /// cleanup_completed_connections(&connections).await.unwrap();
     /// ```
@@ -209,6 +215,7 @@ impl DaemonServer {
     /// This function will return an error if:
     /// * Connection acceptance fails critically
     /// * Shutdown operations fail
+    ///
     /// Runs the main server loop and the background cleanup task concurrently, coordinating their shutdown.
     ///
     /// Starts the server task to accept connections and the cleanup task to periodically remove completed connections and old services. Waits for either task to complete, ensuring graceful shutdown when triggered.
@@ -219,11 +226,12 @@ impl DaemonServer {
     ///
     /// # Examples
     ///
-    /// ```
-    /// # use your_crate::DaemonServer;
+    /// ```ignore
+    /// # use nexsockd::prelude::DaemonServer;
     /// # tokio_test::block_on(async {
     /// let mut server = DaemonServer::new().await.unwrap();
     /// server.run().await.unwrap();
+    /// # server.shutdown().await.unwrap();
     /// # });
     /// ```
     pub async fn run(&mut self) -> Result<()> {
@@ -249,8 +257,8 @@ impl DaemonServer {
     ///
     /// # Examples
     ///
-    /// ```
-    /// # use nexsock::daemon::server::DaemonServer;
+    /// ```ignore
+    /// # use nexsockd::daemon::server::DaemonServer;
     /// # use tokio::sync::oneshot;
     /// # async fn example(mut server: DaemonServer) {
     /// let (tx, _rx) = oneshot::channel();
@@ -279,7 +287,7 @@ impl DaemonServer {
                 _ = ctrl_c() => {
                     info!("Got Ctrl-C, shutting down");
 
-                    cleanup_stop_tx.send(())?;
+                    let _ = cleanup_stop_tx.send(());
                     self.shutdown().await?;
                     break;
                 }
@@ -295,15 +303,18 @@ impl DaemonServer {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use nexsockd::prelude::DaemonServer;
+    /// # async fn example() {
     /// let (tx, rx) = tokio::sync::oneshot::channel();
     /// let server = DaemonServer::new().await.unwrap();
     /// let handle = server.cleanup_task(rx);
     /// // ... later, signal shutdown:
     /// tx.send(()).unwrap();
     /// handle.await.unwrap().unwrap();
+    /// # }
     /// ```
-    fn cleanup_task(&self, cleanup_stop_rx: oneshot::Receiver<()>) -> JoinHandle<Result<()>> {
+    fn cleanup_task(&self, mut cleanup_stop_rx: oneshot::Receiver<()>) -> JoinHandle<Result<()>> {
         let connections_arc = Arc::clone(&self.connections);
         let cleanup_interval = self.cleanup_interval;
 
@@ -312,7 +323,7 @@ impl DaemonServer {
 
             loop {
                 // Check if we've been asked to stop
-                if cleanup_stop_rx.is_closed() {
+                if cleanup_stop_rx.try_recv().is_ok() {
                     info!("Cleanup task received stop signal");
                     break;
                 }

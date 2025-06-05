@@ -24,12 +24,15 @@ use nexsock_protocol::commands::ServiceCommand;
 /// Matches the provided `Commands` enum variant and constructs the appropriate `ServiceCommand` for execution. Returns an error if the command is invalid or unsupported.
 ///
 /// # Returns
-/// 
+///
 /// An `Ok(ServiceCommand)` representing the requested operation, or an error if the command is invalid.
 ///
 /// # Examples
 ///
 /// ```
+/// use nexsock::cli::Commands;
+/// use nexsock::commands::create_command;
+///
 /// let cli_command = Commands::List;
 /// let cmd = create_command(cli_command).unwrap();
 /// // `cmd` is a `ServiceCommand` that lists all services.

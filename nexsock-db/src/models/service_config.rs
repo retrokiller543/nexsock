@@ -62,6 +62,7 @@ impl Model {
     ///
     /// * `filename` - The name of the configuration file.
     /// * `format` - The format of the configuration file.
+    ///
     /// Creates a new `Model` instance representing a service configuration.
     ///
     /// The `id` field is initialized to 0 and is intended to be set by the database.
@@ -74,9 +75,11 @@ impl Model {
     /// # Examples
     ///
     /// ```
-    /// let config = Model::new("service.yaml".to_string(), ConfigFormat::Yaml, Some("run.sh".to_string()));
+    /// # use nexsock_db::models::service_config::Model;
+    /// # use nexsock_protocol::commands::config::ConfigFormat;
+    /// let config = Model::new("service.yaml".to_string(), ConfigFormat::Env, Some("run.sh".to_string()));
     /// assert_eq!(config.filename, "service.yaml");
-    /// assert_eq!(config.format, ConfigFormat::Yaml);
+    /// assert_eq!(config.format, ConfigFormat::Env);
     /// assert_eq!(config.run_command, Some("run.sh".to_string()));
     /// ```
     pub fn new(filename: String, format: ConfigFormat, run_command: Option<String>) -> Self {

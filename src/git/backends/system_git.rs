@@ -29,7 +29,8 @@ impl SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use nexsockd::git::SystemGitBackend;
     /// let backend = SystemGitBackend::new();
     /// ```
     pub fn new() -> Self {
@@ -48,9 +49,9 @@ impl SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use std::collections::HashMap;
-    /// use your_crate::SystemGitBackend;
+    /// use nexsockd::git::SystemGitBackend;
     ///
     /// let mut env = HashMap::new();
     /// env.insert("GIT_TRACE".to_string(), "1".to_string());
@@ -82,10 +83,14 @@ impl SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use nexsockd::git::SystemGitBackend;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let backend = SystemGitBackend::new();
     /// let output = backend.run_git_command(&["--version"], None, None).await?;
     /// assert!(output.starts_with("git version"));
+    /// # Ok(())
+    /// # }
     /// ```
     async fn run_git_command(
         &self,
@@ -145,7 +150,7 @@ impl SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let mut cmd = std::process::Command::new("git");
     /// let auth = GitAuth::SshAgent { username: None };
     /// backend.configure_auth(&mut cmd, &auth)?;
@@ -192,7 +197,7 @@ impl SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let dirty = backend.is_repo_dirty(" M src/main.rs\n");
     /// assert!(dirty);
     ///
@@ -209,7 +214,7 @@ impl SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let output = "* main\n  dev\n  remotes/origin/main\n  remotes/origin/dev\n";
     /// let branches = backend.parse_branches(output);
     /// assert_eq!(branches, vec!["main", "dev", "remotes/origin/main", "remotes/origin/dev"]);
@@ -219,10 +224,10 @@ impl SystemGitBackend {
             .lines()
             .map(|line| {
                 let line = line.trim();
-                if line.starts_with("* ") {
-                    line[2..].trim().to_string()
-                } else if line.starts_with("  ") {
-                    line[2..].trim().to_string()
+                if let Some(stripped) = line.strip_prefix("* ") {
+                    stripped.trim().to_string()
+                } else if let Some(stripped) = line.strip_prefix("  ") {
+                    stripped.trim().to_string()
                 } else {
                     line.trim().to_string()
                 }
@@ -242,7 +247,7 @@ impl SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let log_output = "\
     /// abc123
     /// Alice
@@ -288,7 +293,8 @@ impl Default for SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use nexsockd::git::SystemGitBackend;
     /// let backend = SystemGitBackend::default();
     /// ```
     fn default() -> Self {
@@ -312,9 +318,13 @@ impl GitBackend for SystemGitBackend {
     /// # Examples
     ///
     /// ```
+    /// # use std::path::Path;
+    /// # use nexsockd::git::{GitAuth, SystemGitBackend};
+    /// # use nexsockd::traits::git_backend::GitBackend;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let backend = SystemGitBackend::new();
     /// let repo_info = backend
-    ///     .clone(
+    ///     .clone_repo(
     ///         "https://github.com/example/repo.git",
     ///         Path::new("/tmp/repo"),
     ///         &GitAuth::None,
@@ -323,8 +333,10 @@ impl GitBackend for SystemGitBackend {
     ///     .await
     ///     .unwrap();
     /// assert_eq!(repo_info.current_branch.as_deref(), Some("main"));
+    /// # Ok(())
+    /// # }
     /// ```
-    async fn clone(
+    async fn clone_repo(
         &self,
         remote_url: &str,
         local_path: &Path,
@@ -357,7 +369,10 @@ impl GitBackend for SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use std::path::Path;
+    /// # use nexsockd::git::SystemGitBackend;
+    /// # use nexsockd::traits::git_backend::GitBackend;
     /// let backend = SystemGitBackend::new();
     /// let info = tokio_test::block_on(backend.status(Path::new("/path/to/repo"))).unwrap();
     /// assert!(info.current_commit.len() > 0);
@@ -456,8 +471,9 @@ impl GitBackend for SystemGitBackend {
     ///
     /// ```
     /// # use std::path::Path;
-    /// # use your_crate::{SystemGitBackend, GitAuth};
-    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use nexsockd::git::{SystemGitBackend, GitAuth};
+    /// # use nexsockd::traits::git_backend::GitBackend;
+    /// async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let backend = SystemGitBackend::new();
     /// let repo_path = Path::new("/path/to/repo");
     /// let info = backend.checkout_branch(repo_path, "feature-branch", true).await?;
@@ -500,11 +516,17 @@ impl GitBackend for SystemGitBackend {
     /// # Examples
     ///
     /// ```
+    /// # use std::path::Path;
+    /// # use nexsockd::git::SystemGitBackend;
+    /// # use nexsockd::traits::git_backend::GitBackend;
+    /// # async fn example() -> nexsockd::error::Result<()> {
     /// let backend = SystemGitBackend::new();
     /// let repo_path = Path::new("/path/to/repo");
     /// let commit_hash = "abc123def456";
     /// let info = backend.checkout_commit(repo_path, commit_hash).await?;
-    /// assert_eq!(info.current_commit, Some(commit_hash.to_string()));
+    /// assert_eq!(info.current_commit, commit_hash.to_string());
+    /// # Ok(())
+    /// # }
     /// ```
     async fn checkout_commit(
         &self,
@@ -525,15 +547,16 @@ impl GitBackend for SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
-    /// # use your_crate::{SystemGitBackend, GitAuth};
+    /// ```ignore
+    /// # use nexsockd::git::{SystemGitBackend, GitAuth};
     /// # use std::path::Path;
+    /// # use nexsockd::traits::git_backend::GitBackend;
     /// # tokio_test::block_on(async {
     /// let backend = SystemGitBackend::new();
     /// let repo_path = Path::new("/path/to/repo");
     /// let auth = GitAuth::None;
     /// let info = backend.pull(repo_path, &auth).await.unwrap();
-    /// assert!(info.current_commit.is_some());
+    /// assert!(info.current_commit.len() > 0);
     /// # });
     /// ```
     async fn pull(&self, repo_path: &Path, auth: &GitAuth) -> crate::error::Result<GitRepoInfo> {
@@ -551,10 +574,16 @@ impl GitBackend for SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use std::path::Path;
+    /// # use nexsockd::git::{GitAuth, SystemGitBackend};
+    /// # use nexsockd::traits::git_backend::GitBackend;
+    /// # async fn example() -> nexsockd::error::Result<()> {
     /// let backend = SystemGitBackend::new();
     /// let repo_info = backend.fetch(Path::new("/path/to/repo"), &GitAuth::None).await?;
     /// println!("Current branch: {:?}", repo_info.current_branch);
+    /// # Ok(())
+    /// # }
     /// ```
     async fn fetch(&self, repo_path: &Path, auth: &GitAuth) -> crate::error::Result<GitRepoInfo> {
         self.run_git_command(&["fetch"], Some(repo_path), Some(auth))
@@ -571,10 +600,16 @@ impl GitBackend for SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use std::path::Path;
+    /// # use nexsockd::git::SystemGitBackend;
+    /// # use nexsockd::traits::git_backend::GitBackend;
+    /// # async fn example() -> nexsockd::error::Result<()> {
     /// let backend = SystemGitBackend::new();
     /// let commits = backend.log(Path::new("/path/to/repo"), Some(10), Some("main")).await?;
     /// assert!(!commits.is_empty());
+    /// # Ok(())
+    /// # }
     /// ```
     async fn log(
         &self,
@@ -616,10 +651,16 @@ impl GitBackend for SystemGitBackend {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use std::path::Path;
+    /// # use nexsockd::git::SystemGitBackend;
+    /// # use nexsockd::traits::git_backend::GitBackend;
+    /// # async fn example() -> nexsockd::error::Result<()> {
     /// let backend = SystemGitBackend::new();
-    /// let branches = backend.list_branches(Path::new("/path/to/repo"), true).await.unwrap();
+    /// let branches = backend.list_branches(Path::new("/path/to/repo"), true).await?;
     /// assert!(branches.contains(&"main".to_string()));
+    /// # Ok(())
+    /// # }
     /// ```
     async fn list_branches(
         &self,

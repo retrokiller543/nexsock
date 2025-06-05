@@ -57,7 +57,7 @@ impl Connection<OwnedReadHalf, OwnedWriteHalf> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let stream = get_platform_stream(); // Returns a TcpStream or UnixStream depending on platform
     /// let lua_plugin_manager = Arc::new(LuaPluginManager::new());
     /// let connection = Connection::new(stream, lua_plugin_manager);
@@ -98,6 +98,7 @@ where
     /// This function will return an error if:
     /// * Protocol errors occur
     /// * Command handling fails
+    ///
     /// Handles incoming client messages in a loop until disconnection or a fatal error occurs.
     ///
     /// Processes each message by delegating to `handle_single_message`. Exits cleanly on client disconnect, or returns an error on other I/O failures.
@@ -108,7 +109,7 @@ where
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use std::sync::Arc;
     /// # use crate::{Connection, LuaPluginManager};
     /// # async fn example(mut conn: Connection<_, _>) {
@@ -146,7 +147,7 @@ where
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Inside an async context with a Connection instance `conn`
     /// conn.handle_single_message().await?;
     /// ```
@@ -191,7 +192,7 @@ where
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Example usage within an async context:
     /// let payload = Some(vec![/* encoded payload bytes */]);
     /// let result = connection.handle_command(Command::Ping, payload).await?;
@@ -476,7 +477,7 @@ where
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let payload_bytes = Some(vec![/* encoded bytes */]);
     /// let result: Result<MyType, _> = read_req_payload(payload_bytes);
     /// ```

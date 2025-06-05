@@ -35,6 +35,7 @@ optional = true
 
 [features]
 default = []
+test-helpers = []
 savefile = ["dep:savefile"]
 mlua = ["dep:mlua"]
 sea-orm = ["dep:sea-orm"]

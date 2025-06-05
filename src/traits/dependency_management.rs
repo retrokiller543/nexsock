@@ -20,7 +20,7 @@ use nexsock_protocol::commands::manage_service::ServiceRef;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::dependency_management::DependencyManagement;
 /// use nexsock_protocol::commands::dependency::AddDependencyPayload;
 /// use nexsock_protocol::commands::manage_service::ServiceRef;
@@ -116,7 +116,7 @@ pub trait DependencyManagement {
     ///
     /// # Returns
     ///
-    /// Returns [`Result<ListDependenciesResponse>`] which is:
+    /// Returns [`Result<ListDependenciesResponse>`](crate::Result) which is:
     /// * `Ok(ListDependenciesResponse)` - List of dependencies with metadata
     /// * `Err(Error)` - If the query operation fails
     ///

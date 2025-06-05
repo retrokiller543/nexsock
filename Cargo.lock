@@ -2278,6 +2278,7 @@ dependencies = [
  "migration",
  "nexsock-config",
  "nexsock-protocol",
+ "percent-encoding",
  "sea-orm",
  "serde",
  "serde_json",
@@ -2285,6 +2286,7 @@ dependencies = [
  "thiserror 2.0.12",
  "tokio",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -2336,6 +2338,29 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "nexsock-testing"
+version = "1.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "chrono",
+ "futures",
+ "nexsock-config",
+ "nexsock-db",
+ "nexsock-protocol",
+ "parking_lot",
+ "rand",
+ "sea-orm",
+ "serde",
+ "tempfile",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -2397,6 +2422,7 @@ dependencies = [
  "nexsock-db",
  "nexsock-plugins",
  "nexsock-protocol",
+ "nexsock-testing",
  "nexsock-utils",
  "oneshot",
  "parking_lot",
@@ -2408,6 +2434,7 @@ dependencies = [
  "thiserror 2.0.12",
  "tikv-jemallocator",
  "tokio",
+ "tokio-test",
  "tokio_util_watchdog",
  "tosic-utils",
  "tracing",
@@ -4325,6 +4352,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-test"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2468baabc3311435b55dd935f702f42cd1b8abb7e754fb7dfb16bd36aa88f9f7"
+dependencies = [
+ "async-stream",
+ "bytes",
+ "futures-core",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.7.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4723,6 +4763,7 @@ version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cf4199d1e5d15ddd86a694e4d0dffa9c323ce759fea589f00fef9d81cc1931d"
 dependencies = [
+ "getrandom 0.3.3",
  "js-sys",
  "serde",
  "wasm-bindgen",

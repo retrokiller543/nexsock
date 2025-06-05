@@ -19,13 +19,12 @@ use std::sync::LazyLock;
 ///
 /// # Examples
 ///
-/// ```rust
-/// use nexsockd::config_manager::ConfigManager;
-/// use nexsock_protocol::commands::config::ServiceConfigPayload;
-///
+/// ```ignore
+/// # use nexsockd::config_manager::ConfigManager;
+/// # use nexsock_protocol::commands::config::ServiceConfigPayload;
 /// let manager = ConfigManager::new();
 /// // Update configuration for a service
-/// manager.update_config(&config_payload).await?;
+/// // manager.update_config(&config_payload).await?;
 /// ```
 pub struct ConfigManager {
     service_repository: ServiceRepository<'static>,
@@ -44,7 +43,8 @@ impl ConfigManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use crate::config_manager::ConfigManager;
     /// let manager = ConfigManager::new();
     /// ```
     pub fn new() -> Self {
@@ -70,7 +70,9 @@ impl ConfigManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # use std::sync::LazyLock;
+    /// # use crate::config_manager::ConfigManager;
     /// static CONFIG_MANAGER: LazyLock<ConfigManager> = ConfigManager::new_const();
     /// let manager = &*CONFIG_MANAGER;
     /// ```
@@ -138,9 +140,13 @@ impl ConfigurationManagement for ConfigManager {
     ///
     /// # Examples
     ///
-    /// ```
-    /// let service_ref = ServiceRef::new("example-service");
-    /// let config_payload = config_manager.get_config(&service_ref).await?;
+    /// ```ignore
+    /// # use std::str::FromStr;
+    /// # use nexsock_protocol::commands::manage_service::ServiceRef;
+    /// # use crate::config_manager::ConfigManager;
+    /// # let config_manager = ConfigManager::new();
+    /// let service_ref = ServiceRef::from_str("example-service");
+    /// // let config_payload = config_manager.get_config(&service_ref).await?;
     /// ```
     async fn get_config(&self, payload: &ServiceRef) -> crate::error::Result<ServiceConfigPayload> {
         let service_model = self

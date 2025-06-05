@@ -91,6 +91,7 @@ impl JoinedDependency {
     ///
     /// * `parent_service_id` - The ID of the service that has this dependency.
     /// * `dependent_service_id` - The ID of the service that is the dependency.
+    ///
     /// Creates a new `JoinedDependency` instance with the specified parent and dependent service IDs and tunnel status.
     ///
     /// Fields such as `name`, `repo_url`, `port`, `repo_path`, and `status` are initialized with default values and are expected to be populated later, typically from database queries.
@@ -98,6 +99,7 @@ impl JoinedDependency {
     /// # Examples
     ///
     /// ```
+    /// # use nexsock_db::prelude::JoinedDependency;
     /// let dep = JoinedDependency::new(1, 2, true);
     /// assert_eq!(dep.service_id, 1);
     /// assert_eq!(dep.dependent_service_id, 2);

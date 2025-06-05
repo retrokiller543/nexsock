@@ -20,7 +20,7 @@ use std::path::Path;
 #[async_trait]
 pub trait GitBackend: Send + Sync {
     /// Clone a repository from a remote URL to a local path.
-    async fn clone(
+    async fn clone_repo(
         &self,
         remote_url: &str,
         local_path: &Path,

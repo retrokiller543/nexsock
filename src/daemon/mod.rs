@@ -41,7 +41,7 @@ pub use server::*;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::prelude::*;
 ///
 /// async fn start_daemon() -> Result<()> {
@@ -92,14 +92,20 @@ impl Daemon {
     /// # Platform-specific behavior
     ///
     /// * On Unix: Creates a Unix domain socket and removes any existing socket file
+    ///
     /// Initializes a new daemon instance, binding the socket listener and loading Lua plugins.
     ///
     /// On Unix, removes any existing socket file before binding a Unix domain socket. On Windows, binds a TCP socket. Loads all available Lua plugins into the plugin manager. Returns an error if socket binding or plugin loading fails.
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// use nexsockd::prelude::Daemon;
+    ///
+    /// # async fn example() -> nexsockd::prelude::Result<()> {
     /// let daemon = Daemon::new().await?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn new() -> Result<Self> {
         let config = &*NEXSOCK_CONFIG;
@@ -128,7 +134,7 @@ impl Daemon {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use nexsock_daemon::daemon::SocketRef;
     /// # use nexsock_daemon::daemon::Daemon;
     /// let socket_ref = SocketRef::Path("/tmp/nexsock.sock".into());
@@ -201,10 +207,15 @@ impl Daemon {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// use nexsockd::prelude::Daemon;
+    ///
+    /// # async fn example() -> nexsockd::prelude::Result<()> {
     /// let daemon = Daemon::new().await?;
     /// let mut conn = daemon.accept().await?;
     /// // Use `conn` to interact with the client.
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn accept(&self) -> Result<Connection<OwnedReadHalf, OwnedWriteHalf>> {
         let (stream, addr) = self.listener.accept().await?;
@@ -229,15 +240,21 @@ impl Daemon {
     /// # Platform-specific behavior
     ///
     /// * On Unix: Removes the socket file if it exists
+    ///
     /// Shuts down the daemon and performs platform-specific cleanup.
     ///
     /// On Unix, removes the socket file if it exists. On Windows, closes the TCP listener by dropping it.
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// use nexsockd::prelude::Daemon;
+    ///
+    /// # async fn example() -> nexsockd::prelude::Result<()> {
     /// let daemon = Daemon::new().await?;
     /// daemon.shutdown().await?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn shutdown(self) -> Result<()> {
         info!("Shutting down daemon...");

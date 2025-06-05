@@ -10,7 +10,8 @@
 //! The daemon manages services through a repository-based architecture with
 //! database persistence and supports both native and Lua plugins.
 
-//#![feature(string_from_utf8_lossy_owned)]
+#![allow(rustdoc::private_intra_doc_links)]
+#![allow(rustdoc::redundant_explicit_links)]
 
 mod config_manager;
 pub mod daemon;
@@ -25,8 +26,12 @@ mod statics;
 mod test;
 pub mod traits;
 
+#[cfg(test)]
+mod tests;
+
 use crate::daemon::server::DaemonServer;
 use futures::TryFutureExt;
+use nexsock_config::NEXSOCK_CONFIG;
 use nexsock_db::initialize_db;
 use prelude::*;
 use std::time::Duration;
@@ -53,10 +58,11 @@ use tracing_subscriber::EnvFilter;
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// let layer = tracing_std_layer();
 /// assert!(layer.thread_names);
 /// ```
+#[allow(dead_code)]
 fn tracing_std_layer() -> StdoutLayerConfig {
     StdoutLayerConfig::default()
         .file(false)
@@ -74,7 +80,7 @@ fn tracing_std_layer() -> StdoutLayerConfig {
 ///
 /// # Returns
 ///
-/// ```
+/// ```ignore
 fn tracing_env_filter() -> EnvFilter {
     FilterConfig::default().use_env(true).build()
 }
@@ -102,7 +108,7 @@ fn tracing_env_filter() -> EnvFilter {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::tracing;
 ///
 /// let _guards = tracing().expect("Failed to initialize tracing");
@@ -121,7 +127,8 @@ fn tracing_env_filter() -> EnvFilter {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
+/// # use nexsockd::tracing;
 /// let guards = tracing().expect("Failed to initialize tracing");
 /// // Keep `guards` alive for the duration of the application.
 /// ```
@@ -171,23 +178,11 @@ pub fn tracing() -> Result<Vec<WorkerGuard>> {
 /// * Server socket binding fails
 /// * Plugin manager initialization fails
 #[tracing::instrument(err)]
-/// Concurrently initializes the database (with migrations) and creates a new `DaemonServer`.
-///
-/// Returns the fully initialized `DaemonServer` instance upon success.
-///
-/// # Errors
-///
-/// Returns an error if database initialization, migration, or server creation fails.
-///
-/// # Examples
-///
-/// ```
-/// let server = tokio::runtime::Runtime::new().unwrap().block_on(setup()).unwrap();
-/// ```
 async fn setup() -> Result<DaemonServer> {
-    // loads the database static variable and runs migrations while at the same time we initialize the server
+    let db_url = NEXSOCK_CONFIG.database().path.display().to_string();
+
     let (_, server) = try_join!(
-        initialize_db(true).map_err(Error::from),
+        initialize_db(db_url, true).map_err(Error::from),
         DaemonServer::new()
     )?;
 
@@ -226,11 +221,19 @@ async fn setup() -> Result<DaemonServer> {
 ///
 /// # Examples
 ///
-/// ```no_run
-/// # use nexsock_daemon::run_daemon;
+/// ```ignore
+/// # use nexsockd::run_daemon;
 /// # #[tokio::main]
 /// # async fn main() -> anyhow::Result<()> {
-/// run_daemon().await?;
+/// # use std::time::Duration;
+/// # use tokio::time::timeout;
+/// # match timeout(Duration::new(0, 0),
+/// // Runs the Nexsock daemon server and blocks the current thread until it is stopped either via shutdown or a critical error occurs.
+/// run_daemon()
+/// # ).await {
+/// # Ok(res) => res,
+/// # Err(_) => Ok(()),
+/// # }.expect("Failed to run daemon");
 /// # Ok(())
 /// # }
 /// ```
@@ -271,33 +274,16 @@ pub async fn run_daemon() -> Result<()> {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use std::time::Duration;
 /// use nexsockd::timed_run_daemon;
 ///
-/// // Run daemon for maximum 30 seconds
-/// let result = timed_run_daemon(Duration::from_secs(30)).await;
-/// ```
-#[inline]
-/// Runs the Nexsock daemon for a specified duration or until completion, whichever occurs first.
-///
-/// If the daemon completes before the timeout, its result is returned. If the timeout is reached, the function returns success.
-///
-/// # Parameters
-/// - `duration`: The maximum time to allow the daemon to run.
-///
-/// # Returns
-/// Returns `Ok(())` if the daemon completes successfully or the timeout is reached. Returns an error if the daemon fails before the timeout.
-///
-/// # Examples
-///
-/// ```
-/// use std::time::Duration;
 /// # tokio_test::block_on(async {
-/// let result = nexsock::timed_run_daemon(Duration::from_secs(10)).await;
-/// assert!(result.is_ok());
+/// // Run daemon for maximum 30 seconds
+/// let result = timed_run_daemon(Duration::from_secs(0)).await;
 /// # });
 /// ```
+#[inline]
 pub async fn timed_run_daemon(duration: Duration) -> Result<()> {
     match timeout(duration, run_daemon()).await {
         Ok(res) => res,

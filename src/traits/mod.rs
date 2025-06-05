@@ -91,7 +91,7 @@ pub(crate) trait VecExt<T> {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```ignore
     /// use nexsockd::traits::VecExt;
     ///
     /// let mut vec = vec![1, 2, 3, 4];

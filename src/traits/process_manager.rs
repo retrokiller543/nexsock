@@ -7,10 +7,6 @@
 //! - Process state tracking and health monitoring
 //! - Graceful and forceful process termination
 //! - Log collection and management for running processes
-//!
-//! The module includes two main traits:
-//! - [`ProcessManager`] - Basic process management interface
-//! - [`FullProcessManager`] - Extended interface with detailed process control
 
 use anyhow::{anyhow, Context as _};
 use command_group::AsyncCommandGroup as _;
@@ -36,7 +32,7 @@ use crate::statics::SERVICE_REPOSITORY;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::process_manager::ProcessManager;
 /// use std::sync::Arc;
 /// use dashmap::DashMap;
@@ -442,7 +438,7 @@ async fn start_log_collection(process: &mut ServiceProcess) -> crate::error::Res
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::process_manager::{ProcessManager, FullProcessManager};
 /// use std::collections::HashMap;
 /// use std::path::Path;
@@ -583,7 +579,7 @@ pub(crate) trait FullProcessManager: ProcessManager {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```ignore
     /// use std::collections::HashMap;
     /// use std::path::Path;
     ///

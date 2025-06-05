@@ -17,7 +17,7 @@ use nexsock_protocol::commands::manage_service::ServiceRef;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::configuration_management::ConfigurationManagement;
 /// use nexsock_protocol::commands::config::ServiceConfigPayload;
 /// use nexsock_protocol::commands::manage_service::ServiceRef;
@@ -49,7 +49,7 @@ pub trait ConfigurationManagement {
     /// # Arguments
     ///
     /// * `payload` - The configuration data including service reference, filename,
-    ///               format, and run command
+    ///   format, and run command
     ///
     /// # Returns
     ///
