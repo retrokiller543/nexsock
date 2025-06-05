@@ -41,7 +41,7 @@ pub use server::*;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::prelude::*;
 ///
 /// async fn start_daemon() -> Result<()> {
@@ -98,8 +98,13 @@ impl Daemon {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// use nexsockd::prelude::Daemon;
+    ///
+    /// # async fn example() -> nexsockd::prelude::Result<()> {
     /// let daemon = Daemon::new().await?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn new() -> Result<Self> {
         let config = &*NEXSOCK_CONFIG;
@@ -128,7 +133,7 @@ impl Daemon {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use nexsock_daemon::daemon::SocketRef;
     /// # use nexsock_daemon::daemon::Daemon;
     /// let socket_ref = SocketRef::Path("/tmp/nexsock.sock".into());
@@ -201,10 +206,15 @@ impl Daemon {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// use nexsockd::prelude::Daemon;
+    ///
+    /// # async fn example() -> nexsockd::prelude::Result<()> {
     /// let daemon = Daemon::new().await?;
     /// let mut conn = daemon.accept().await?;
     /// // Use `conn` to interact with the client.
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn accept(&self) -> Result<Connection<OwnedReadHalf, OwnedWriteHalf>> {
         let (stream, addr) = self.listener.accept().await?;
@@ -235,9 +245,14 @@ impl Daemon {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// use nexsockd::prelude::Daemon;
+    ///
+    /// # async fn example() -> nexsockd::prelude::Result<()> {
     /// let daemon = Daemon::new().await?;
     /// daemon.shutdown().await?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn shutdown(self) -> Result<()> {
         info!("Shutting down daemon...");

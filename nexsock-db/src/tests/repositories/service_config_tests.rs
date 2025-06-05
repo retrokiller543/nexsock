@@ -94,7 +94,6 @@ mod tests {
     /// # });
     /// ```
     async fn test_delete_by_id() {
-    async fn test_delete_by_id() {
         let db = setup_in_memory_db()
             .await
             .expect("Failed to setup in-memory DB");

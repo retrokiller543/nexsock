@@ -71,6 +71,7 @@ pub async fn initialize_db(run_migrations: bool) -> anyhow::Result<&'static Data
 ///
 /// ```
 /// // Ensure initialize_db has been called before this
+/// # use nexsock_db::get_db_connection;
 /// let conn = get_db_connection();
 /// // Use `conn` for database operations
 /// ```

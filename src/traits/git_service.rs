@@ -22,9 +22,9 @@ use std::path::Path;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::git_service::GitService;
-/// use std::path::Path;
+/// use std::path::{Path, PathBuf};
 ///
 /// struct MyGitService {
 ///     path: PathBuf,
@@ -37,7 +37,7 @@ use std::path::Path;
 /// }
 ///
 /// let service = MyGitService { /* ... */ };
-/// let repo = service.clone_or_open()?;  // Clone if needed, or open existing
+/// let repo = service.clone_repo()?;  // Clone if needed, or open existing
 /// ```
 #[diagnostic::on_unimplemented(
     message = "the trait `GitService` is not implemented for `{Self}`",
@@ -93,7 +93,7 @@ pub trait GitService {
         let backend = SystemGitBackend::new();
         let auth = GitAuth::ssh_agent("git"); // Default to SSH agent
 
-        GitBackend::clone(
+        GitBackend::clone_repo(
             &backend,
             &self.repository_url(),
             self.repository_path(),

@@ -54,6 +54,7 @@ impl GitRepoInfo {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitRepoInfo;
     /// let repo_info = GitRepoInfo::new(
     ///     Some("main".to_string()),
     ///     "abcdef1234567890".to_string(),
@@ -87,6 +88,7 @@ impl GitRepoInfo {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitRepoInfo;
     /// let repo = GitRepoInfo {
     ///     current_branch: Some("main".to_string()),
     ///     current_commit: "abc123".to_string(),
@@ -107,6 +109,7 @@ impl GitRepoInfo {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitRepoInfo;
     /// let mut repo = GitRepoInfo::new(Some("main".to_string()), "abc123".to_string(), "https://example.com/repo.git".to_string(), false);
     /// repo.ahead_count = Some(2);
     /// assert!(repo.is_ahead());
@@ -120,6 +123,7 @@ impl GitRepoInfo {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitRepoInfo;
     /// let mut repo = GitRepoInfo::new(Some("main".to_string()), "abc123".to_string(), "https://example.com/repo.git".to_string(), false);
     /// repo.behind_count = Some(2);
     /// assert!(repo.is_behind());
@@ -137,6 +141,7 @@ impl GitCommit {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitCommit;
     /// let commit = GitCommit::new(
     ///     "abcdef1234567890".to_string(),
     ///     "Alice".to_string(),

@@ -22,7 +22,7 @@ pub struct Cli {
     /// Tcp address to use to communicate with the daemon
     #[cfg(windows)]
     #[arg(short, long)]
-    pub(crate) address: Option<SocketAddr>,
+    pub address: Option<SocketAddr>,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -368,7 +368,7 @@ pub enum ToolCommands {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, IsVariant)]
 pub enum ToolType {
     /// Nexsock daemon
     Daemon,
@@ -387,8 +387,8 @@ impl FromStr for ToolType {
     /// # Examples
     ///
     /// ```
-    /// use your_crate::ToolType;
     /// use std::str::FromStr;
+    /// use nexsock::cli::ToolType;
     ///
     /// assert_eq!(ToolType::from_str("nexsockd").unwrap(), ToolType::Daemon);
     /// assert_eq!(ToolType::from_str("web").unwrap(), ToolType::Web);
@@ -413,12 +413,13 @@ impl Cli {
     /// # Examples
     ///
     /// ```
+    /// use nexsock::cli::Cli;
     /// let vars = vec![
     ///     "FOO=bar".to_string(),
     ///     "BAZ=qux".to_string(),
     ///     "INVALID".to_string(),
     /// ];
-    /// let map = parse_env_vars(vars);
+    /// let map = Cli::parse_env_vars(vars);
     /// assert_eq!(map.get("FOO"), Some(&"bar".to_string()));
     /// assert_eq!(map.get("BAZ"), Some(&"qux".to_string()));
     /// assert!(!map.contains_key("INVALID"));

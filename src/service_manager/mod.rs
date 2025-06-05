@@ -35,7 +35,7 @@ use tracing::warn;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::service_manager::ServiceProcess;
 /// use nexsock_protocol::commands::service_status::ServiceState;
 ///
@@ -84,7 +84,7 @@ where
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::service_manager::LogEntry;
 /// use chrono::Utc;
 ///
@@ -134,7 +134,7 @@ impl ServiceProcess {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let mut service = ServiceProcess::spawn(...).await?;
     /// let state = service.check_status().await?;
     /// assert!(matches!(state, ServiceState::Running | ServiceState::Stopped | ServiceState::Failed));

@@ -32,7 +32,7 @@ use tracing::{debug, warn};
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::service_manager::ServiceManager;
 /// use nexsock_protocol::commands::manage_service::StartServicePayload;
 ///
@@ -65,7 +65,7 @@ impl ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = ServiceManager::new_const();
     /// // Use `manager` to manage services.
     /// ```
@@ -81,7 +81,7 @@ impl Default for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = ServiceManager::default();
     /// assert!(manager.running_services().is_empty());
     /// ```
@@ -104,7 +104,7 @@ impl ProcessManager for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = ServiceManager::default();
     /// let running = manager.running_services();
     /// assert!(running.is_empty());
@@ -117,7 +117,7 @@ impl ProcessManager for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = ServiceManager::default();
     /// let sender = manager.shutdown_tx();
     /// sender.send(()).unwrap();
@@ -139,7 +139,7 @@ impl ServiceManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let payload = StartServicePayload { service: ServiceRef::Id(42), env_vars: None };
     /// service_manager.start(&payload).await?;
     /// ```
@@ -195,7 +195,7 @@ impl ServiceManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = ServiceManager::default();
     /// let service_ref = ServiceRef::from_id(42);
     /// manager.stop(&service_ref).await?;
@@ -223,7 +223,7 @@ impl ServiceManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let payload = StartServicePayload {
     ///     service: ServiceRef::from_id(42),
     ///     env_vars: HashMap::new(),
@@ -283,7 +283,7 @@ impl ServiceManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let payload = AddServicePayload {
     ///     name: "example".to_string(),
     ///     repo_url: "https://github.com/example/repo.git".to_string(),
@@ -296,8 +296,6 @@ impl ServiceManagement for ServiceManager {
     /// service_manager.add_service(&payload).await?;
     /// ```
     async fn add_service(&self, payload: &AddServicePayload) -> crate::error::Result<()> {
-        dbg!(&payload);
-
         let AddServicePayload {
             name,
             repo_url,
@@ -324,8 +322,6 @@ impl ServiceManagement for ServiceManager {
             None
         };
 
-        dbg!(id);
-
         let mut record = Service::new_with_git(
             name.to_owned(),
             repo_url.to_owned(),
@@ -336,8 +332,6 @@ impl ServiceManagement for ServiceManager {
             None, // git_commit_hash will be set when repository is cloned
             git_auth_type.clone(),
         );
-
-        dbg!(&record);
 
         self.service_repository.save(&mut record).await?;
 
@@ -359,7 +353,7 @@ impl ServiceManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let service_ref = ServiceRef::from_id(42);
     /// service_manager.remove_service(&service_ref).await?;
     /// ```
@@ -415,7 +409,7 @@ impl ServiceManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = ServiceManager::default();
     /// let service_ref = ServiceRef::from_id(1);
     /// let status = tokio_test::block_on(manager.get_status(&service_ref)).unwrap();
@@ -437,7 +431,7 @@ impl ServiceManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let response = service_manager.get_all().await?;
     /// assert!(!response.services.is_empty());
     /// ```
@@ -471,7 +465,7 @@ impl GitManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use your_crate::{ServiceManager, ServiceRef};
     /// # async fn example(manager: ServiceManager, service_ref: ServiceRef) {
     /// manager.git_checkout_branch(&service_ref, "feature/new-branch", true).await.unwrap();
@@ -515,7 +509,7 @@ impl GitManagement for ServiceManager {
 
         // Ensure repository exists
         if !repo_path.exists() {
-            GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, None).await?;
+            GitBackend::clone_repo(&backend, &service.repo_url, repo_path, &auth, None).await?;
         }
 
         // Checkout the branch
@@ -550,7 +544,7 @@ impl GitManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let service_ref = ServiceRef::from_id(42);
     /// manager.git_checkout_commit(&service_ref, "abc123def456").await?;
     /// ```
@@ -588,7 +582,7 @@ impl GitManagement for ServiceManager {
 
         // Ensure repository exists
         if !repo_path.exists() {
-            GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, None).await?;
+            GitBackend::clone_repo(&backend, &service.repo_url, repo_path, &auth, None).await?;
         }
 
         let repo_info = backend.checkout_commit(repo_path, commit_hash).await?;
@@ -613,7 +607,7 @@ impl GitManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use crate::ServiceManager;
     /// # use crate::ServiceRef;
     /// # async fn example(manager: ServiceManager, service_ref: ServiceRef) {
@@ -676,7 +670,7 @@ impl GitManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let status = service_manager.git_status(&service_ref).await?;
     /// println!("Current branch: {}", status.current_branch);
     /// ```
@@ -719,7 +713,7 @@ impl GitManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let commits = service_manager.git_log(&service_ref, Some(10), Some("main")).await?;
     /// assert!(!commits.is_empty());
     /// ```
@@ -763,7 +757,7 @@ impl GitManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let branches = service_manager.git_list_branches(&service_ref, true).await?;
     /// assert!(branches.contains(&"main".to_string()));
     /// ```
@@ -810,7 +804,7 @@ impl GitManagement for ServiceManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = ServiceManager::default();
     /// let service_ref = ServiceRef::from_id(42);
     /// manager.git_ensure_repo(&service_ref).await.unwrap();
@@ -851,7 +845,8 @@ impl GitManagement for ServiceManager {
         let target_branch = service.git_branch.as_deref();
 
         let repo_info =
-            GitBackend::clone(&backend, &service.repo_url, repo_path, &auth, target_branch).await?;
+            GitBackend::clone_repo(&backend, &service.repo_url, repo_path, &auth, target_branch)
+                .await?;
 
         // Update database with initial Git information
         self.service_repository

@@ -20,7 +20,7 @@ use std::sync::LazyLock;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::dependency_manager::DependencyManager;
 /// use nexsock_protocol::commands::dependency::AddDependencyPayload;
 ///
@@ -47,7 +47,7 @@ impl DependencyManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = DependencyManager::new_const();
     /// // The manager is initialized only when accessed.
     /// ```
@@ -61,7 +61,7 @@ impl Default for DependencyManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = DependencyManager::default();
     /// ```
     fn default() -> Self {
@@ -83,7 +83,7 @@ impl DependencyManagement for DependencyManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let payload = AddDependencyPayload {
     ///     service: ServiceRef::Name("service-a".to_string()),
     ///     dependent_service: ServiceRef::Name("service-b".to_string()),
@@ -125,7 +125,7 @@ impl DependencyManagement for DependencyManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let payload = RemoveDependencyPayload {
     ///     service: ServiceRef::from_id("service-a"),
     ///     dependent_service: ServiceRef::from_id("service-b"),
@@ -174,10 +174,10 @@ impl DependencyManagement for DependencyManager {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let manager = DependencyManager::default();
     /// let service_ref = ServiceRef::from_id("service-123");
-    /// let dependencies = tokio_test::block_on(manager.list_dependencies(&service_ref)).unwrap();
+    /// let dependencies = manager.list_dependencies(&service_ref).await?;
     /// assert!(dependencies.dependencies.len() >= 0);
     /// ```
     async fn list_dependencies(

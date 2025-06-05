@@ -115,6 +115,8 @@ tikv-jemallocator = { workspace = true, optional = true }
 
 [dev-dependencies]
 nexsock-client.workspace = true
+nexsock-testing.workspace = true
+tokio-test = "0.4.4"
 
 [build-dependencies]
 #sqlx = { version = "0.8.3", features = ["sqlite", "macros", "chrono", "runtime-tokio"] }

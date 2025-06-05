@@ -68,7 +68,7 @@ impl GitAuth {
     /// # Examples
     ///
     /// ```
-    /// use crate::git::auth::GitAuth;
+    /// use nexsockd::git::auth::GitAuth;
     ///
     /// let auth = GitAuth::Token { username: "user".into(), token: "abc123".into() };
     /// assert!(auth.requires_storage());
@@ -90,6 +90,7 @@ impl GitAuth {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitAuth;
     /// let auth = GitAuth::ssh_agent("alice");
     /// assert_eq!(auth.auth_type(), "ssh_agent");
     /// ```
@@ -108,6 +109,7 @@ impl GitAuth {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitAuth;
     /// let auth = GitAuth::none();
     /// matches!(auth, GitAuth::None);
     /// ```
@@ -120,6 +122,7 @@ impl GitAuth {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitAuth;
     /// let auth = GitAuth::ssh_agent("gituser");
     /// matches!(auth, GitAuth::SshAgent { username } if username == "gituser");
     /// ```
@@ -134,6 +137,7 @@ impl GitAuth {
     /// # Examples
     ///
     /// ```
+    /// # use nexsockd::git::GitAuth;
     /// let auth = GitAuth::token("user", "mytoken123");
     /// if let GitAuth::Token { username, token } = auth {
     ///     assert_eq!(username, "user");

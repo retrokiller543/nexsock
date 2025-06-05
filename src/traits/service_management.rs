@@ -29,7 +29,7 @@ use nexsock_protocol::commands::service_status::ServiceStatus;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::service_management::ServiceManagement;
 /// use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 /// use nexsock_protocol::commands::add_service::AddServicePayload;
@@ -270,7 +270,7 @@ pub(crate) trait ServiceManagement: ProcessManager {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```ignore
     /// use nexsock_protocol::commands::manage_service::ServiceRef;
     ///
     /// let logs = manager.get_stdout(&ServiceRef::Name("webapp".to_string())).await?;

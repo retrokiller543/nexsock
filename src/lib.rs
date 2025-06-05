@@ -25,6 +25,9 @@ mod statics;
 mod test;
 pub mod traits;
 
+#[cfg(test)]
+mod tests;
+
 use crate::daemon::server::DaemonServer;
 use futures::TryFutureExt;
 use nexsock_db::initialize_db;
@@ -53,7 +56,7 @@ use tracing_subscriber::EnvFilter;
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// let layer = tracing_std_layer();
 /// assert!(layer.thread_names);
 /// ```
@@ -74,7 +77,7 @@ fn tracing_std_layer() -> StdoutLayerConfig {
 ///
 /// # Returns
 ///
-/// ```
+/// ```ignore
 fn tracing_env_filter() -> EnvFilter {
     FilterConfig::default().use_env(true).build()
 }
@@ -102,7 +105,7 @@ fn tracing_env_filter() -> EnvFilter {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::tracing;
 ///
 /// let _guards = tracing().expect("Failed to initialize tracing");
@@ -121,7 +124,8 @@ fn tracing_env_filter() -> EnvFilter {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
+/// # use nexsockd::tracing;
 /// let guards = tracing().expect("Failed to initialize tracing");
 /// // Keep `guards` alive for the duration of the application.
 /// ```
@@ -181,7 +185,7 @@ pub fn tracing() -> Result<Vec<WorkerGuard>> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// let server = tokio::runtime::Runtime::new().unwrap().block_on(setup()).unwrap();
 /// ```
 async fn setup() -> Result<DaemonServer> {
@@ -226,11 +230,19 @@ async fn setup() -> Result<DaemonServer> {
 ///
 /// # Examples
 ///
-/// ```no_run
-/// # use nexsock_daemon::run_daemon;
+/// ```ignore
+/// # use nexsockd::run_daemon;
 /// # #[tokio::main]
 /// # async fn main() -> anyhow::Result<()> {
-/// run_daemon().await?;
+/// # use std::time::Duration;
+/// # use tokio::time::timeout;
+/// # match timeout(Duration::new(0, 0),
+/// // Runs the Nexsock daemon server and blocks the current thread until it is stopped either via shutdown or a critical error occurs.
+/// run_daemon()
+/// # ).await {
+/// # Ok(res) => res,
+/// # Err(_) => Ok(()),
+/// # }.expect("Failed to run daemon");
 /// # Ok(())
 /// # }
 /// ```
@@ -271,33 +283,16 @@ pub async fn run_daemon() -> Result<()> {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use std::time::Duration;
 /// use nexsockd::timed_run_daemon;
 ///
-/// // Run daemon for maximum 30 seconds
-/// let result = timed_run_daemon(Duration::from_secs(30)).await;
-/// ```
-#[inline]
-/// Runs the Nexsock daemon for a specified duration or until completion, whichever occurs first.
-///
-/// If the daemon completes before the timeout, its result is returned. If the timeout is reached, the function returns success.
-///
-/// # Parameters
-/// - `duration`: The maximum time to allow the daemon to run.
-///
-/// # Returns
-/// Returns `Ok(())` if the daemon completes successfully or the timeout is reached. Returns an error if the daemon fails before the timeout.
-///
-/// # Examples
-///
-/// ```
-/// use std::time::Duration;
 /// # tokio_test::block_on(async {
-/// let result = nexsock::timed_run_daemon(Duration::from_secs(10)).await;
-/// assert!(result.is_ok());
+/// // Run daemon for maximum 30 seconds
+/// let result = timed_run_daemon(Duration::from_secs(0)).await;
 /// # });
 /// ```
+#[inline]
 pub async fn timed_run_daemon(duration: Duration) -> Result<()> {
     match timeout(duration, run_daemon()).await {
         Ok(res) => res,

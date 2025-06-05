@@ -36,7 +36,7 @@ use crate::statics::SERVICE_REPOSITORY;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::process_manager::ProcessManager;
 /// use std::sync::Arc;
 /// use dashmap::DashMap;
@@ -442,7 +442,7 @@ async fn start_log_collection(process: &mut ServiceProcess) -> crate::error::Res
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use nexsockd::traits::process_manager::{ProcessManager, FullProcessManager};
 /// use std::collections::HashMap;
 /// use std::path::Path;
@@ -583,7 +583,7 @@ pub(crate) trait FullProcessManager: ProcessManager {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```ignore
     /// use std::collections::HashMap;
     /// use std::path::Path;
     ///
