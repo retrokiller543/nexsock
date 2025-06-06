@@ -2389,6 +2389,7 @@ dependencies = [
  "nexsock-client",
  "nexsock-config",
  "nexsock-protocol",
+ "regex",
  "rust-embed",
  "serde",
  "serde_json",
