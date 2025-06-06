@@ -3,22 +3,23 @@ export const css = `.ns-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
+  padding: var(--spacing-sm, 8px) var(--spacing-lg, 16px);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-md, 6px);
   cursor: pointer;
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--font-size-base, 14px);
   line-height: 1.4;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast, 0.15s) ease;
   user-select: none;
   min-height: 36px;
   gap: 6px;
+  font-family: var(--font-family, inherit);
 }
 
 .ns-button:focus {
-  outline: 2px solid var(--focus-color, #3b82f6);
+  outline: 2px solid var(--primary, #0070f3);
   outline-offset: 2px;
 }
 
@@ -30,45 +31,50 @@ export const css = `.ns-button {
 
 /* Variants */
 .ns-button.primary {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
+  background-color: var(--primary, #0070f3);
+  color: var(--text-inverse, white);
+  border-color: var(--primary, #0070f3);
 }
 
 .ns-button.primary:hover:not(:disabled) {
-  background-color: var(--primary-hover, #2563eb);
+  background-color: var(--primary-hover, #0061d5);
+  border-color: var(--primary-hover, #0061d5);
   transform: translateY(-1px);
 }
 
 .ns-button.secondary {
-  background-color: var(--secondary-bg, #f3f4f6);
-  color: var(--secondary-color, #374151);
-  border: 1px solid var(--secondary-border, #d1d5db);
+  background-color: var(--color-surface-elevated, #f8f9fa);
+  color: var(--text-secondary, #666);
+  border-color: var(--color-border, #e1e5e9);
 }
 
 .ns-button.secondary:hover:not(:disabled) {
-  background-color: var(--secondary-hover, #e5e7eb);
-  border-color: var(--secondary-border-hover, #9ca3af);
+  background-color: var(--color-surface-hover, #f5f5f5);
+  color: var(--text-primary, #2d3748);
+  border-color: var(--color-border, #e1e5e9);
 }
 
 .ns-button.danger {
-  background-color: var(--danger-color, #ef4444);
-  color: white;
+  background-color: var(--danger, #dc3545);
+  color: var(--text-inverse, white);
+  border-color: var(--danger, #dc3545);
 }
 
 .ns-button.danger:hover:not(:disabled) {
-  background-color: var(--danger-hover, #dc2626);
+  background-color: var(--danger-hover, #c82333);
+  border-color: var(--danger-hover, #c82333);
   transform: translateY(-1px);
 }
 
 .ns-button.ghost {
   background-color: transparent;
-  color: var(--ghost-color, #6b7280);
+  color: var(--text-secondary, #666);
   border: 1px solid transparent;
 }
 
 .ns-button.ghost:hover:not(:disabled) {
-  background-color: var(--ghost-hover, #f9fafb);
-  color: var(--ghost-color-hover, #374151);
+  background-color: var(--color-surface-elevated, #f8f9fa);
+  color: var(--text-primary, #2d3748);
 }
 
 /* Sizes */

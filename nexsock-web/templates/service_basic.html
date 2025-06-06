@@ -1,6 +1,6 @@
-<ns-card>
-  <div class="service-card-header">
-    <strong>{{ service.name }}</strong>
+<article aria-labelledby="service-title-{{ service.name }}" class="service-card" role="article">
+  <header class="service-card-header">
+    <h3 class="service-title" id="service-title-{{ service.name }}">{{ service.name }}</h3>
     {% if service.state == "Running" %}
       <ns-badge variant="success">{{ service.state }}</ns-badge>
     {% elif service.state == "Failed" %}
@@ -10,12 +10,16 @@
     {% else %}
       <ns-badge variant="neutral">{{ service.state }}</ns-badge>
     {% endif %}
-  </div>
+  </header>
 
   <div class="service-card-body">
     <div class="service-card-info">
-      <div>Port: {{ service.port }}</div>
-      <div>Dependencies:
+      <div class="info-item">
+        <span class="info-label">Port:</span>
+        <span class="info-value">{{ service.port }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Dependencies:</span>
         {% if service.has_dependencies %}
           <ns-badge size="small" variant="info">Yes</ns-badge>
         {% else %}
@@ -25,14 +29,27 @@
     </div>
 
     <div class="service-card-actions">
-      <ns-button onclick="window.location.href='/services/{{ service.name }}'" size="small" variant="secondary">Details</ns-button>
-      <ns-button onclick="nexsock.toggleManagement('{{ service.name }}')" size="small" variant="ghost">
+      <ns-button 
+        aria-label="View details for {{ service.name }}"
+        hx-get="/services/{{ service.name }}"
+        hx-push-url="/services/{{ service.name }}"
+        hx-swap="innerHTML"
+        hx-target="#page-content"
+        size="small"
+        variant="secondary">
+        Details
+      </ns-button>
+      <ns-button 
+        aria-label="Toggle management options for {{ service.name }}"
+        onclick="nexsock.toggleManagement('{{ service.name }}')"
+        size="small"
+        variant="ghost">
         ⚙️
       </ns-button>
     </div>
   </div>
 
-  <div class="service-card-management" id="management-{{ service.name }}" style="display: none;">
+  <div aria-label="Management options for {{ service.name }}" class="service-card-management" id="management-{{ service.name }}" role="region" style="display: none;">
     {% include "management.html" %}
   </div>
-</ns-card>
+</article>

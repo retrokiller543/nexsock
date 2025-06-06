@@ -7,19 +7,14 @@ import {showMessage} from '../ui/messages';
 import {closeModal} from '../ui/modals';
 import {closeAllDropdowns} from '../ui/dropdowns';
 import {restoreGitContentVisibility} from '../services/git-service';
-import {refreshConfigUI} from '../services/service-management';
+import {getThemeService, initializeThemeService} from '../services/theme-service';
 
 /**
  * Initialize the application when the DOM is loaded
  */
 export function initializeApp(): void {
-  // Initialize config UI for all services
-  document.querySelectorAll<HTMLElement>('[data-service-name]').forEach(element => {
-    const serviceName = element.getAttribute('data-service-name');
-    if (serviceName) {
-      refreshConfigUI(serviceName);
-    }
-  });
+  // Initialize theme service
+  initializeThemeService();
 
   // Restore git content visibility preferences
   restoreGitContentVisibility();
@@ -29,6 +24,16 @@ export function initializeApp(): void {
     const htmxEvent = event as HTMXEvent;
     console.error('HTMX Error:', htmxEvent.detail);
     showMessage('An error occurred while loading content', 'error');
+  });
+
+  // Handle navigation state changes
+  document.body.addEventListener('htmx:pushedIntoHistory', (event: Event) => {
+    // Just ensure theme is applied, don't re-initialize
+    const themeService = getThemeService();
+    if (themeService) {
+      const currentTheme = themeService.getCurrentTheme();
+      document.documentElement.setAttribute('data-theme', currentTheme);
+    }
   });
 
   // Add loading indicator for HTMX requests
@@ -47,6 +52,16 @@ export function initializeApp(): void {
 
     // Restore git content visibility after HTMX updates
     restoreGitContentVisibility();
+  });
+
+  // Handle content replacement and re-initialization
+  document.body.addEventListener('htmx:afterSettle', (event: Event) => {
+    // Ensure theme is properly applied to new content (don't re-initialize)
+    const themeService = getThemeService();
+    if (themeService) {
+      const currentTheme = themeService.getCurrentTheme();
+      document.documentElement.setAttribute('data-theme', currentTheme);
+    }
   });
 
   // Handle click outside modal to close

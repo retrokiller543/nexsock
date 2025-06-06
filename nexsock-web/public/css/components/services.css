@@ -26,12 +26,12 @@
 
 /* Service cards */
 .service-card {
-    background: white;
-    border: 1px solid var(--border-color);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .service-card:hover {
@@ -45,9 +45,11 @@
     margin-bottom: var(--spacing-md);
 }
 
-.service-card-header strong {
+.service-title {
     font-size: var(--font-size-lg);
     color: var(--text-primary);
+    margin: 0;
+    font-weight: 600;
 }
 
 .service-card-body {
@@ -58,11 +60,28 @@
 }
 
 .service-card-info {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-xs);
     flex: 1;
     font-size: var(--font-size-sm);
+}
+
+.service-card-info .info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.service-card-info .info-label {
     color: var(--text-secondary);
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.service-card-info .info-value {
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .service-card-actions {
@@ -75,7 +94,7 @@
 .service-card-management {
     margin-top: var(--spacing-md);
     padding-top: var(--spacing-md);
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--color-border);
 }
 
 /* Service page */
@@ -113,8 +132,8 @@
 }
 
 .service-details {
-    background: white;
-    border: 1px solid var(--border-color);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-xl);
 }
@@ -134,7 +153,7 @@
 .service-section {
     margin-top: var(--spacing-2xl);
     padding-top: var(--spacing-xl);
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--color-border);
 }
 
 .service-section:first-child {
@@ -156,7 +175,7 @@
 }
 
 .dependency-card {
-    background: #f8f9fa;
+    background: var(--color-surface-elevated);
     border-left: 4px solid var(--primary);
     border-radius: var(--border-radius-md);
     padding: var(--spacing-lg);
@@ -172,7 +191,7 @@
 .dependency-management {
     margin-top: var(--spacing-lg);
     padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--color-border);
 }
 
 /* Empty state */
@@ -189,17 +208,17 @@
 
 /* Management cards for service details */
 .management-card {
-    background: white;
-    border: 1px solid var(--border-color);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--border-radius-lg);
     margin-bottom: var(--spacing-lg);
     overflow: hidden;
 }
 
 .card-header {
-    background: var(--light-gray);
+    background: var(--color-surface-elevated);
     padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     justify-content: space-between;
     align-items: center;

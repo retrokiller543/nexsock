@@ -1,4 +1,4 @@
-import css from '../generated/components/NsBadge.css';
+import {css} from '../generated/components/NsBadge.css';
 
 interface NsBadgeProps {
   children?: any;

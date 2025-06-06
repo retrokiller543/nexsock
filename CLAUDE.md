@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+
 # Nexsock Architecture Documentation
 
 ## Overview
@@ -248,6 +254,15 @@ cargo test
 
 # Run specific crate tests
 cargo test -p nexsock-db
+
+# Run single test by name
+cargo test test_name
+
+# Run tests with output (especially useful for debugging)
+cargo test -- --nocapture
+
+# Run tests in specific file/module
+cargo test -p nexsock-db repository::test_service_crud
 ```
 
 ### Database Operations
@@ -278,6 +293,34 @@ cargo run --bin nexsock-web
 # Use CLI
 cargo run --bin nexsock -- help
 ```
+
+### Web Interface Development
+
+The web interface (`nexsock-web`) includes TypeScript/TSX support with component-based architecture:
+
+```bash
+# Build TypeScript/TSX to JavaScript (production)
+cd nexsock-web && bun run build
+
+# Build for development (with sourcemaps)
+cd nexsock-web && bun run build:dev
+
+# Watch mode for development
+cd nexsock-web && bun run watch
+
+# Type check without building
+cd nexsock-web && bun run check
+
+# Build with type checking
+cd nexsock-web && bun run build-check
+```
+
+**Web Tech Stack:**
+- **Build Tool**: Bun with TypeScript compilation
+- **Frontend Framework**: TSX with custom createElement function
+- **Dynamic Interactions**: HTMX
+- **CSS**: Scoped component styles with automatic class generation
+- **Component Architecture**: Modular components in `src-ts/components/`
 
 ### CI/CD Pipeline
 

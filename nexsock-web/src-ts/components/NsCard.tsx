@@ -1,4 +1,4 @@
-import css from '../generated/components/NsCard.css';
+import {css} from '../generated/components/NsCard.css';
 
 interface NsCardProps {
   children?: any;

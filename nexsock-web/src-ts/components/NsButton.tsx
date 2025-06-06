@@ -1,4 +1,4 @@
-import css from '../generated/components/NsButton.css';
+import {css} from '../generated/components/NsButton.css';
 
 interface NsButtonProps {
   children?: any;

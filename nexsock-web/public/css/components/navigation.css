@@ -1,11 +1,13 @@
 /* Navigation components */
 .navbar {
-    background: white;
-    box-shadow: var(--shadow-md);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
     padding: var(--spacing-lg) 0;
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .nav-content {
@@ -35,6 +37,7 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    align-items: center;
 }
 
 .nav-item {
@@ -73,6 +76,39 @@
     margin-right: var(--spacing-xs);
 }
 
+/* Theme selector */
+.theme-selector {
+    margin-left: var(--spacing-md);
+}
+
+.theme-toggle {
+    background: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    min-width: 40px;
+    height: 40px;
+}
+
+.theme-toggle:hover {
+    background: var(--color-surface-elevated);
+    border-color: var(--primary);
+}
+
+.theme-icon {
+    font-size: 1.2rem;
+    transition: transform var(--transition-fast);
+}
+
+.theme-toggle:hover .theme-icon {
+    transform: scale(1.1);
+}
+
 /* Mobile navigation */
 @media (max-width: 768px) {
     .nav-content {
@@ -83,5 +119,11 @@
     
     .nav-links {
         gap: var(--spacing-lg);
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .theme-selector {
+        margin-left: 0;
     }
 }

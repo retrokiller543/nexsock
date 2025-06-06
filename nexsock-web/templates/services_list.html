@@ -1,25 +1,39 @@
-<div class="services-container">
-  <div class="services-header">
+<main class="services-container" role="main">
+  <header class="services-header">
     <h1>Service Management</h1>
-    <ns-button href="/add-service" variant="primary">
+    <ns-button 
+      aria-label="Add a new service"
+      hx-get="/add-service"
+      hx-push-url="/add-service"
+      hx-swap="innerHTML"
+      hx-target="#page-content"
+      variant="primary">
       Add Service
     </ns-button>
-  </div>
+  </header>
 
   {% if services_list.services %}
-  <div class="service-grid">
+  <section aria-label="Service list" class="service-grid" role="region">
     {% for service in services_list.services %}
     {% include "service_basic.html" %}
     {% endfor %}
-  </div>
+  </section>
   {% else %}
-  <ns-card subtitle="Get started by adding your first service" title="No Services">
-    <p>No services configured yet.</p>
-    <div style="margin-top: 16px;">
-      <ns-button href="/add-service" variant="primary">
-        Add Your First Service
-      </ns-button>
-    </div>
-  </ns-card>
+  <section aria-label="No services message" class="empty-state" role="region">
+    <ns-card subtitle="Get started by adding your first service" title="No Services">
+      <p>No services configured yet.</p>
+      <div style="margin-top: 16px;">
+        <ns-button 
+          aria-label="Add your first service"
+          hx-get="/add-service"
+          hx-push-url="/add-service"
+          hx-swap="innerHTML"
+          hx-target="#page-content"
+          variant="primary">
+          Add Your First Service
+        </ns-button>
+      </div>
+    </ns-card>
+  </section>
   {% endif %}
-</div>
+</main>

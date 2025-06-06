@@ -16,6 +16,14 @@ export function createWebComponent(
   tagName: string,
   definition: ComponentDefinition
 ): void {
+  // Inject CSS if provided
+  if (definition.css && !document.querySelector(`style[data-component="${tagName}"]`)) {
+    const style = document.createElement('style');
+    style.textContent = definition.css;
+    style.setAttribute('data-component', tagName);
+    document.head.appendChild(style);
+  }
+
   class JSXWebComponent extends HTMLElement {
     private mounted = false;
     
