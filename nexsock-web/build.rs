@@ -1,5 +1,7 @@
 use rust_embed::RustEmbed;
 use std::error::Error;
+use std::path::Path;
+use std::process::Command;
 use tera::Tera;
 
 #[derive(RustEmbed)]
@@ -14,6 +16,8 @@ enum BuildError {
         error: std::str::Utf8Error,
     },
     TemplateNotFound(String),
+    TypeScriptCompilationError(String),
+    IoError(std::io::Error),
 }
 
 impl std::fmt::Display for BuildError {
@@ -30,6 +34,10 @@ impl std::fmt::Display for BuildError {
                     file
                 )
             }
+            BuildError::TypeScriptCompilationError(msg) => {
+                write!(f, "TypeScript compilation error: {}", msg)
+            }
+            BuildError::IoError(e) => write!(f, "I/O error: {}", e),
         }
     }
 }
@@ -40,6 +48,8 @@ impl std::error::Error for BuildError {
             BuildError::TeraError(e) => Some(e),
             BuildError::Utf8Error { error, .. } => Some(error),
             BuildError::TemplateNotFound(_) => None,
+            BuildError::TypeScriptCompilationError(_) => None,
+            BuildError::IoError(e) => Some(e),
         }
     }
 }
@@ -47,6 +57,12 @@ impl std::error::Error for BuildError {
 impl From<tera::Error> for BuildError {
     fn from(error: tera::Error) -> Self {
         BuildError::TeraError(error)
+    }
+}
+
+impl From<std::io::Error> for BuildError {
+    fn from(error: std::io::Error) -> Self {
+        BuildError::IoError(error)
     }
 }
 
@@ -78,12 +94,87 @@ fn load_templates(tera: &mut Tera) -> Result<(), BuildError> {
     Ok(())
 }
 
+fn ensure_node_modules_exists() -> Result<(), BuildError> {
+    if !Path::new("node_modules").exists() {
+        println!("cargo:warning=node_modules not found, running bun install...");
+        let output = Command::new("bun")
+            .args(&["install"])
+            .output()
+            .map_err(|e| {
+                BuildError::TypeScriptCompilationError(format!("Failed to run bun install: {}", e))
+            })?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(BuildError::TypeScriptCompilationError(format!(
+                "bun install failed: {}",
+                stderr
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn compile_typescript() -> Result<(), BuildError> {
+    #[cfg(debug_assertions)]
+    println!("cargo:warning=Compiling TypeScript...");
+
+    // Ensure we have node_modules
+    ensure_node_modules_exists()?;
+
+    // Check if the TypeScript source exists
+    if !Path::new("src-ts").exists() {
+        println!("cargo:warning=No TypeScript source directory found, skipping TS compilation");
+        return Ok(());
+    }
+
+    // Use Bun's native build command to bundle TypeScript directly
+    let output = Command::new("bun")
+        .args(&[
+            "build",
+            "src-ts/main.ts",
+            "--outdir=public/js",
+            "--target=browser",
+            "--format=iife",
+            "--minify",
+            "--sourcemap",
+            "--outfile=public/js/main.min.js",
+        ])
+        .output()
+        .map_err(|e| {
+            BuildError::TypeScriptCompilationError(format!("Failed to run bun build: {}", e))
+        })?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(BuildError::TypeScriptCompilationError(format!(
+            "Bun build failed: {}",
+            stderr
+        )));
+    }
+
+    #[cfg(debug_assertions)]
+    println!("cargo:warning=TypeScript bundling and optimization completed successfully");
+    Ok(())
+}
+
 fn main() {
     println!("cargo:rerun-if-changed=templates");
     println!("cargo:rerun-if-changed=public");
+    println!("cargo:rerun-if-changed=src-ts");
+    println!("cargo:rerun-if-changed=package.json");
+    println!("cargo:rerun-if-changed=tsconfig.json");
+
+    // Compile TypeScript first
+    if let Err(e) = compile_typescript() {
+        eprintln!("TypeScript compilation error: {}", e);
+        // Don't panic for TS errors in development, just warn
+        println!("cargo:warning=TypeScript compilation failed: {}", e);
+    }
 
     match create_tera_env() {
         Ok(_) => {
+            #[cfg(debug_assertions)]
             println!("cargo:warning=Template compilation successful");
         }
         Err(e) => {
