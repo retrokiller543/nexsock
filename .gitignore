@@ -4,5 +4,4 @@
 *.log
 /logs
 /node_modules
-*.min.js.*
-*.js.map
+/nexsock-web/node_modules/

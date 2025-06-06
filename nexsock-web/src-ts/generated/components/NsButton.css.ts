@@ -1,0 +1,110 @@
+// Auto-generated CSS module for src-ts/components/NsButton.css
+export const css = `.ns-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  user-select: none;
+  min-height: 36px;
+  gap: 6px;
+}
+
+.ns-button:focus {
+  outline: 2px solid var(--focus-color, #3b82f6);
+  outline-offset: 2px;
+}
+
+.ns-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Variants */
+.ns-button.primary {
+  background-color: var(--primary-color, #3b82f6);
+  color: white;
+}
+
+.ns-button.primary:hover:not(:disabled) {
+  background-color: var(--primary-hover, #2563eb);
+  transform: translateY(-1px);
+}
+
+.ns-button.secondary {
+  background-color: var(--secondary-bg, #f3f4f6);
+  color: var(--secondary-color, #374151);
+  border: 1px solid var(--secondary-border, #d1d5db);
+}
+
+.ns-button.secondary:hover:not(:disabled) {
+  background-color: var(--secondary-hover, #e5e7eb);
+  border-color: var(--secondary-border-hover, #9ca3af);
+}
+
+.ns-button.danger {
+  background-color: var(--danger-color, #ef4444);
+  color: white;
+}
+
+.ns-button.danger:hover:not(:disabled) {
+  background-color: var(--danger-hover, #dc2626);
+  transform: translateY(-1px);
+}
+
+.ns-button.ghost {
+  background-color: transparent;
+  color: var(--ghost-color, #6b7280);
+  border: 1px solid transparent;
+}
+
+.ns-button.ghost:hover:not(:disabled) {
+  background-color: var(--ghost-hover, #f9fafb);
+  color: var(--ghost-color-hover, #374151);
+}
+
+/* Sizes */
+.ns-button.small {
+  padding: 4px 12px;
+  font-size: 12px;
+  min-height: 28px;
+}
+
+.ns-button.large {
+  padding: 12px 24px;
+  font-size: 16px;
+  min-height: 44px;
+}
+
+/* Loading state */
+.ns-button.loading {
+  position: relative;
+  color: transparent;
+}
+
+.ns-button.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.8s linear infinite;
+  color: inherit;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}`;
+export default css;

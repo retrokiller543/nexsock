@@ -1,9 +1,9 @@
 <div class="services-container">
   <div class="services-header">
     <h1>Service Management</h1>
-    <a class="button button-primary" href="/add-service">
+    <ns-button href="/add-service" variant="primary">
       Add Service
-    </a>
+    </ns-button>
   </div>
 
   {% if services_list.services %}
@@ -13,11 +13,13 @@
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-state">
+  <ns-card subtitle="Get started by adding your first service" title="No Services">
     <p>No services configured yet.</p>
-    <a class="button button-primary" href="/add-service">
-      Add Your First Service
-    </a>
-  </div>
+    <div style="margin-top: 16px;">
+      <ns-button href="/add-service" variant="primary">
+        Add Your First Service
+      </ns-button>
+    </div>
+  </ns-card>
   {% endif %}
 </div>

@@ -8,7 +8,11 @@ pub enum BuildError {
         error: std::str::Utf8Error,
     },
     TemplateNotFound(String),
-    TypeScriptCompilationError(String),
+    TypeScriptCompilationError {
+        msg: String,
+        stdout: Option<String>,
+        stderr: Option<String>,
+    },
     IoError(std::io::Error),
 }
 
@@ -26,9 +30,18 @@ impl std::fmt::Display for BuildError {
                     file
                 )
             }
-            BuildError::TypeScriptCompilationError(msg) => {
-                write!(f, "TypeScript compilation error: {}", msg)
-            }
+            BuildError::TypeScriptCompilationError {
+                msg,
+                stdout,
+                stderr,
+            } => writeln!(f, "TypeScript compilation error: {}", msg).and_then(|_| {
+                match (stdout, stderr) {
+                    (Some(out), Some(err)) => write!(f, "stdout: {}\nstderr: {}", out, err),
+                    (Some(out), None) => write!(f, "stdout: {}", out),
+                    (None, Some(err)) => write!(f, "stderr: {}", err),
+                    (None, None) => Ok(()),
+                }
+            }),
             BuildError::IoError(e) => write!(f, "I/O error: {}", e),
         }
     }
@@ -40,7 +53,7 @@ impl Error for BuildError {
             BuildError::TeraError(e) => Some(e),
             BuildError::Utf8Error { error, .. } => Some(error),
             BuildError::TemplateNotFound(_) => None,
-            BuildError::TypeScriptCompilationError(_) => None,
+            BuildError::TypeScriptCompilationError { .. } => None,
             BuildError::IoError(e) => Some(e),
         }
     }

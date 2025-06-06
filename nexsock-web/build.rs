@@ -14,6 +14,7 @@ fn main() {
     if let Err(e) = compile_typescript() {
         eprintln!("TypeScript compilation error: {}", e);
         println!("cargo:warning=TypeScript compilation failed: {}", e);
+        panic!("Failed to compile TypeScript: {}", e);
     }
 
     match create_tera_env() {
