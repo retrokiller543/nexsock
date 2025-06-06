@@ -3,3 +3,6 @@
 *.db-*
 *.log
 /logs
+/node_modules
+*.min.js.*
+*.js.map

@@ -4,6 +4,7 @@
  */
 
 import {HTMXEvent, MessageType, NexsockAPI, ServiceConfig, ServiceConfigs, STORAGE_KEYS} from './types.js';
+import {createServiceCard} from "./example.tsx";
 
 // ===============================================
 // Configuration Management with localStorage
@@ -529,3 +530,14 @@ const nexsockAPI: NexsockAPI = {
 
 // Make API available globally
 window.nexsock = nexsockAPI;
+window.createServiceCard = createServiceCard;
+
+// Test function for TSX functionality
+window.testTSX = function() {
+  const container = document.getElementById('tsx-test-container');
+  if (container) {
+    const serviceCard = createServiceCard('Test Service', 'running', 3000);
+    container.appendChild(serviceCard);
+    console.log('TSX test executed successfully!');
+  }
+};

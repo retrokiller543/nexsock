@@ -5,6 +5,9 @@
     "moduleResolution": "node",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "allowJs": true,
+    "jsx": "react",
+    "jsxFactory": "createElement",
+    "jsxFragmentFactory": "Fragment",
     "outDir": "./public/js",
     "rootDir": "./src-ts",
     "strict": true,
@@ -28,7 +31,8 @@
     "exactOptionalPropertyTypes": true
   },
   "include": [
-    "src-ts/**/*"
+    "src-ts/**/*",
+    "src-ts/**/*.tsx"
   ],
   "exclude": [
     "node_modules",
