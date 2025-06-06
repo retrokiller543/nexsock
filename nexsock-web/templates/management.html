@@ -1,95 +1,128 @@
-<div class="management-section">
-    {% if service.state == "Running" %}
-    <button class="button button-warning"
-            hx-on::after-request="refreshView(this)"
-            hx-post="/services/{{ service.name }}/stop"
-            hx-swap="outerHTML"
-            hx-target="closest .management-section"
-            hx-trigger="click">
-        Stop Service
-    </button>
-    {% else %}
-    <!-- Git Repository Section -->
-    <div class="git-section-container" 
-         hx-get="/api/templates/git-section?service={{ service.name }}"
-         hx-trigger="load">
-        <div class="loading-container">
-            <div class="loading">
-                <span class="spinner"></span>
-                Loading git information...
-            </div>
+{% if service.state == "Running" %}
+<!-- Running Service Controls -->
+<div class="management-card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <span class="icon">🚦</span>
+            Service Control
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="service-control-actions">
+            <button class="button button-warning"
+                    hx-on::after-request="refreshView(this)"
+                    hx-post="/services/{{ service.name }}/stop"
+                    hx-swap="outerHTML"
+                    hx-target="closest .service-control-section"
+                    hx-trigger="click">
+                ⏹️ Stop Service
+            </button>
+            <button class="button button-secondary"
+                    hx-on::after-request="refreshView(this)"
+                    hx-post="/services/{{ service.name }}/restart"
+                    hx-swap="outerHTML"
+                    hx-target="closest .service-control-section"
+                    hx-trigger="click">
+                🔄 Restart Service
+            </button>
         </div>
     </div>
-    
-    <!-- Configuration Templates Section -->
-    <div class="config-section" 
-         data-service-name="{{ service.name }}"
-         hx-get="/api/templates/config-section?service={{ service.name }}"
-         hx-trigger="load">
-        <div class="loading-container">
-            <div class="loading">
-                <span class="spinner"></span>
-                Loading configuration options...
-            </div>
-        </div>
-    </div>
-    
-    <div class="management-card">
-        <div class="card-header">
-            <h3 class="card-title">
-                <span class="icon">🔧</span>
-                Environment Variables
-            </h3>
-            <div class="card-actions">
-                <button class="button button-secondary button-sm"
-                        hx-get="/api/templates/env-var-pair"
-                        hx-swap="beforeend"
-                        hx-target="#env-vars-{{ service.name }}"
-                        hx-trigger="click"
-                        type="button">
-                    ➕ Add Variable
-                </button>
-            </div>
-        </div>
-        
-        <div class="card-body">
-            <div class="env-list" id="env-vars-{{ service.name }}">
-                <div class="env-var-pair">
-                    <input class="form-input" name="env_key" placeholder="Key" type="text">
-                    <input class="form-input" name="env_value" placeholder="Value" type="text">
-                    <button class="button button-icon"
-                            hx-swap="outerHTML"
-                            hx-target="closest .env-var-pair"
-                            hx-trigger="click"
-                            type="button">×</button>
-                </div>
-            </div>
-            
-            <div class="env-actions">
-                <button class="button button-primary"
-                        hx-include="#env-vars-{{ service.name }} input"
-                        hx-on::after-request="refreshView(this)"
-                        hx-post="/services/{{ service.name }}/start"
-                        hx-swap="outerHTML"
-                        hx-target="closest .management-section"
-                        hx-trigger="click">
-                    🚀 Start Service
-                </button>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+</div>
 
-    <div class="danger-zone">
-        <h4 class="section-subtitle">Danger Zone</h4>
+<div class="management-card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <span class="icon">🗑️</span>
+            Remove Service
+        </h3>
+    </div>
+    <div class="card-body">
+        <p class="text-secondary mb-3">Permanently remove this service and all its configuration.</p>
         <button class="button button-danger"
                 hx-confirm="Are you sure you want to remove {{ service.name }}? This action cannot be undone."
                 hx-delete="/api/services/{{ service.name }}"
-                hx-on::after-request="refreshView(this)"
-                hx-swap="outerHTML"
-                hx-target="closest .management-section"
+                hx-on::after-request="window.location.href = '/'"
                 hx-trigger="click">
-            Remove Service
+            🗑️ Remove Service
         </button>
     </div>
 </div>
+
+{% else %}
+<!-- Configuration and Startup Controls -->
+<div class="config-section" 
+     data-service-name="{{ service.name }}"
+     hx-get="/api/templates/config-section?service={{ service.name }}"
+     hx-trigger="load">
+    <div class="loading-container">
+        <div class="loading">
+            <span class="spinner"></span>
+            Loading configuration options...
+        </div>
+    </div>
+</div>
+
+<div class="management-card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <span class="icon">🔧</span>
+            Environment Variables
+        </h3>
+        <div class="card-actions">
+            <button class="button button-secondary button-sm"
+                    hx-get="/api/templates/env-var-pair"
+                    hx-swap="beforeend"
+                    hx-target="#env-vars-{{ service.name }}"
+                    hx-trigger="click"
+                    type="button">
+                ➕ Add Variable
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        <div class="env-list" id="env-vars-{{ service.name }}">
+            <div class="env-var-pair">
+                <input class="form-input" name="env_key" placeholder="Key" type="text">
+                <input class="form-input" name="env_value" placeholder="Value" type="text">
+                <button class="button button-icon"
+                        hx-swap="outerHTML"
+                        hx-target="closest .env-var-pair"
+                        hx-trigger="click"
+                        type="button">×</button>
+            </div>
+        </div>
+        
+        <div class="env-actions">
+            <button class="button button-primary"
+                    hx-include="#env-vars-{{ service.name }} input"
+                    hx-on::after-request="refreshView(this)"
+                    hx-post="/services/{{ service.name }}/start"
+                    hx-swap="outerHTML"
+                    hx-target="closest .service-config-section"
+                    hx-trigger="click">
+                🚀 Start Service
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="management-card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <span class="icon">🗑️</span>
+            Remove Service
+        </h3>
+    </div>
+    <div class="card-body">
+        <p class="text-secondary mb-3">Permanently remove this service and all its configuration.</p>
+        <button class="button button-danger"
+                hx-confirm="Are you sure you want to remove {{ service.name }}? This action cannot be undone."
+                hx-delete="/api/services/{{ service.name }}"
+                hx-on::after-request="window.location.href = '/'"
+                hx-trigger="click">
+            🗑️ Remove Service
+        </button>
+    </div>
+</div>
+{% endif %}

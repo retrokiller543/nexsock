@@ -11,9 +11,30 @@
               hx-target="#git-section">
         🔄 Refresh
       </button>
-      <button class="button button-secondary button-sm" onclick="nexsock.showGitModal('{{ git.service_name }}')">
-        ⚙️ More Actions
-      </button>
+      <div class="dropdown" id="git-actions-{{ git.service_name }}">
+        <button class="dropdown-toggle button button-secondary button-sm" onclick="nexsock.toggleDropdown('git-actions-{{ git.service_name }}')">
+          ⚙️ More Actions
+        </button>
+        <div class="dropdown-menu">
+          <button class="dropdown-item"
+                  hx-on::after-request="nexsock.refreshGitSection('{{ git.service_name }}')"
+                  hx-post="/api/services/{{ git.service_name }}/git/pull"
+                  hx-swap="none">
+            📥 Pull Changes
+          </button>
+          <button class="dropdown-item"
+                  hx-on::after-request="nexsock.refreshGitSection('{{ git.service_name }}')"
+                  hx-post="/api/services/{{ git.service_name }}/git/fetch"
+                  hx-swap="none">
+            🔄 Fetch
+          </button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item"
+                  onclick="nexsock.showMessage('Git operations coming soon', 'info')">
+            🔧 Advanced Options
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   

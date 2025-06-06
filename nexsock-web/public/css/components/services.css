@@ -29,7 +29,7 @@
     background: white;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
     transition: box-shadow var(--transition-fast);
 }
@@ -42,7 +42,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
 }
 
 .service-card-header strong {
@@ -54,24 +54,27 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
 }
 
 .service-card-info {
     display: grid;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
 }
 
 .service-card-actions {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     flex-shrink: 0;
+    align-items: center;
 }
 
 .service-card-management {
-    margin-top: var(--spacing-lg);
-    padding-top: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
     border-top: 1px solid var(--border-color);
 }
 
@@ -189,7 +192,7 @@
     background: white;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
     overflow: hidden;
 }
 
@@ -316,6 +319,85 @@
     min-height: 200px;
     background: white;
     border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+}
+
+/* Collapsible content */
+.collapsible-content {
+    transition: all var(--transition-normal);
+    max-height: 500px;
+    overflow: hidden;
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* Git section headers */
+.git-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.git-section-header h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+}
+
+.git-section-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+/* Service sections styling */
+.service-section {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.service-section h2 {
+    color: var(--text-primary);
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--light-gray);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.service-info-section .management-card {
+    background: var(--light-gray);
+}
+
+.service-control-section .management-card:first-child {
+    border-left: 4px solid var(--success);
+}
+
+.service-config-section .management-card:first-child {
+    border-left: 4px solid var(--primary);
+}
+
+.service-git-section .management-card {
+    border-left: 4px solid var(--warning);
+}
+
+.service-dependencies-section .management-card {
+    border-left: 4px solid var(--info);
+}
+
+/* Service control actions */
+.service-control-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
 }
 
 /* Responsive */

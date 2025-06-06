@@ -102,17 +102,21 @@
 }
 
 .button-icon {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-xl);
+    padding: var(--spacing-xs);
+    font-size: var(--font-size-lg);
     line-height: 1;
-    background: var(--light-gray);
+    background: transparent;
     color: var(--text-secondary);
     border-radius: var(--border-radius-sm);
+    border: 1px solid transparent;
+    min-width: 32px;
+    min-height: 32px;
 }
 
 .button-icon:hover:not(:disabled) {
-    background: #e5e5e5;
+    background: var(--light-gray);
     color: var(--text-primary);
+    border-color: var(--border-color);
 }
 
 /* Button groups */

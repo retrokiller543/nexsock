@@ -11,6 +11,8 @@
 @import 'components/forms.css';
 @import 'components/status.css';
 @import 'components/alerts.css';
+@import 'components/modal.css';
+@import 'components/dropdown.css';
 
 /* Layout components */
 .footer {
@@ -69,6 +71,8 @@
 .pb-0 { padding-bottom: 0; }
 .pl-0 { padding-left: 0; }
 .pr-0 { padding-right: 0; }
+
+.mb-3 { margin-bottom: var(--spacing-lg); }
 
 /* HTMX specific styles */
 .htmx-indicator {

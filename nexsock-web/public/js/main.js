@@ -120,6 +120,25 @@ function applyEnvVarsToForm(serviceName, envVars) {
 }
 
 /**
+ * Clears all current environment variables
+ * @param {string} serviceName - The name of the service
+ */
+function clearCurrentEnvVars(serviceName) {
+    const container = document.getElementById(`env-vars-${serviceName}`);
+    if (!container) return;
+    
+    if (confirm('Clear all current environment variables?')) {
+        container.innerHTML = '';
+        // Add one empty pair
+        htmx.ajax('GET', '/api/templates/env-var-pair', {
+            target: `#env-vars-${serviceName}`,
+            swap: 'beforeend'
+        });
+        showMessage('Environment variables cleared', 'info');
+    }
+}
+
+/**
  * Loads a configuration from selection
  * @param {string} serviceName - The name of the service
  * @param {string} configName - The name of the configuration to load
@@ -375,6 +394,72 @@ function refreshGitSection(serviceName) {
     });
 }
 
+/**
+ * Toggles git content visibility (commits or branches)
+ * @param {string} contentId - The ID of the content to toggle
+ */
+function toggleGitContent(contentId) {
+    const content = document.getElementById(contentId);
+    if (!content) return;
+    
+    content.classList.toggle('collapsed');
+    
+    // Update local storage to remember user preference
+    const isCollapsed = content.classList.contains('collapsed');
+    localStorage.setItem(`git_${contentId}_collapsed`, isCollapsed);
+}
+
+/**
+ * Restores git content visibility from user preferences
+ */
+function restoreGitContentVisibility() {
+    // Restore commits visibility
+    const commitsCollapsed = localStorage.getItem('git_git-commits-list_collapsed') === 'true';
+    const commitsList = document.getElementById('git-commits-list');
+    if (commitsList && commitsCollapsed) {
+        commitsList.classList.add('collapsed');
+    }
+    
+    // Restore branches visibility
+    const branchesCollapsed = localStorage.getItem('git_git-branches-list_collapsed') === 'true';
+    const branchesList = document.getElementById('git-branches-list');
+    if (branchesList && branchesCollapsed) {
+        branchesList.classList.add('collapsed');
+    }
+}
+
+// ===============================================
+// Dropdown Management
+// ===============================================
+
+/**
+ * Toggles dropdown menu visibility
+ * @param {string} dropdownId - The ID of the dropdown element
+ */
+function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+    
+    // Close all other dropdowns first
+    document.querySelectorAll('.dropdown.active').forEach(dd => {
+        if (dd.id !== dropdownId) {
+            dd.classList.remove('active');
+        }
+    });
+    
+    // Toggle this dropdown
+    dropdown.classList.toggle('active');
+}
+
+/**
+ * Closes all open dropdowns
+ */
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+        dropdown.classList.remove('active');
+    });
+}
+
 // ===============================================
 // Initialization and Event Handling
 // ===============================================
@@ -386,6 +471,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const serviceName = element.getAttribute('data-service-name');
         refreshConfigUI(serviceName);
     });
+    
+    // Restore git content visibility preferences
+    restoreGitContentVisibility();
     
     // Add global error handler for HTMX
     document.body.addEventListener('htmx:responseError', function(event) {
@@ -406,6 +494,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (target.classList.contains('button')) {
             target.classList.remove('button-loading');
         }
+        
+        // Restore git content visibility after HTMX updates
+        restoreGitContentVisibility();
     });
 });
 
@@ -414,12 +505,18 @@ document.addEventListener('click', function(event) {
     if (event.target.classList.contains('modal-overlay')) {
         closeModal();
     }
+    
+    // Close dropdowns when clicking outside
+    if (!event.target.closest('.dropdown')) {
+        closeAllDropdowns();
+    }
 });
 
-// Handle ESC key to close modal
+// Handle ESC key to close modal and dropdowns
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeModal();
+        closeAllDropdowns();
     }
 });
 
@@ -441,5 +538,10 @@ window.nexsock = {
     confirmRemove,
     showGitTab,
     createNewBranch,
-    refreshGitSection
+    refreshGitSection,
+    toggleDropdown,
+    closeAllDropdowns,
+    clearCurrentEnvVars,
+    toggleGitContent,
+    restoreGitContentVisibility
 };

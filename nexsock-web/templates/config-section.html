@@ -8,9 +8,28 @@
             <button class="button button-secondary button-sm" onclick="nexsock.showSaveConfigModal('{{ service }}')">
                 💾 Save Current
             </button>
-            <button class="button button-secondary button-sm" onclick="nexsock.showConfigManagementModal('{{ service }}')">
-                📋 Manage
-            </button>
+            <div class="dropdown" id="config-actions-{{ service }}">
+                <button class="dropdown-toggle button button-secondary button-sm" onclick="nexsock.toggleDropdown('config-actions-{{ service }}')">
+                    📋 Manage
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item"
+                            hx-get="/api/templates/config-modal?service={{ service }}"
+                            hx-swap="beforeend"
+                            hx-target="body">
+                        📋 View All Configs
+                    </button>
+                    <button class="dropdown-item"
+                            onclick="nexsock.clearCurrentEnvVars('{{ service }}')">
+                        🗑️ Clear Current
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item"
+                            onclick="nexsock.showMessage('Export/Import coming soon', 'info')">
+                        📤 Export/Import
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     

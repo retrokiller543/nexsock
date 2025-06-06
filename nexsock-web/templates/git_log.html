@@ -2,7 +2,7 @@
   <div class="git-section-header">
     <h4>Recent Commits</h4>
     <div class="git-section-actions">
-      <button class="button-secondary"
+      <button class="button button-secondary button-sm"
               hx-confirm="Pull latest changes from remote?"
               hx-get="/api/services/{{ log.service_name }}/git/pull"
               hx-swap="outerHTML"
@@ -10,10 +10,15 @@
         <span class="icon">⬇️</span>
         Pull
       </button>
+      <button class="button button-icon"
+              onclick="nexsock.toggleGitContent('git-commits-list')"
+              title="Toggle commits visibility">
+        📋
+      </button>
     </div>
   </div>
 
-  <div class="git-commits-list" id="git-commits-list">
+  <div class="git-commits-list collapsible-content" id="git-commits-list">
     {% for commit in log.commits %}
     <div class="git-commit-item">
       <div class="git-commit-header">
@@ -23,7 +28,7 @@
       </div>
       <div class="git-commit-message">{{ commit.message | truncate(length=100) }}</div>
       <div class="git-commit-actions">
-        <button class="button-small"
+        <button class="button button-secondary button-sm"
                 hx-confirm="Checkout commit {{ commit.hash | truncate(length=8) }}? This will put you in detached HEAD state."
                 hx-post="/api/services/{{ log.service_name }}/git/checkout/commit"
                 hx-swap="outerHTML"

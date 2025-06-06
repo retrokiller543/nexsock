@@ -6,10 +6,16 @@
     --success: #28a745;
     --danger: #dc3545;
     --warning: #ffc107;
+    --info: #17a2b8;
     --light-gray: #f0f0f0;
     --border-color: #ddd;
     --text-primary: #333;
     --text-secondary: #666;
+    
+    /* Surface colors */
+    --color-surface: #ffffff;
+    --color-surface-elevated: #f8f9fa;
+    --color-surface-hover: #f5f5f5;
     
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -23,6 +29,7 @@
     --font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --font-size-sm: 0.75rem;
     --font-size-base: 0.875rem;
+    --font-size-md: 0.9rem;
     --font-size-lg: 1rem;
     --font-size-xl: 1.25rem;
     --font-size-2xl: 1.5rem;
