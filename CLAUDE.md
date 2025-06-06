@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Nexsock Architecture Documentation
 
 ## Overview
@@ -25,6 +29,7 @@ nexsock/
 ├── nexsock-example-plugin/    # Example plugin implementation
 ├── nexsock-plugins/           # Plugin system (Lua + Native)
 ├── nexsock-protocol/          # Communication protocol definitions
+├── nexsock-testing/           # Testing infrastructure and utilities
 ├── nexsock-utils/             # Shared utilities
 └── nexsock-web/               # Web interface (Axum)
 ```
@@ -274,6 +279,29 @@ cargo run --bin nexsock-web
 cargo run --bin nexsock -- help
 ```
 
+### CI/CD Pipeline
+
+**GitHub Actions** (`/.github/workflows/test.yml`):
+- **Platform Matrix**: Linux (x86_64, aarch64), macOS (x86_64, aarch64), Windows (x86_64)
+- **Feature Testing**: Default + jemalloc feature combinations
+- **Quality Gates**: `cargo fmt`, `cargo clippy`, security audit (`cargo-audit`)
+- **Cross-compilation**: Automated toolchain setup
+
+**Quality Commands**
+```bash
+# Code formatting
+cargo fmt --all -- --check
+
+# Linting 
+cargo clippy --all-targets --all-features
+
+# Security audit
+cargo audit
+
+# Run all quality checks
+cargo fmt --all -- --check && cargo clippy --all-targets --all-features && cargo audit
+```
+
 ### Distribution
 
 Uses cargo-dist for cross-platform releases:
@@ -284,12 +312,14 @@ Uses cargo-dist for cross-platform releases:
 
 ## Testing Strategy
 
-### Database Testing
+### Testing Infrastructure (nexsock-testing crate)
 
-**In-Memory SQLite**
-- Fast test execution
-- Isolated test environments
-- Full migration testing
+**Comprehensive Testing Framework**
+- **Testing Macros**: `test_async!`, `test_with_db!`, `test_with_fixtures!`
+- **Database Testing**: In-memory SQLite with full migrations
+- **Service Fixtures**: Builder pattern for test data creation (`ServiceFixtureBuilder`)
+- **Mock Framework**: Process managers, protocol handlers, daemon state
+- **Cross-platform Process Testing**: Command execution with timeouts
 
 **Test Structure**
 ```rust
@@ -298,7 +328,21 @@ pub async fn setup_in_memory_db() -> DatabaseConnection {
     // Creates :memory: SQLite database
     // Runs migrations automatically
 }
+
+// Fixture builders for consistent test data
+let service = ServiceFixtureBuilder::new()
+    .with_name("test-service")
+    .with_port(8080)
+    .build(&db)
+    .await?;
 ```
+
+### Database Testing
+
+**In-Memory SQLite**
+- Fast test execution
+- Isolated test environments
+- Full migration testing
 
 **Repository Testing**
 - Unit tests for each repository
@@ -406,7 +450,15 @@ pub struct NexsockConfig {
 
 ### Error Propagation
 
-Uses `anyhow::Error` for error chaining with detailed context information throughout the stack.
+**Current State**: Heavy use of `anyhow::Error` as catch-all throughout the stack.
+
+**Recommended Approach**: Prefer typed errors with `thiserror::Error` for:
+- Explicit error handling and better API design
+- Specific error variants that callers can handle programmatically  
+- Better debugging and testing capabilities
+- Proper error serialization for client communication
+
+Only use `anyhow::Error` for prototyping or when error types genuinely cannot be known at compile time.
 
 ## Future Architecture Considerations
 

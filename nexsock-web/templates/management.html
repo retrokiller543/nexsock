@@ -9,6 +9,14 @@
         Stop Service
     </button>
     {% else %}
+    <!-- Configuration Templates Section -->
+    <div class="config-section" 
+         data-service-name="{{ service.name }}"
+         hx-get="/api/templates/config-section?service={{ service.name }}"
+         hx-trigger="load">
+        Loading configuration options...
+    </div>
+    
     <div class="env-section">
         <div class="env-container">
             <h4 class="section-subtitle">Environment Variables</h4>
@@ -31,7 +39,7 @@
                         hx-trigger="click"
                         type="button">
                     Add Variable
-                </button> <!--TODO: Make this function-->
+                </button>
                 <button class="button button-primary"
                         hx-include="#env-vars-{{ service.name }} input"
                         hx-on::after-request="refreshView(this)"

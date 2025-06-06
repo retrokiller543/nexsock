@@ -1,0 +1,13 @@
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Manage Configurations - {{ service }}</h3>
+            <button class="button button-icon" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" 
+             hx-get="/api/templates/config-modal-content?service={{ service }}"
+             hx-trigger="load">
+            Loading...
+        </div>
+    </div>
+</div>

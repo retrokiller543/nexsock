@@ -1,0 +1,12 @@
+<div class="config-section" id="config-section-{{ service }}">
+    <h4 class="section-subtitle">Configuration Templates</h4>
+    <div class="config-controls">
+        <select class="form-input" id="config-dropdown-{{ service }}" onchange="loadConfigFromSelection('{{ service }}', this.value)">
+            <option value="">Select a saved configuration...</option>
+        </select>
+        <div class="config-actions">
+            <button class="button button-secondary" onclick="showSaveConfigModal('{{ service }}')">Save Current</button>
+            <button class="button button-secondary" onclick="showConfigManagementModal('{{ service }}')">Manage</button>
+        </div>
+    </div>
+</div>

@@ -58,6 +58,22 @@ pub async fn app() -> anyhow::Result<Router> {
             "/services/{service_id}/stop",
             post(endpoints::api::service::stop::stop_service),
         )
+        .route(
+            "/api/templates/env-var-pair",
+            get(endpoints::templates::env_var_pair),
+        )
+        .route(
+            "/api/templates/config-section",
+            get(endpoints::templates::config_section),
+        )
+        .route(
+            "/api/templates/config-modal",
+            get(endpoints::templates::config_modal),
+        )
+        .route(
+            "/api/templates/config-modal-content",
+            get(endpoints::templates::config_modal_content),
+        )
         .fallback(static_handler.layer(cache))
         .layer(compression_layer)
         .layer(
