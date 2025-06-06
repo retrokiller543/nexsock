@@ -9,6 +9,13 @@
         Stop Service
     </button>
     {% else %}
+    <!-- Git Repository Section -->
+    <div class="git-section-container" 
+         hx-get="/api/templates/git-section?service={{ service.name }}"
+         hx-trigger="load">
+        Loading git information...
+    </div>
+    
     <!-- Configuration Templates Section -->
     <div class="config-section" 
          data-service-name="{{ service.name }}"

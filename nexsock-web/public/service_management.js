@@ -256,6 +256,215 @@ function closeModal() {
     }
 }
 
+// ===============================================
+// Git Operations
+// ===============================================
+
+/**
+ * Shows git operations modal
+ * @param {string} serviceName - The name of the service
+ */
+function showGitModal(serviceName) {
+    htmx.ajax('GET', `/api/templates/git-modal?service=${encodeURIComponent(serviceName)}`, {
+        target: 'body',
+        swap: 'beforeend'
+    });
+}
+
+/**
+ * Refreshes git status for a service
+ * @param {string} serviceName - The name of the service
+ */
+function refreshGitStatus(serviceName) {
+    fetch(`/api/services/${serviceName}/git/status`)
+        .then(response => response.json())
+        .then(data => {
+            // Convert the data to query parameters for the template
+            const params = new URLSearchParams(data).toString();
+            htmx.ajax('GET', `/api/templates/git-status?${params}`, {
+                target: `#git-section-${serviceName} .git-status`,
+                swap: 'innerHTML'
+            });
+        })
+        .catch(error => {
+            console.error('Failed to refresh git status:', error);
+        });
+}
+
+/**
+ * Shows a specific git tab in the modal
+ * @param {string} tabName - The name of the tab to show
+ */
+function showGitTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.git-tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show selected tab
+    const tab = document.getElementById(`git-tab-${tabName}`);
+    const button = document.querySelector(`[onclick="showGitTab('${tabName}')"]`);
+    if (tab) tab.classList.add('active');
+    if (button) button.classList.add('active');
+}
+
+/**
+ * Checks out the selected branch
+ * @param {string} serviceName - The name of the service
+ */
+function checkoutSelectedBranch(serviceName) {
+    const selector = document.getElementById(`branch-selector-${serviceName}`);
+    const branch = selector.value;
+    
+    if (!branch) {
+        alert('Please select a branch to checkout.');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('branch', branch);
+    
+    fetch(`/api/services/${serviceName}/git/checkout`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Successfully checked out branch: ${branch}`);
+            refreshGitStatus(serviceName);
+            closeModal();
+        } else {
+            alert('Failed to checkout branch');
+        }
+    })
+    .catch(error => {
+        console.error('Error checking out branch:', error);
+        alert('Failed to checkout branch');
+    });
+}
+
+/**
+ * Creates and checks out a new branch
+ * @param {string} serviceName - The name of the service
+ */
+function createAndCheckoutBranch(serviceName) {
+    const input = document.getElementById(`new-branch-name-${serviceName}`);
+    const branchName = input.value.trim();
+    
+    if (!branchName) {
+        alert('Please enter a branch name.');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('branch', branchName);
+    formData.append('create', 'true');
+    
+    fetch(`/api/services/${serviceName}/git/checkout`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Successfully created and checked out branch: ${branchName}`);
+            input.value = '';
+            refreshGitStatus(serviceName);
+            closeModal();
+        } else {
+            alert('Failed to create branch');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating branch:', error);
+        alert('Failed to create branch');
+    });
+}
+
+/**
+ * Loads commits for the git modal
+ * @param {string} serviceName - The name of the service
+ */
+function loadCommits(serviceName) {
+    const countSelect = document.getElementById(`commit-count-${serviceName}`);
+    const maxCount = countSelect ? countSelect.value : 25;
+    
+    fetch(`/api/services/${serviceName}/git/log?max_count=${maxCount}`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById(`commit-list-${serviceName}`);
+            if (!container) return;
+            
+            if (data.commits && data.commits.length > 0) {
+                let html = '<div class=\"commit-list-items\">';
+                data.commits.forEach(commit => {
+                    html += `
+                        <div class=\"commit-item\">
+                            <div class=\"commit-header\">
+                                <code class=\"commit-hash\">${commit.short_hash}</code>
+                                <span class=\"commit-author\">${commit.author_name}</span>
+                                <span class=\"commit-date\">${new Date(commit.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            <div class=\"commit-message\">${commit.message}</div>
+                            <div class=\"commit-actions\">
+                                <button class=\"button button-sm\" onclick=\"checkoutCommit('${serviceName}', '${commit.hash}')\">
+                                    Checkout
+                                </button>
+                            </div>
+                        </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class=\"text-muted\">No commits found.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Failed to load commits:', error);
+            const container = document.getElementById(`commit-list-${serviceName}`);
+            if (container) {
+                container.innerHTML = '<p class=\"text-error\">Failed to load commits.</p>';
+            }
+        });
+}
+
+/**
+ * Checks out a specific commit
+ * @param {string} serviceName - The name of the service
+ * @param {string} commitHash - The commit hash to checkout
+ */
+function checkoutCommit(serviceName, commitHash) {
+    if (!confirm(`Checkout commit ${commitHash.substring(0, 8)}? This will put the repository in a detached HEAD state.`)) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('commit_hash', commitHash);
+    
+    fetch(`/api/services/${serviceName}/git/checkout-commit`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Successfully checked out commit: ${commitHash.substring(0, 8)}`);
+            refreshGitStatus(serviceName);
+            closeModal();
+        } else {
+            alert('Failed to checkout commit');
+        }
+    })
+    .catch(error => {
+        console.error('Error checking out commit:', error);
+        alert('Failed to checkout commit');
+    });
+}
+
 // Initialize configuration system when page loads
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize config UI for all services
@@ -329,4 +538,120 @@ function toggleManagement(serviceName) {
     } else {
         managementDiv.style.display = 'none';
     }
+}
+
+/**
+ * Shows a specific git tab (commits or branches)
+ * @param {string} tabName - The name of the tab to show ('commits' or 'branches')
+ * @param {string} serviceName - The name of the service
+ */
+function showGitTab(tabName, serviceName) {
+    // Update tab button states
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Find and activate the clicked tab button
+    const clickedTab = event?.target;
+    if (clickedTab) {
+        clickedTab.classList.add('active');
+    }
+    
+    // Load the appropriate content
+    const tabContent = document.getElementById('git-tab-content');
+    if (!tabContent) return;
+    
+    if (tabName === 'commits') {
+        tabContent.innerHTML = '<div class="loading">Loading commits...</div>';
+        // Use HTMX to load the git log template
+        htmx.ajax('GET', `/api/templates/git-log?service=${serviceName}`, {
+            target: '#git-tab-content',
+            swap: 'innerHTML'
+        });
+    } else if (tabName === 'branches') {
+        tabContent.innerHTML = '<div class="loading">Loading branches...</div>';
+        // Use HTMX to load the git branches template
+        htmx.ajax('GET', `/api/templates/git-branches?service=${serviceName}`, {
+            target: '#git-tab-content',
+            swap: 'innerHTML'
+        });
+    }
+}
+
+/**
+ * Creates a new git branch
+ * @param {string} serviceName - The name of the service
+ */
+function createNewBranch(serviceName) {
+    const input = document.getElementById('new-branch-name');
+    if (!input) return;
+    
+    const branchName = input.value.trim();
+    if (!branchName) {
+        alert('Please enter a branch name');
+        return;
+    }
+    
+    if (!confirm(`Create new branch "${branchName}" and switch to it?`)) {
+        return;
+    }
+    
+    // Use HTMX to create the branch
+    const formData = new FormData();
+    formData.append('branch', branchName);
+    formData.append('create', 'true');
+    
+    fetch(`/api/services/${serviceName}/git/checkout/branch`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Clear the input
+        input.value = '';
+        
+        // Refresh the git section
+        htmx.ajax('GET', `/api/templates/git-section?service=${serviceName}`, {
+            target: '#git-section',
+            swap: 'outerHTML'
+        });
+        
+        alert(`Successfully created and switched to branch "${branchName}"`);
+    })
+    .catch(error => {
+        console.error('Error creating branch:', error);
+        alert('Failed to create branch');
+    });
+}
+
+/**
+ * Refreshes the git section for a service
+ * @param {string} serviceName - The name of the service
+ */
+function refreshGitSection(serviceName) {
+    htmx.ajax('GET', `/api/templates/git-section?service=${serviceName}`, {
+        target: '#git-section',
+        swap: 'outerHTML'
+    });
+}
+
+/**
+ * Shows the git modal (keeping existing functionality)
+ * @param {string} serviceName - The name of the service
+ */
+function showGitModal(serviceName) {
+    // This function can be enhanced later for more complex git operations
+    // For now, we have the structured components in the main view
+    console.log('Git modal for:', serviceName);
+    
+    // Load the git modal template
+    htmx.ajax('GET', `/api/templates/git-modal?service=${serviceName}`, {
+        target: 'body',
+        swap: 'beforeend'
+    });
 }

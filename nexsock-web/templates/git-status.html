@@ -1,0 +1,31 @@
+<div class="git-status-content">
+    <div class="git-info">
+        <div class="git-info-item">
+            <strong>Current Branch:</strong>
+            <span class="git-branch">{{ current_branch | default(value="(detached HEAD)") }}</span>
+        </div>
+        <div class="git-info-item">
+            <strong>Current Commit:</strong>
+            <code class="git-commit">{{ current_commit | truncate(length=8) }}</code>
+        </div>
+        <div class="git-info-item">
+            <strong>Remote URL:</strong>
+            <span class="git-remote">{{ remote_url }}</span>
+        </div>
+        {% if is_dirty %}
+        <div class="git-info-item">
+            <span class="status-badge status-warning">Working Directory Dirty</span>
+        </div>
+        {% endif %}
+        {% if ahead_count or behind_count %}
+        <div class="git-info-item">
+            {% if ahead_count %}
+            <span class="status-badge status-info">{{ ahead_count }} commits ahead</span>
+            {% endif %}
+            {% if behind_count %}
+            <span class="status-badge status-warning">{{ behind_count }} commits behind</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>

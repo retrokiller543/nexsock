@@ -1,0 +1,55 @@
+<div class="service-section" id="git-section">
+  <div class="section-header">
+    <h3>Git Repository</h3>
+    <div class="section-actions">
+      <button class="button-secondary" 
+              hx-get="/api/templates/git-section?service={{ git.service_name }}"
+              hx-swap="outerHTML"
+              hx-target="#git-section">
+        <span class="icon">🔄</span>
+        Refresh
+      </button>
+      <button class="button-secondary" onclick="showGitModal('{{ git.service_name }}')">
+        <span class="icon">⚙️</span>
+        More Actions
+      </button>
+    </div>
+  </div>
+  
+  {% if git.error %}
+  <div class="git-error">
+    <span class="error-message">{{ git.error }}</span>
+  </div>
+  {% elif git.status %}
+  <div class="git-content">
+    <div class="git-status-section">
+      {% set git = git.status %}
+      {% include "git_status.html" %}
+    </div>
+    
+    <div class="git-tabs">
+      <div class="tab-nav">
+        <button class="tab-button active" onclick="showGitTab('commits', '{{ git.service_name }}')">
+          Recent Commits
+        </button>
+        <button class="tab-button" onclick="showGitTab('branches', '{{ git.service_name }}')">
+          Branches
+        </button>
+      </div>
+      
+      <div class="tab-content" id="git-tab-content">
+        <div hx-get="/api/templates/git-log?service={{ git.service_name }}"
+             hx-swap="innerHTML"
+             hx-trigger="load" 
+             id="git-commits-tab">
+          <div class="loading">Loading commits...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="git-no-repo">
+    <p>No git repository found for this service.</p>
+  </div>
+  {% endif %}
+</div>

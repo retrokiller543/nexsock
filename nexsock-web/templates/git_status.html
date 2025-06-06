@@ -1,0 +1,49 @@
+<div class="git-status-container">
+  {% if git.current_branch %}
+  <div class="git-info-grid">
+    <div class="git-info-item">
+      <span class="git-label">Branch:</span>
+      <span class="git-branch">{{ git.current_branch }}</span>
+    </div>
+    
+    {% if git.current_commit %}
+    <div class="git-info-item">
+      <span class="git-label">Commit:</span>
+      <span class="git-commit">{{ git.current_commit | truncate(length=8) }}</span>
+    </div>
+    {% endif %}
+    
+    {% if git.remote_url %}
+    <div class="git-info-item">
+      <span class="git-label">Remote:</span>
+      <span class="git-remote">{{ git.remote_url | replace(from="https://", to="") | replace(from=".git", to="") }}</span>
+    </div>
+    {% endif %}
+    
+    <div class="git-info-item">
+      <span class="git-label">Status:</span>
+      <span class="git-status-badge {% if git.is_dirty %}dirty{% else %}clean{% endif %}">
+        {% if git.is_dirty %}Modified{% else %}Clean{% endif %}
+      </span>
+    </div>
+    
+    {% if git.ahead > 0 or git.behind > 0 %}
+    <div class="git-info-item">
+      <span class="git-label">Sync:</span>
+      <div class="git-sync-info">
+        {% if git.ahead > 0 %}
+        <span class="git-ahead">↑{{ git.ahead }}</span>
+        {% endif %}
+        {% if git.behind > 0 %}
+        <span class="git-behind">↓{{ git.behind }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="git-no-repo">
+    <span class="git-status-badge error">No repository</span>
+  </div>
+  {% endif %}
+</div>
