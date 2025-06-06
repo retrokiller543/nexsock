@@ -1,56 +1,63 @@
-<div class="service-section" id="git-section">
-  <div class="section-header">
-    <h3>Git Repository</h3>
-    <div class="section-actions">
-      <button class="button-secondary" 
+<div class="management-card" id="git-section">
+  <div class="card-header">
+    <h3 class="card-title">
+      <span class="icon">📁</span>
+      Git Repository
+    </h3>
+    <div class="card-actions">
+      <button class="button button-secondary button-sm" 
               hx-get="/api/templates/git-section?service={{ git.service_name }}"
               hx-swap="outerHTML"
               hx-target="#git-section">
-        <span class="icon">🔄</span>
-        Refresh
+        🔄 Refresh
       </button>
-      <button class="button-secondary" onclick="showGitModal('{{ git.service_name }}')">
-        <span class="icon">⚙️</span>
-        More Actions
+      <button class="button button-secondary button-sm" onclick="nexsock.showGitModal('{{ git.service_name }}')">
+        ⚙️ More Actions
       </button>
     </div>
   </div>
   
-  {% if git.error %}
-  <div class="git-error">
-    <span class="error-message">{{ git.error }}</span>
-  </div>
-  {% elif git.status %}
-  {% set service_name = git.service_name %}
-  <div class="git-content">
-    <div class="git-status-section">
-      {% set git = git.status %}
-      {% include "git_status.html" %}
+  <div class="card-body">
+    {% if git.error %}
+    <div class="alert alert-error">
+      <div class="alert-icon">⚠️</div>
+      <div>{{ git.error }}</div>
     </div>
-    
-    <div class="git-tabs">
-      <div class="tab-nav">
-        <button class="tab-button active" onclick="showGitTab('commits', '{{ service_name }}')">
-          Recent Commits
-        </button>
-        <button class="tab-button" onclick="showGitTab('branches', '{{ service_name }}')">
-          Branches
-        </button>
+    {% elif git.status %}
+    {% set service_name = git.service_name %}
+    <div class="git-content">
+      <div class="git-status-section">
+        {% set git = git.status %}
+        {% include "git_status.html" %}
       </div>
       
-      <div class="tab-content" id="git-tab-content">
-        <div hx-get="/api/templates/git-log?service={{ service_name }}"
-             hx-swap="innerHTML"
-             hx-trigger="load" 
-             id="git-commits-tab">
-          <div class="loading">Loading commits...</div>
+      <div class="git-tabs">
+        <div class="tab-nav">
+          <button class="tab-button active" onclick="nexsock.showGitTab('commits', '{{ service_name }}')">
+            📝 Recent Commits
+          </button>
+          <button class="tab-button" onclick="nexsock.showGitTab('branches', '{{ service_name }}')">
+            🌿 Branches
+          </button>
+        </div>
+        
+        <div class="tab-content" id="git-tab-content">
+          <div hx-get="/api/templates/git-log?service={{ service_name }}"
+               hx-swap="innerHTML"
+               hx-trigger="load" 
+               id="git-commits-tab">
+            <div class="loading">
+              <span class="spinner"></span>
+              Loading commits...
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    {% else %}
+    <div class="empty-state">
+      <p>No git repository found for this service.</p>
+    </div>
+    {% endif %}
   </div>
-  {% else %}
-  <div class="git-no-repo">
-    <p>No git repository found for this service.</p>
-  </div>
-  {% endif %}
 </div>

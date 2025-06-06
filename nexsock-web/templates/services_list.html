@@ -1,0 +1,23 @@
+<div class="services-container">
+  <div class="services-header">
+    <h1>Service Management</h1>
+    <a class="button button-primary" href="/add-service">
+      Add Service
+    </a>
+  </div>
+
+  {% if services_list.services %}
+  <div class="service-grid">
+    {% for service in services_list.services %}
+    {% include "service_basic.html" %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No services configured yet.</p>
+    <a class="button button-primary" href="/add-service">
+      Add Your First Service
+    </a>
+  </div>
+  {% endif %}
+</div>

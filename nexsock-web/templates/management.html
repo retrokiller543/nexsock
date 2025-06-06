@@ -13,7 +13,12 @@
     <div class="git-section-container" 
          hx-get="/api/templates/git-section?service={{ service.name }}"
          hx-trigger="load">
-        Loading git information...
+        <div class="loading-container">
+            <div class="loading">
+                <span class="spinner"></span>
+                Loading git information...
+            </div>
+        </div>
     </div>
     
     <!-- Configuration Templates Section -->
@@ -21,12 +26,33 @@
          data-service-name="{{ service.name }}"
          hx-get="/api/templates/config-section?service={{ service.name }}"
          hx-trigger="load">
-        Loading configuration options...
+        <div class="loading-container">
+            <div class="loading">
+                <span class="spinner"></span>
+                Loading configuration options...
+            </div>
+        </div>
     </div>
     
-    <div class="env-section">
-        <div class="env-container">
-            <h4 class="section-subtitle">Environment Variables</h4>
+    <div class="management-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <span class="icon">🔧</span>
+                Environment Variables
+            </h3>
+            <div class="card-actions">
+                <button class="button button-secondary button-sm"
+                        hx-get="/api/templates/env-var-pair"
+                        hx-swap="beforeend"
+                        hx-target="#env-vars-{{ service.name }}"
+                        hx-trigger="click"
+                        type="button">
+                    ➕ Add Variable
+                </button>
+            </div>
+        </div>
+        
+        <div class="card-body">
             <div class="env-list" id="env-vars-{{ service.name }}">
                 <div class="env-var-pair">
                     <input class="form-input" name="env_key" placeholder="Key" type="text">
@@ -38,15 +64,8 @@
                             type="button">×</button>
                 </div>
             </div>
+            
             <div class="env-actions">
-                <button class="button button-secondary"
-                        hx-get="/api/templates/env-var-pair"
-                        hx-swap="beforeend"
-                        hx-target="#env-vars-{{ service.name }}"
-                        hx-trigger="click"
-                        type="button">
-                    Add Variable
-                </button>
                 <button class="button button-primary"
                         hx-include="#env-vars-{{ service.name }} input"
                         hx-on::after-request="refreshView(this)"
@@ -54,7 +73,7 @@
                         hx-swap="outerHTML"
                         hx-target="closest .management-section"
                         hx-trigger="click">
-                    Start Service
+                    🚀 Start Service
                 </button>
             </div>
         </div>

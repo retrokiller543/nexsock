@@ -1,11 +1,19 @@
-<div class="service">
+<!-- Service Detail Page Content -->
+<div class="service-page">
   <div class="service-header">
-    <h1 class="service-name">{{ service.name }}</h1>
-    <span class="service-id">ID: {{ service.id }}</span>
+    <div class="breadcrumb">
+      <a href="/" hx-get="/services" hx-push-url="/" hx-swap="innerHTML" hx-target="#page-content">← Back to Services</a>
+    </div>
+    <div class="service-title-section">
+      <h1 class="service-name">{{ service.name }}</h1>
+      <span class="service-id">ID: {{ service.id }}</span>
+      <span class="status-badge status-{{ service.state | lower }}">{{ service.state }}</span>
+    </div>
   </div>
 
+<div class="service-details">
+
   <div class="service-info">
-    <div>Status: <span class="status-badge status-{{ service.state | lower }}">{{ service.state }}</span></div>
     <div>Port: {{ service.port }}</div>
     <div>Repository: <a class="link" href="{{ service.repo_url }}">{{ service.repo_url }}</a></div>
     <div>Path: <a class="link" href="file://{{ service.repo_path }}">{{ service.repo_path }}</a></div>
@@ -40,4 +48,6 @@
     <h2>Management</h2>
     {% include "management.html" %}
   </section>
-</div>
+
+</div> <!-- .service-details -->
+</div> <!-- .service-page -->

@@ -1,12 +1,27 @@
-<div class="config-section" id="config-section-{{ service }}">
-    <h4 class="section-subtitle">Configuration Templates</h4>
-    <div class="config-controls">
-        <select class="form-input" id="config-dropdown-{{ service }}" onchange="loadConfigFromSelection('{{ service }}', this.value)">
-            <option value="">Select a saved configuration...</option>
-        </select>
-        <div class="config-actions">
-            <button class="button button-secondary" onclick="showSaveConfigModal('{{ service }}')">Save Current</button>
-            <button class="button button-secondary" onclick="showConfigManagementModal('{{ service }}')">Manage</button>
+<div class="management-card" id="config-section-{{ service }}">
+    <div class="card-header">
+        <h3 class="card-title">
+            <span class="icon">⚙️</span>
+            Configuration Templates
+        </h3>
+        <div class="card-actions">
+            <button class="button button-secondary button-sm" onclick="nexsock.showSaveConfigModal('{{ service }}')">
+                💾 Save Current
+            </button>
+            <button class="button button-secondary button-sm" onclick="nexsock.showConfigManagementModal('{{ service }}')">
+                📋 Manage
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        <div class="form-group">
+            <label class="form-label" for="config-dropdown-{{ service }}">
+                Load Saved Configuration
+            </label>
+            <select class="form-select" id="config-dropdown-{{ service }}" onchange="nexsock.loadConfigFromSelection('{{ service }}', this.value)">
+                <option value="">Select a saved configuration...</option>
+            </select>
         </div>
     </div>
 </div>

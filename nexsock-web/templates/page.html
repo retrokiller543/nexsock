@@ -1,4 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
-<div hx-get="/services" hx-swap="outerHTML" hx-trigger="load">Loading page...</div>
+{% if is_service_page and service %}
+<!-- Individual Service Page -->
+<div class="service-page">
+    <div class="service-header">
+        <div class="breadcrumb">
+            <a href="/" hx-get="/services" hx-push-url="/" hx-swap="innerHTML" hx-target="#page-content">← Back to Services</a>
+        </div>
+        <h1>{{ service.name }}</h1>
+        <div class="status-badge status-{{ service.state }}">{{ service.state }}</div>
+    </div>
+    
+    <div class="service-details">
+        {% include "service_page.html" %}
+    </div>
+</div>
+{% elif services_list %}
+<!-- Service Listing Page -->
+{% include "services_list.html" %}
+{% else %}
+<!-- Loading state for dynamic content -->
+<div hx-get="/services?partial=true" hx-swap="outerHTML" hx-trigger="load">
+    <div class="loading-container">
+        <div class="loading">
+            <span class="spinner"></span>
+            Loading services...
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock content %}

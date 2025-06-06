@@ -4,8 +4,8 @@
   {% block head %}
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <link href="/style.css" rel="stylesheet">
-  <title>Service Management</title>
+  <link href="/css/main.css" rel="stylesheet">
+  <title>{% if page %}{{ page.title }} - {% endif %}Nexsock Service Management</title>
   {% endblock head %}
   <script src="/dependencies/htmx.js" defer></script>
 </head>
@@ -13,7 +13,7 @@
 <header>
   <nav class="navbar" hx-boost="true">
     <div class="nav-content">
-      <a class="nav-logo" href="/">Service Management</a>
+      <a class="nav-logo" href="/">Nexsock</a>
       <div class="nav-links">
         <a class="nav-item" href="/">Services</a>
       </div>
@@ -23,9 +23,9 @@
 
 <main class="container">
   {% if messages %}
-  <div class="messages">
+  <div class="messages" id="messages-container">
     {% for message in messages %}
-    <div class="alert alert-{{ message.type }}">
+    <div class="message message-{{ message.type }}">
       {{ message.content }}
     </div>
     {% endfor %}
@@ -43,6 +43,6 @@
   </div>
 </footer>
 
-<script src="/service_management.js" defer></script>
+<script defer src="/js/main.js"></script>
 </body>
 </html>
