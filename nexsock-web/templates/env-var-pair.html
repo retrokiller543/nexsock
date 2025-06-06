@@ -1,0 +1,9 @@
+<div class="env-var-pair">
+    <input class="form-input" name="env_key" placeholder="Key" type="text" value="{{ key | default(value='') }}">
+    <input class="form-input" name="env_value" placeholder="Value" type="text" value="{{ value | default(value='') }}">
+    <button class="button button-icon"
+            hx-swap="outerHTML"
+            hx-target="closest .env-var-pair"
+            hx-trigger="click"
+            type="button">×</button>
+</div>

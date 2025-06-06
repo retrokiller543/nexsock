@@ -1,0 +1,62 @@
+// Auto-generated CSS module for src-ts/components/NsCard.css
+export const css = `.ns-card {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e1e5e9);
+  border-radius: var(--border-radius-lg, 8px);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast, 0.15s) ease;
+}
+
+.ns-card:hover {
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.ns-card-header {
+  padding: var(--spacing-lg, 16px) var(--spacing-xl, 20px);
+  border-bottom: 1px solid var(--color-border, #e1e5e9);
+  background: var(--color-surface-elevated, #f8f9fa);
+}
+
+.ns-card-title {
+  margin: 0;
+  font-size: var(--font-size-xl, 18px);
+  font-weight: 600;
+  color: var(--text-primary, #2d3748);
+}
+
+.ns-card-subtitle {
+  margin: 4px 0 0 0;
+  font-size: var(--font-size-base, 14px);
+  color: var(--text-secondary, #718096);
+}
+
+.ns-card-body {
+  padding: var(--spacing-xl, 20px);
+}
+
+.ns-card-footer {
+  padding: var(--spacing-md, 12px) var(--spacing-xl, 20px);
+  border-top: 1px solid var(--color-border, #e1e5e9);
+  background: var(--color-surface-elevated, #f8f9fa);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md, 12px);
+}
+
+/* Variants */
+.ns-card.elevated {
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+}
+
+.ns-card.flat {
+  box-shadow: none;
+  border: 1px solid var(--color-border, #e1e5e9);
+}
+
+.ns-card.borderless {
+  border: none;
+  box-shadow: none;
+}`;
+export default css;

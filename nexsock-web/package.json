@@ -1,0 +1,19 @@
+{
+  "name": "nexsock-web",
+  "version": "1.0.0",
+  "description": "Web interface for Nexsock service management",
+  "scripts": {
+    "build": "bun build src-ts/main.ts --outdir=public/js --target=browser --format=iife --minify --sourcemap --outfile=public/js/main.js --jsx-factory=createElement --jsx-fragment=Fragment",
+    "build-check": "bun run check && bun run build",
+    "build:dev": "bun build src-ts/main.ts --outdir=public/js --target=browser --format=iife --sourcemap --outfile=public/js/main.js --jsx-factory=createElement --jsx-fragment=Fragment",
+    "watch": "bun build src-ts/main.ts --outdir=public/js --target=browser --format=iife --sourcemap --outfile=public/js/main.js --watch --jsx-factory=createElement --jsx-fragment=Fragment",
+    "check": "bun x tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "htmx.org": "^1.9.8"
+  }
+}

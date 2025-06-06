@@ -1,0 +1,143 @@
+/* Main CSS file - imports all modular components */
+
+/* Core styles */
+@import 'variables.css';
+@import 'base.css';
+
+/* Components */
+@import 'components/buttons.css';
+@import 'components/navigation.css';
+@import 'components/services.css';
+@import 'components/forms.css';
+@import 'components/status.css';
+@import 'components/alerts.css';
+@import 'components/modal.css';
+@import 'components/dropdown.css';
+
+/* Layout components */
+.footer {
+    background: var(--color-surface-elevated);
+    padding: var(--spacing-xl) 0;
+    margin-top: auto;
+    border-top: 1px solid var(--color-border);
+}
+
+.footer-content {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-2xl);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+}
+
+/* Utility classes */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.d-flex { display: flex; }
+.d-none { display: none; }
+.d-block { display: block; }
+.d-inline { display: inline; }
+.d-inline-block { display: inline-block; }
+
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+
+.align-center { align-items: center; }
+.align-start { align-items: flex-start; }
+.align-end { align-items: flex-end; }
+
+.flex-column { flex-direction: column; }
+.flex-row { flex-direction: row; }
+
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+.gap-xl { gap: var(--spacing-xl); }
+
+.m-0 { margin: 0; }
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }
+.ml-0 { margin-left: 0; }
+.mr-0 { margin-right: 0; }
+
+.p-0 { padding: 0; }
+.pt-0 { padding-top: 0; }
+.pb-0 { padding-bottom: 0; }
+.pl-0 { padding-left: 0; }
+.pr-0 { padding-right: 0; }
+
+.mb-3 { margin-bottom: var(--spacing-lg); }
+
+/* HTMX specific styles */
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline;
+}
+
+.htmx-request.htmx-indicator {
+    display: inline;
+}
+
+/* Loading states for HTMX */
+[hx-get], [hx-post], [hx-put], [hx-delete] {
+    position: relative;
+}
+
+[hx-get].htmx-request, 
+[hx-post].htmx-request, 
+[hx-put].htmx-request, 
+[hx-delete].htmx-request {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Smooth transitions for content swaps */
+.htmx-settling {
+    transition: opacity var(--transition-fast);
+}
+
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+/* Loading states */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: var(--text-secondary);
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-base);
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

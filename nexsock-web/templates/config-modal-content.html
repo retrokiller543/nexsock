@@ -1,0 +1,53 @@
+<div class="config-info">
+    <p>Configuration templates are stored locally in your browser.</p>
+    <div id="config-list-{{ service }}">
+        <!-- This will be populated by JavaScript -->
+    </div>
+</div>
+<script>
+// Populate the config list for this service
+(function() {
+    const serviceName = '{{ service }}';
+    const configs = getServiceConfigs(serviceName);
+    const configNames = Object.keys(configs);
+    
+    const container = document.getElementById('config-list-' + serviceName);
+    if (configNames.length === 0) {
+        container.innerHTML = '<p class="text-muted">No saved configurations found.</p>';
+        return;
+    }
+    
+    let tableHtml = `
+        <table class="config-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Variables</th>
+                    <th>Last Used</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    configNames.forEach(configName => {
+        const config = configs[configName];
+        const lastUsed = new Date(config.lastUsed).toLocaleDateString();
+        const varCount = Object.keys(config.envVars).length;
+        tableHtml += `
+            <tr>
+                <td><strong>${configName}</strong></td>
+                <td>${config.description || 'No description'}</td>
+                <td>${varCount} variables</td>
+                <td>${lastUsed}</td>
+                <td>
+                    <button class="button button-primary" onclick="loadConfigFromSelection('${serviceName}', '${configName}'); closeModal();">Load</button>
+                    <button class="button button-danger" onclick="deleteConfigAndRefresh('${serviceName}', '${configName}')">Delete</button>
+                </td>
+            </tr>`;
+    });
+    
+    tableHtml += '</tbody></table>';
+    container.innerHTML = tableHtml;
+})();
+</script>

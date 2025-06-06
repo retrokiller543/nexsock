@@ -1,0 +1,15 @@
+<div class="alert alert-error">
+    <div class="alert-icon">⚠️</div>
+    <div>
+        <h4 class="error-title">Something went wrong</h4>
+        <p class="error-message">{{ error_message | default(value="An unexpected error occurred while loading this content.") }}</p>
+        {% if retry_action %}
+        <button class="button button-secondary button-sm" 
+                hx-get="{{ retry_action }}" 
+                hx-swap="outerHTML" 
+                hx-target="closest .alert">
+            Try Again
+        </button>
+        {% endif %}
+    </div>
+</div>

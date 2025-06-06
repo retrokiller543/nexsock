@@ -1,0 +1,49 @@
+<div class="git-status-info">
+  {% if git.current_branch %}
+  <div class="info-grid">
+    <div class="info-item">
+      <span class="info-label">🌿 Branch:</span>
+      <span class="info-value git-branch">{{ git.current_branch }}</span>
+    </div>
+    
+    {% if git.current_commit %}
+    <div class="info-item">
+      <span class="info-label">📝 Commit:</span>
+      <code class="info-value git-commit">{{ git.current_commit | truncate(length=8) }}</code>
+    </div>
+    {% endif %}
+    
+    {% if git.remote_url %}
+    <div class="info-item">
+      <span class="info-label">🔗 Remote:</span>
+      <span class="info-value git-remote">{{ git.remote_url | replace(from="https://", to="") | replace(from=".git", to="") }}</span>
+    </div>
+    {% endif %}
+    
+    <div class="info-item">
+      <span class="info-label">📊 Status:</span>
+      <span class="status-badge {% if git.is_dirty %}status-warning{% else %}status-success{% endif %}">
+        {% if git.is_dirty %}Modified{% else %}Clean{% endif %}
+      </span>
+    </div>
+    
+    {% if git.ahead_count > 0 or git.behind_count > 0 %}
+    <div class="info-item">
+      <span class="info-label">🔄 Sync:</span>
+      <div class="sync-indicators">
+        {% if git.ahead_count > 0 %}
+        <span class="badge badge-success">↑{{ git.ahead_count }}</span>
+        {% endif %}
+        {% if git.behind_count > 0 %}
+        <span class="badge badge-warning">↓{{ git.behind_count }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <span class="status-badge status-error">No repository</span>
+  </div>
+  {% endif %}
+</div>

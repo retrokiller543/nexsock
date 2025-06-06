@@ -1,43 +1,89 @@
-<div class="service">
+<!-- Service Detail Page Content -->
+<div class="service-page">
   <div class="service-header">
-    <h1 class="service-name">{{ service.name }}</h1>
-    <span class="service-id">ID: {{ service.id }}</span>
+    <div class="breadcrumb">
+      <a href="/" hx-get="/services" hx-push-url="/" hx-swap="innerHTML" hx-target="#page-content">← Back to Services</a>
+    </div>
+    <div class="service-title-section">
+      <h1 class="service-name">{{ service.name }}</h1>
+      <span class="service-id">ID: {{ service.id }}</span>
+      <span class="status-badge status-{{ service.state | lower }}">{{ service.state }}</span>
+    </div>
   </div>
 
-  <div class="service-info">
-    <div>Status: <span class="status-badge status-{{ service.state | lower }}">{{ service.state }}</span></div>
-    <div>Port: {{ service.port }}</div>
-    <div>Repository: <a class="link" href="{{ service.repo_url }}">{{ service.repo_url }}</a></div>
-    <div>Path: <a class="link" href="file://{{ service.repo_path }}">{{ service.repo_path }}</a></div>
-    {% if service.config %}
-    {% if service.config.id %}
-    <div>Config ID: <pre>{{ service.config.id }}</pre></div>
-    {% endif %}
-    {% if service.config.filename %}
-    <div>Project config file: <pre>{{ service.config.filename }}</pre></div>
-    {% endif %}
-    {% if service.config.format %}
-    <div>Project config file format: <pre>{{ service.config.format }}</pre></div>
-    {% endif %}
-    {% if service.config.run_command %}
-    <div>Project run command: <pre>{{ service.config.run_command }}</pre></div>
-    {% endif %}
-    {% else %}
-    <div class="text-secondary">No config</div>
-    {% endif %}
-  </div>
-
-  <section class="service-section">
-    <h2>Dependencies</h2>
-    <div class="dependencies-list">
-      {% for dependency in service.dependencies %}
-      {% include "dependency.html" %}
-      {% endfor %}
+  <!-- Service Information Section -->
+  <section class="service-section service-info-section">
+    <h2>Service Information</h2>
+    <div class="management-card">
+      <div class="card-body">
+        <div class="service-info">
+          <div>Port: {{ service.port }}</div>
+          <div>Repository: <a class="link" href="{{ service.repo_url }}">{{ service.repo_url }}</a></div>
+          <div>Path: <a class="link" href="file://{{ service.repo_path }}">{{ service.repo_path }}</a></div>
+          {% if service.config %}
+          {% if service.config.id %}
+          <div>Config ID: <pre>{{ service.config.id }}</pre></div>
+          {% endif %}
+          {% if service.config.filename %}
+          <div>Project config file: <pre>{{ service.config.filename }}</pre></div>
+          {% endif %}
+          {% if service.config.format %}
+          <div>Project config file format: <pre>{{ service.config.format }}</pre></div>
+          {% endif %}
+          {% if service.config.run_command %}
+          <div>Project run command: <pre>{{ service.config.run_command }}</pre></div>
+          {% endif %}
+          {% else %}
+          <div class="text-secondary">No config</div>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="service-section">
-    <h2>Management</h2>
+  {% if service.state == "Running" %}
+  <!-- Service Control Section (when running) -->
+  <section class="service-section service-control-section">
+    <h2>🟢 Service Control</h2>
     {% include "management.html" %}
   </section>
-</div>
+  {% else %}
+  <!-- Configuration Section (when not running) -->
+  <section class="service-section service-config-section">
+    <h2>⚙️ Configuration & Startup</h2>
+    {% include "management.html" %}
+  </section>
+  {% endif %}
+
+  <!-- Git Repository Section -->
+  <section class="service-section service-git-section">
+    <h2>📁 Repository Management</h2>
+    <div class="git-section-container" 
+         hx-get="/api/templates/git-section?service={{ service.name }}"
+         hx-trigger="load">
+        <div class="loading-container">
+            <div class="loading">
+                <span class="spinner"></span>
+                Loading git information...
+            </div>
+        </div>
+    </div>
+  </section>
+
+  <!-- Dependencies Section -->
+  {% if service.dependencies %}
+  <section class="service-section service-dependencies-section">
+    <h2>🔗 Dependencies</h2>
+    <div class="management-card">
+      <div class="card-body">
+        <div class="dependencies-list">
+          {% for dependency in service.dependencies %}
+          {% include "dependency.html" %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+</div> <!-- .service-page -->

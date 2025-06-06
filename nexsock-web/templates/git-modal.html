@@ -1,0 +1,92 @@
+<div class="modal-overlay" onclick="closeModal()">
+    <div class="modal git-modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Git Operations - {{ service }}</h3>
+            <button class="button button-icon" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="git-modal-tabs">
+                <button class="tab-button active" onclick="showGitTab('branches', '{{ service }}')">Branches</button>
+                <button class="tab-button" onclick="showGitTab('commits', '{{ service }}')">Commits</button>
+            </div>
+            
+            <!-- Branches Tab -->
+            <div class="git-tab-content active" id="git-tab-branches">
+                <div class="git-tab-section">
+                    <h4>Branch Management</h4>
+                    <div class="branch-controls">
+                        <select class="form-input" id="branch-selector-{{ service }}">
+                            <option value="">Loading branches...</option>
+                        </select>
+                        <button class="button button-primary" onclick="checkoutSelectedBranch('{{ service }}')">
+                            Checkout Branch
+                        </button>
+                    </div>
+                    
+                    <div class="branch-create">
+                        <h5>Create New Branch</h5>
+                        <div class="branch-create-form">
+                            <input class="form-input" id="new-branch-name-{{ service }}" placeholder="New branch name" type="text">
+                            <button class="button button-secondary" onclick="createAndCheckoutBranch('{{ service }}')">
+                                Create & Checkout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Commits Tab -->
+            <div class="git-tab-content" id="git-tab-commits">
+                <div class="git-tab-section">
+                    <h4>Recent Commits</h4>
+                    <div class="commit-controls">
+                        <label>
+                            Max commits:
+                            <select class="form-input" id="commit-count-{{ service }}" onchange="loadCommits('{{ service }}')">
+                                <option value="10">10</option>
+                                <option selected value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </label>
+                        <button class="button button-secondary" onclick="loadCommits('{{ service }}')">
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="commit-list" id="commit-list-{{ service }}">
+                        Loading commits...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize git modal for service {{ service }}
+(function() {
+    const serviceName = '{{ service }}';
+    
+    // Load branches
+    fetch(`/api/services/${serviceName}/git/branches?include_remote=true`)
+        .then(response => response.json())
+        .then(data => {
+            const selector = document.getElementById(`branch-selector-${serviceName}`);
+            selector.innerHTML = '';
+            data.branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch;
+                option.textContent = branch;
+                selector.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Failed to load branches:', error);
+            const selector = document.getElementById(`branch-selector-${serviceName}`);
+            selector.innerHTML = '<option value="">Failed to load branches</option>';
+        });
+    
+    // Load initial commits
+    loadCommits(serviceName);
+})();
+</script>
