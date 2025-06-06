@@ -6,7 +6,7 @@
 // Import JSX utilities first to set up global functions
 import './core/jsx-utils';
 
-import {registerComponents} from './components';
+import {registerAllComponents} from './generated/component-registry';
 import {initializeApp} from './core/init';
 import {createGlobalAPI} from './core/api';
 
@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Create and make API available globally
   window.nexsock = createGlobalAPI();
 
-  // Register all UI components as web components
-  registerComponents();
+  // Register all UI components as web components  
+  registerAllComponents();
 
   console.log('Nexsock web interface initialized successfully');
 });
