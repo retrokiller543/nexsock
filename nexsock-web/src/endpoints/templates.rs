@@ -1,4 +1,5 @@
 use crate::components::git_view::{GitBranchesView, GitLogView, GitSectionView};
+use crate::error::ServiceError;
 use crate::services::nexsock_services::git;
 use crate::state::AppState;
 use crate::templates::TERA;
@@ -77,6 +78,7 @@ pub async fn config_modal_content(Query(params): Query<ServiceQuery>) -> Result<
 }
 
 /// Returns HTML template for git section with actual git data
+#[tracing::instrument(skip_all, err)]
 pub async fn git_section(
     State(ref state): State<AppState>,
     Query(params): Query<ServiceQuery>,
@@ -89,9 +91,15 @@ pub async fn git_section(
     };
 
     let context = json!({ GitSectionView::VARIABLE_NAME: git_view });
+    dbg!(&context);
+
     let context = Context::from_serialize(context)?;
 
-    let html = TERA.render(GitSectionView::TEMPLATE_NAME, &context)?;
+    let html = TERA
+        .render(GitSectionView::TEMPLATE_NAME, &context)
+        .map_err(|e| {
+            ServiceError::from_template_error(GitSectionView::TEMPLATE_NAME, e, &context)
+        })?;
     Ok(Html(html))
 }
 
@@ -110,16 +118,12 @@ pub async fn git_branches(
     let service_ref = ServiceRef::from_str(&params.service)?;
     let include_remote = false; // Default to local branches for cleaner UI
 
-    let branches = git::list_branches(state, service_ref, include_remote).await?;
-    let mut branches_view = GitBranchesView::new(branches, params.service);
+    let branches_response = git::list_branches(state, service_ref, include_remote).await?;
+    let show_all = params.show_all.unwrap_or(false);
+    let limit = params.limit.unwrap_or(10);
 
-    if let Some(show_all) = params.show_all {
-        branches_view = branches_view.with_show_all(show_all);
-    }
-
-    if let Some(limit) = params.limit {
-        branches_view = branches_view.with_limit(limit);
-    }
+    let branches_view =
+        GitBranchesView::with_pagination(branches_response, params.service, show_all, limit);
 
     let context = json!({ GitBranchesView::VARIABLE_NAME: branches_view });
     let context = Context::from_serialize(context)?;
@@ -135,21 +139,18 @@ pub async fn git_log(
 ) -> Result<Html<String>> {
     let service_ref = ServiceRef::from_str(&params.service)?;
 
-    let log = git::get_log(state, service_ref, None, None).await?;
-    let mut log_view = GitLogView::new(log, params.service);
+    let log_response = git::get_log(state, service_ref, None, None).await?;
+    let show_all = params.show_all.unwrap_or(false);
+    let limit = params.limit.unwrap_or(5);
 
-    if let Some(show_all) = params.show_all {
-        log_view = log_view.with_show_all(show_all);
-    }
-
-    if let Some(limit) = params.limit {
-        log_view = log_view.with_limit(limit);
-    }
+    let log_view = GitLogView::with_pagination(log_response, params.service, show_all, limit);
 
     let context = json!({ GitLogView::VARIABLE_NAME: log_view });
     let context = Context::from_serialize(context)?;
 
-    let html = TERA.render(GitLogView::TEMPLATE_NAME, &context)?;
+    let html = TERA
+        .render(GitLogView::TEMPLATE_NAME, &context)
+        .map_err(|e| ServiceError::from_template_error(GitLogView::TEMPLATE_NAME, e, &context))?;
     Ok(Html(html))
 }
 

@@ -2,7 +2,7 @@
   <div class="git-section-header">
     <h4>Recent Commits</h4>
     <div class="git-section-actions">
-      <button class="button-secondary" 
+      <button class="button-secondary"
               hx-confirm="Pull latest changes from remote?"
               hx-get="/api/services/{{ log.service_name }}/git/pull"
               hx-swap="outerHTML"
@@ -12,18 +12,18 @@
       </button>
     </div>
   </div>
-  
+
   <div class="git-commits-list" id="git-commits-list">
-    {% for commit in log.displayed_commits() %}
+    {% for commit in log.commits %}
     <div class="git-commit-item">
       <div class="git-commit-header">
         <span class="git-commit-hash">{{ commit.hash | truncate(length=8) }}</span>
-        <span class="git-commit-author">{{ commit.author }}</span>
-        <span class="git-commit-date">{{ commit.date | date(format="%Y-%m-%d %H:%M") }}</span>
+        <span class="git-commit-author">{{ commit.author_name }}</span>
+        <span class="git-commit-date">{{ commit.timestamp | date(format="%Y-%m-%d %H:%M") }}</span>
       </div>
       <div class="git-commit-message">{{ commit.message | truncate(length=100) }}</div>
       <div class="git-commit-actions">
-        <button class="button-small" 
+        <button class="button-small"
                 hx-confirm="Checkout commit {{ commit.hash | truncate(length=8) }}? This will put you in detached HEAD state."
                 hx-post="/api/services/{{ log.service_name }}/git/checkout/commit"
                 hx-swap="outerHTML"
@@ -34,14 +34,14 @@
       </div>
     </div>
     {% endfor %}
-    
-    {% if log.has_more() %}
+
+    {% if log.has_more %}
     <div class="git-show-more">
-      <button class="button-text" 
+      <button class="button-text"
               hx-get="/api/templates/git-log?service={{ log.service_name }}&show_all=true"
               hx-swap="outerHTML"
               hx-target="#git-commits-list">
-        Show {{ log.remaining_count() }} more commits...
+        Show {{ log.remaining_count }} more commits...
       </button>
     </div>
     {% endif %}

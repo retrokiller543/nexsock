@@ -21,53 +21,62 @@ impl RenderTemplate for GitStatusView {
 /// Git branches component for displaying branch information with pagination
 #[derive(Debug, Serialize)]
 pub struct GitBranchesView {
-    pub branches: GitListBranchesResponse,
+    pub branches: Vec<String>, // Already paginated list
     pub service_name: String,
+    pub has_more: bool,         // Simple boolean
+    pub remaining_count: usize, // Simple number
     pub show_all: bool,
-    pub limit: usize,
 }
 
 impl GitBranchesView {
-    pub fn new(branches: GitListBranchesResponse, service_name: String) -> Self {
+    pub fn new(branches_response: GitListBranchesResponse, service_name: String) -> Self {
+        Self::with_pagination(branches_response, service_name, false, 10)
+    }
+
+    pub fn with_show_all(
+        branches_response: GitListBranchesResponse,
+        service_name: String,
+        show_all: bool,
+    ) -> Self {
+        Self::with_pagination(branches_response, service_name, show_all, 10)
+    }
+
+    pub fn with_limit(
+        branches_response: GitListBranchesResponse,
+        service_name: String,
+        limit: usize,
+    ) -> Self {
+        Self::with_pagination(branches_response, service_name, false, limit)
+    }
+
+    pub fn with_pagination(
+        branches_response: GitListBranchesResponse,
+        service_name: String,
+        show_all: bool,
+        limit: usize,
+    ) -> Self {
+        let all_branches = branches_response.branches;
+        let has_more = !show_all && all_branches.len() > limit;
+        let count = all_branches.len();
+
+        let branches = if show_all {
+            all_branches.clone()
+        } else {
+            all_branches.into_iter().take(limit).collect()
+        };
+
+        let remaining_count = if show_all {
+            0
+        } else {
+            count.saturating_sub(limit)
+        };
+
         Self {
             branches,
             service_name,
-            show_all: false,
-            limit: 10, // Default limit for branches
-        }
-    }
-
-    pub fn with_show_all(mut self, show_all: bool) -> Self {
-        self.show_all = show_all;
-        self
-    }
-
-    pub fn with_limit(mut self, limit: usize) -> Self {
-        self.limit = limit;
-        self
-    }
-
-    /// Get branches to display based on pagination settings
-    pub fn displayed_branches(&self) -> &[String] {
-        if self.show_all {
-            &self.branches.branches
-        } else {
-            let end = std::cmp::min(self.limit, self.branches.branches.len());
-            &self.branches.branches[..end]
-        }
-    }
-
-    /// Check if there are more branches to show
-    pub fn has_more(&self) -> bool {
-        !self.show_all && self.branches.branches.len() > self.limit
-    }
-
-    /// Get count of remaining branches
-    pub fn remaining_count(&self) -> usize {
-        if self.show_all {
-            0
-        } else {
-            self.branches.branches.len().saturating_sub(self.limit)
+            has_more,
+            remaining_count,
+            show_all,
         }
     }
 }
@@ -80,53 +89,58 @@ impl RenderTemplate for GitBranchesView {
 /// Git log component for displaying commit history with pagination
 #[derive(Debug, Serialize)]
 pub struct GitLogView {
-    pub log: GitLogResponse,
+    pub commits: Vec<nexsock_protocol::commands::git::GitCommitInfo>, // Already paginated
     pub service_name: String,
+    pub has_more: bool,
+    pub remaining_count: usize,
     pub show_all: bool,
-    pub limit: usize,
 }
 
 impl GitLogView {
-    pub fn new(log: GitLogResponse, service_name: String) -> Self {
-        Self {
-            log,
-            service_name,
-            show_all: false,
-            limit: 5, // Default limit for commits
-        }
+    pub fn new(log_response: GitLogResponse, service_name: String) -> Self {
+        Self::with_pagination(log_response, service_name, false, 5)
     }
 
-    pub fn with_show_all(mut self, show_all: bool) -> Self {
-        self.show_all = show_all;
-        self
+    pub fn with_show_all(
+        log_response: GitLogResponse,
+        service_name: String,
+        show_all: bool,
+    ) -> Self {
+        Self::with_pagination(log_response, service_name, show_all, 5)
     }
 
-    pub fn with_limit(mut self, limit: usize) -> Self {
-        self.limit = limit;
-        self
+    pub fn with_limit(log_response: GitLogResponse, service_name: String, limit: usize) -> Self {
+        Self::with_pagination(log_response, service_name, false, limit)
     }
 
-    /// Get commits to display based on pagination settings
-    pub fn displayed_commits(&self) -> &[nexsock_protocol::commands::git::GitCommitInfo] {
-        if self.show_all {
-            &self.log.commits
+    pub fn with_pagination(
+        log_response: GitLogResponse,
+        service_name: String,
+        show_all: bool,
+        limit: usize,
+    ) -> Self {
+        let all_commits = log_response.commits;
+        let has_more = !show_all && all_commits.len() > limit;
+        let count = all_commits.len();
+
+        let commits = if show_all {
+            all_commits.clone()
         } else {
-            let end = std::cmp::min(self.limit, self.log.commits.len());
-            &self.log.commits[..end]
-        }
-    }
+            all_commits.into_iter().take(limit).collect()
+        };
 
-    /// Check if there are more commits to show
-    pub fn has_more(&self) -> bool {
-        !self.show_all && self.log.commits.len() > self.limit
-    }
-
-    /// Get count of remaining commits
-    pub fn remaining_count(&self) -> usize {
-        if self.show_all {
+        let remaining_count = if show_all {
             0
         } else {
-            self.log.commits.len().saturating_sub(self.limit)
+            count.saturating_sub(limit)
+        };
+
+        Self {
+            commits,
+            service_name,
+            has_more,
+            remaining_count,
+            show_all,
         }
     }
 }
