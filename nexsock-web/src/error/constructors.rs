@@ -211,6 +211,24 @@ impl WebError {
         Self::Internal {
             message: message.into(),
             component: component.into(),
+            status_code: axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            source: source.map(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>),
+        }
+    }
+
+    /// Create an not found error
+    pub fn not_found<E>(
+        message: impl Into<String>,
+        component: impl Into<String>,
+        source: Option<E>,
+    ) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        Self::Internal {
+            message: message.into(),
+            component: component.into(),
+            status_code: axum::http::StatusCode::NOT_FOUND,
             source: source.map(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>),
         }
     }

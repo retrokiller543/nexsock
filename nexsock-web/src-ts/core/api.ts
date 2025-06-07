@@ -31,6 +31,9 @@ import {showMessage} from '../ui/messages';
 import {closeModal} from '../ui/modals';
 import {closeAllDropdowns, toggleDropdown} from '../ui/dropdowns';
 
+// Import debug utilities
+import {debugUtils} from './debug';
+
 /**
  * Create and export the global API object
  */
@@ -57,6 +60,7 @@ export const createGlobalAPI = (): NexsockAPI => {
     closeAllDropdowns,
     clearCurrentEnvVars,
     toggleGitContent,
-    restoreGitContentVisibility
+    restoreGitContentVisibility,
+    debug: debugUtils
   };
 };

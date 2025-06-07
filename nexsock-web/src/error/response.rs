@@ -1,6 +1,9 @@
 use super::types::WebError;
+use crate::templates::TERA;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Response};
+use serde_json::json;
+use tera::Context;
 
 impl IntoResponse for WebError {
     fn into_response(self) -> Response {
@@ -24,7 +27,7 @@ fn determine_status_code(error: &WebError) -> StatusCode {
         WebError::HttpRequest { .. } => StatusCode::BAD_GATEWAY,
         WebError::FileSystem { .. } => StatusCode::INTERNAL_SERVER_ERROR,
         WebError::Configuration { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-        WebError::Internal { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+        WebError::Internal { status_code, .. } => *status_code,
     }
 }
 
@@ -44,268 +47,58 @@ fn create_rich_error_html(error: &WebError) -> Html<String> {
 
     let debug_output = format_debug_with_pretty_context(error);
 
-    let html_content = format!(
-        r#"
-<!DOCTYPE html>
+    // Try to render using the error template first, fall back to standalone HTML if template fails
+    let context = json!({
+        "error_code": get_error_code(error),
+        "error_message": html_escape(&error.to_string()),
+        "diagnostic_output": diagnostic_output,
+        "debug_output": debug_output,
+    });
+
+    match TERA.render(
+        "error.html",
+        &Context::from_value(context).expect("Failed to create context"),
+    ) {
+        Ok(rendered_html) => Html(rendered_html),
+        Err(template_error) => {
+            // If template rendering fails, fall back to a simple error page
+            // This prevents infinite recursion if the error template itself has issues
+            let fallback_html = format!(
+                r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error - nexsock Web</title>
     <style>
-        body {{
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d42 100%);
-            color: #cdd6f4;
-            margin: 0;
-            padding: 20px;
-            line-height: 1.6;
-        }}
-        .error-container {{
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #313244;
-            border-radius: 12px;
-            border: 1px solid #45475a;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }}
-        .error-header {{
-            background: linear-gradient(90deg, #f38ba8 0%, #eba0ac 100%);
-            color: #1e1e2e;
-            padding: 20px 30px;
-            font-weight: bold;
-            font-size: 1.2em;
-            border-bottom: 1px solid #45475a;
-        }}
-        .error-body {{
-            padding: 30px;
-        }}
-        .error-code {{
-            background: #45475a;
-            color: #fab387;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 15px;
-        }}
-        .error-message {{
-            font-size: 1.1em;
-            margin-bottom: 25px;
-            color: #f9e2af;
-        }}
-        .error-details {{
-            background: #1e1e2e;
-            border: 1px solid #45475a;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            white-space: pre-wrap;
-            overflow-x: auto;
-            font-size: 0.9em;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            line-height: 1.4;
-            color: #cdd6f4;
-        }}
-        .error-details .error-symbol {{
-            color: #f38ba8;
-            font-weight: bold;
-        }}
-        .error-details .help-symbol {{
-            color: #a6e3a1;
-            font-weight: bold;
-        }}
-        .error-details .chain-symbol {{
-            color: #fab387;
-            font-weight: bold;
-        }}
-        .source-code {{
-            background: #11111b;
-            border: 1px solid #45475a;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            overflow-x: auto;
-        }}
-        .line-number {{
-            color: #6c7086;
-            margin-right: 15px;
-            user-select: none;
-        }}
-        .error-line {{
-            background: rgba(243, 139, 168, 0.2);
-            color: #f38ba8;
-        }}
-        .help-text {{
-            background: #a6e3a1;
-            color: #1e1e2e;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-weight: 500;
-        }}
-        .back-link {{
-            display: inline-block;
-            background: #89b4fa;
-            color: #1e1e2e;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            margin-top: 20px;
-            transition: all 0.2s ease;
-        }}
-        .back-link:hover {{
-            background: #74c7ec;
-            transform: translateY(-1px);
-        }}
-        .miette-diagnostics {{
-            margin: 20px 0;
-        }}
-        .miette-diagnostics h3 {{
-            color: #cba6f7;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-        }}
-        .debug-section {{
-            margin: 25px 0;
-        }}
-        .debug-toggle {{
-            background: #6c7086;
-            color: #cdd6f4;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.9em;
-            transition: all 0.2s ease;
-        }}
-        .debug-toggle:hover {{
-            background: #7f849c;
-        }}
-        .debug-details {{
-            margin-top: 15px;
-        }}
-        .debug-details h4 {{
-            color: #f9e2af;
-            margin-bottom: 10px;
-            font-size: 1em;
-        }}
-        .debug-output {{
-            background: #11111b;
-            border: 1px solid #45475a;
-            border-radius: 8px;
-            padding: 15px;
-            overflow-x: auto;
-            font-size: 0.85em;
-            color: #bac2de;
-            white-space: pre-wrap;
-        }}
-        /* Miette output styling */
-        .miette-error {{
-            color: #f38ba8;
-            font-weight: bold;
-        }}
-        .miette-chain {{
-            color: #fab387;
-        }}
-        .miette-help {{
-            color: #a6e3a1;
-            font-style: italic;
-        }}
-        .miette-source {{
-            color: #89b4fa;
-        }}
-        .miette-border {{
-            color: #6c7086;
-        }}
-        /* Template context styling */
-        .template-context-section {{
-            background: #11111b;
-            border: 1px solid #45475a;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-        }}
-        .template-context-section h5 {{
-            color: #cba6f7;
-            margin: 0 0 10px 0;
-            font-size: 1em;
-        }}
-        .context-json {{
-            background: #1e1e2e;
-            border: 1px solid #45475a;
-            border-radius: 6px;
-            padding: 12px;
-            margin: 0;
-            font-size: 0.9em;
-            color: #a6e3a1;
-            overflow-x: auto;
-            white-space: pre-wrap;
-        }}
-        .context-inline {{
-            color: #fab387;
-            font-style: italic;
-        }}
+        body {{ font-family: monospace; margin: 40px; background: #1e1e2e; color: #cdd6f4; }}
+        .error {{ background: #313244; padding: 20px; border-radius: 8px; border: 1px solid #45475a; }}
+        .error-code {{ background: #45475a; color: #fab387; padding: 4px 8px; border-radius: 4px; font-weight: bold; }}
+        .error-message {{ margin: 15px 0; color: #f9e2af; }}
+        .template-error {{ margin-top: 20px; padding: 15px; background: #f38ba8; color: #1e1e2e; border-radius: 6px; }}
+        pre {{ background: #1e1e2e; padding: 15px; border-radius: 6px; overflow-x: auto; }}
     </style>
 </head>
 <body>
-    <div class="error-container">
-        <div class="error-header">
-            🚨 Error Occurred
+    <div class="error">
+        <div class="error-code">{}</div>
+        <div class="error-message">{}</div>
+        <div class="template-error">
+            <strong>Template Error:</strong> Failed to render error template: {}
         </div>
-        <div class="error-body">
-            <div class="error-code">{error_code}</div>
-            <div class="error-message">{error_message}</div>
-            
-            <div class="miette-diagnostics">
-                <h3>🔍 Error Diagnostics</h3>
-                <div class="error-details">{diagnostic_output}</div>
-            </div>
-            
-            <div class="debug-section">
-                <button class="debug-toggle" onclick="toggleDebug()">🐛 Show Debug Information</button>
-                <div class="debug-details" id="debugDetails" style="display: none;">
-                    <h4>Raw Error Details:</h4>
-                    <pre class="debug-output">{debug_output}</pre>
-                </div>
-            </div>
-            
-            <div class="help-text">
-                💡 <strong>Tip:</strong> This error occurred while processing your request. 
-                Check the details above for specific information about what went wrong.
-            </div>
-            
-            <a href="/" class="back-link">← Back to Services</a>
-        </div>
+        <pre>{}</pre>
+        <a href="/" style="color: #89b4fa;">← Back to Services</a>
     </div>
-    <script>
-        function toggleDebug() {{
-            const debugDetails = document.getElementById('debugDetails');
-            const button = document.querySelector('.debug-toggle');
-            
-            if (debugDetails.style.display === 'none') {{
-                debugDetails.style.display = 'block';
-                button.textContent = '🐛 Hide Debug Information';
-            }} else {{
-                debugDetails.style.display = 'none';
-                button.textContent = '🐛 Show Debug Information';
-            }}
-        }}
-    </script>
 </body>
-</html>
-        "#,
-        error_code = get_error_code(error),
-        error_message = html_escape(&error.to_string()),
-        diagnostic_output = diagnostic_output,
-        debug_output = debug_output,
-    );
-
-    Html(html_content)
+</html>"#,
+                get_error_code(error),
+                html_escape(&error.to_string()),
+                html_escape(&template_error.to_string()),
+                html_escape(&debug_output)
+            );
+            Html(fallback_html)
+        }
+    }
 }
 
 fn get_error_code(error: &WebError) -> &'static str {

@@ -8,6 +8,7 @@ import {closeModal} from '../ui/modals';
 import {closeAllDropdowns} from '../ui/dropdowns';
 import {restoreGitContentVisibility} from '../services/git-service';
 import {getThemeService, initializeThemeService} from '../services/theme-service';
+import {handleHTMXErrorWithDebug} from '../ui/error-display';
 
 /**
  * Initialize the application when the DOM is loaded
@@ -23,7 +24,18 @@ export function initializeApp(): void {
   document.body.addEventListener('htmx:responseError', (event: Event) => {
     const htmxEvent = event as HTMXEvent;
     console.error('HTMX Error:', htmxEvent.detail);
-    showMessage('An error occurred while loading content', 'error');
+    
+    // Extract request information
+    const xhr = htmxEvent.detail.xhr;
+    const requestUrl = htmxEvent.detail.requestConfig?.path;
+    
+    if (xhr) {
+      // Use enhanced error display with debug mode support
+      handleHTMXErrorWithDebug(xhr, requestUrl);
+    } else {
+      // Fallback for cases where xhr is not available
+      showMessage('An error occurred while loading content', 'error');
+    }
   });
 
   // Handle navigation state changes

@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .error-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        background: var(--surface-color);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    .error-header {
+        background: linear-gradient(90deg, var(--error-color) 0%, var(--error-hover-color) 100%);
+        color: var(--surface-color);
+        padding: 20px 30px;
+        font-weight: bold;
+        font-size: 1.2em;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .error-body {
+        padding: 30px;
+    }
+    
+    .error-code {
+        background: var(--secondary-bg-color);
+        color: var(--warning-color);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 15px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+    
+    .error-message {
+        font-size: 1.1em;
+        margin-bottom: 25px;
+        color: var(--text-color);
+        line-height: 1.5;
+    }
+    
+    .error-details {
+        background: var(--secondary-bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        font-size: 0.9em;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        line-height: 1.4;
+        color: var(--text-color);
+    }
+    
+    .debug-section {
+        margin: 25px 0;
+    }
+    
+    .debug-toggle {
+        background: var(--secondary-color);
+        color: var(--text-color);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+    }
+    
+    .debug-toggle:hover {
+        background: var(--secondary-hover-color);
+    }
+    
+    .debug-details {
+        margin-top: 15px;
+    }
+    
+    .debug-details h4 {
+        color: var(--warning-color);
+        margin-bottom: 10px;
+        font-size: 1em;
+    }
+    
+    .debug-output {
+        background: var(--secondary-bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        overflow-x: auto;
+        font-size: 0.85em;
+        color: var(--muted-text-color);
+        white-space: pre-wrap;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+    
+    .help-text {
+        background: var(--success-bg-color);
+        color: var(--success-color);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-weight: 500;
+        border: 1px solid var(--success-color);
+    }
+    
+    .back-link {
+        display: inline-block;
+        background: var(--primary-color);
+        color: var(--surface-color);
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: bold;
+        margin-top: 20px;
+        transition: all 0.2s ease;
+    }
+    
+    .back-link:hover {
+        background: var(--primary-hover-color);
+        transform: translateY(-1px);
+    }
+    
+    .miette-diagnostics {
+        margin: 20px 0;
+    }
+    
+    .miette-diagnostics h3 {
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        font-size: 1.1em;
+    }
+    
+    /* Miette output styling with CSS variables */
+    .miette-error {
+        color: var(--error-color);
+        font-weight: bold;
+    }
+    
+    .miette-chain {
+        color: var(--warning-color);
+    }
+    
+    .miette-help {
+        color: var(--success-color);
+        font-style: italic;
+    }
+    
+    .miette-source {
+        color: var(--primary-color);
+    }
+    
+    .miette-border {
+        color: var(--muted-text-color);
+    }
+</style>
+{% endblock head %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-header">
+        🚨 Error Occurred
+    </div>
+    <div class="error-body">
+        <div class="error-code">{{ error_code }}</div>
+        <div class="error-message">{{ error_message }}</div>
+        
+        <div class="miette-diagnostics">
+            <h3>🔍 Error Diagnostics</h3>
+            <div class="error-details">{{ diagnostic_output | safe }}</div>
+        </div>
+        
+        <div class="debug-section">
+            <button class="debug-toggle" onclick="toggleDebug()">🐛 Show Debug Information</button>
+            <div class="debug-details" id="debugDetails" style="display: none;">
+                <h4>Raw Error Details:</h4>
+                <pre class="debug-output">{{ debug_output | safe }}</pre>
+            </div>
+        </div>
+        
+        <div class="help-text">
+            💡 <strong>Tip:</strong> This error occurred while processing your request. 
+            Check the details above for specific information about what went wrong.
+        </div>
+        
+        <a class="back-link" href="/">← Back to Services</a>
+    </div>
+</div>
+
+<script>
+    function toggleDebug() {
+        const debugDetails = document.getElementById('debugDetails');
+        const button = document.querySelector('.debug-toggle');
+        
+        if (debugDetails.style.display === 'none') {
+            debugDetails.style.display = 'block';
+            button.textContent = '🐛 Hide Debug Information';
+        } else {
+            debugDetails.style.display = 'none';
+            button.textContent = '🐛 Show Debug Information';
+        }
+    }
+</script>
+{% endblock content %}

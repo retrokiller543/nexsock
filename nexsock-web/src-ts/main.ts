@@ -6,6 +6,9 @@
 // Import JSX utilities first to set up global functions
 import './core/jsx-utils';
 
+// Import styles
+import './ui/error-display.css';
+
 import {registerAllComponents} from './generated/component-registry';
 import {initializeApp} from './core/init';
 import {createGlobalAPI} from './core/api';

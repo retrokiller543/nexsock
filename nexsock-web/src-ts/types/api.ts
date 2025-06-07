@@ -5,6 +5,17 @@
 import {ServiceConfig, ServiceConfigs} from './service';
 import {MessageType} from './ui';
 
+// Debug utilities interface
+export interface DebugAPI {
+  enable: (options?: any) => void;
+  disable: () => void;
+  configure: (options: any) => void;
+  status: () => void;
+  testError: () => void;
+  getConfig: () => any;
+  log: (message: string, ...args: any[]) => void;
+}
+
 // API interface
 export interface NexsockAPI {
   // Configuration management
@@ -38,4 +49,7 @@ export interface NexsockAPI {
   // Dropdown management
   toggleDropdown: (dropdownId: string) => void;
   closeAllDropdowns: () => void;
+  
+  // Debug utilities
+  debug: DebugAPI;
 }

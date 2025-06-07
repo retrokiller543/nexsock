@@ -3,7 +3,7 @@ mod build_src;
 use build_src::{compile_typescript, create_tera_env, BuildError};
 use miette::{IntoDiagnostic, Result};
 
-fn main() -> Result<()> {
+fn main() {
     let _guard = miette::set_hook(Box::new(|_| {
         Box::new(
             miette::MietteHandlerOpts::new()
@@ -14,7 +14,8 @@ fn main() -> Result<()> {
                 .with_cause_chain()
                 .build(),
         )
-    }))?;
+    }))
+    .unwrap();
 
     println!("cargo:rerun-if-changed=templates");
     println!("cargo:rerun-if-changed=public");
@@ -23,21 +24,18 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=tsconfig.json");
 
     if let Err(err) = run() {
-        // Also print a cargo warning so it's visible in the build output
         println!("cargo:warning=Build script failed. See error details in the console output.");
-
-        Err(err)
-    } else {
-        Ok(())
+        println!("cargo:warning=Build error: {:#?}", err);
+        panic!();
     }
 }
 
-fn run() -> Result<()> {
+fn run() -> Result<(), BuildError> {
     // Compile TypeScript/TSX first
-    compile_typescript().into_diagnostic()?;
+    compile_typescript()?;
 
     // Create Tera environment
-    create_tera_env().into_diagnostic()?;
+    create_tera_env()?;
 
     #[cfg(debug_assertions)]
     println!("cargo:warning=Template compilation successful");

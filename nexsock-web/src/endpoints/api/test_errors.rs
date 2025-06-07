@@ -53,3 +53,65 @@ pub async fn test_query_error() -> Result<&'static str, WebError> {
         parse_error,
     ))
 }
+
+/// Test endpoint that will trigger a template rendering error
+/// GET /api/test-template-error
+pub async fn test_template_error() -> Result<&'static str, WebError> {
+    use serde_json::json;
+
+    // Simulate a template rendering error with missing variable
+    let template_source =
+        Some("Hello {{ missing_variable }}! Welcome {{ user.name }}.".to_string());
+    let context = json!({
+        "user": {
+            "email": "test@example.com"
+        },
+        "is_service_page": true
+    });
+
+    // Create a Tera error for missing variable
+    let tera_error = tera::Error::msg(
+        "Variable `missing_variable` not found in context while rendering template",
+    );
+
+    Err(WebError::template_render(
+        "test-template.html",
+        template_source,
+        Some(&context),
+        tera_error,
+    ))
+}
+
+/// Test endpoint that will trigger an internal server error
+/// GET /api/test-internal-error
+pub async fn test_internal_error() -> Result<&'static str, WebError> {
+    Err(WebError::internal(
+        "This is a test internal server error for demonstration purposes",
+        "test_handler",
+        Some(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "Access denied",
+        )),
+    ))
+}
+
+/// Test endpoint that will trigger a daemon communication error
+/// GET /api/test-daemon-error
+pub async fn test_daemon_error() -> Result<&'static str, WebError> {
+    use std::io;
+
+    let io_error = io::Error::new(io::ErrorKind::ConnectionRefused, "Connection refused");
+
+    Err(WebError::daemon_communication(
+        "list_services",
+        Some("unix:///tmp/nexsock.sock".to_string()),
+        "disconnected",
+        io_error,
+    ))
+}
+
+/// Test endpoint that will panic - should be caught by global error handler
+/// GET /api/test-panic
+pub async fn test_panic() -> Result<&'static str, WebError> {
+    panic!("This is a test panic to verify global error handling works!");
+}

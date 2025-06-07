@@ -589,6 +589,10 @@ pub enum BuildError {
     #[error("I/O error: {0}")]
     #[diagnostic(code(build::io_error))]
     IoError(#[from] std::io::Error),
+    #[error(transparent)]
+    Fmt(#[from] core::fmt::Error),
+    #[error(transparent)]
+    InstallError(#[from] miette::InstallError),
 }
 
 // Implement From<TypeScriptError> for BuildError

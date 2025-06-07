@@ -1,6 +1,8 @@
 use crate::embedded::Public;
+use crate::error::WebError;
 use axum::body::Body;
-use axum::http::{header, HeaderValue, Response, StatusCode};
+use axum::http::{header, HeaderValue, Response};
+use axum::response::IntoResponse;
 
 pub async fn static_handler(uri: axum::http::Uri) -> Response<Body> {
     let path = uri.path().trim_start_matches('/');
@@ -21,9 +23,14 @@ pub async fn static_handler(uri: axum::http::Uri) -> Response<Body> {
                 .body(Body::from(content.data.to_vec()))
                 .unwrap()
         }
-        None => Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::from("404 Not Found"))
-            .unwrap(),
+        None => {
+            // For true 404s (non-static files), return a proper 404 WebError
+            let error = WebError::not_found(
+                format!("The requested resource '{}' was not found", uri.path()),
+                "static_handler",
+                None::<std::convert::Infallible>,
+            );
+            error.into_response()
+        }
     }
 }

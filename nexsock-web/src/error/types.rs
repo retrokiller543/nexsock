@@ -1,3 +1,4 @@
+use axum::http::StatusCode;
 use miette::{Diagnostic, LabeledSpan, NamedSource, SourceSpan};
 use thiserror::Error;
 
@@ -162,6 +163,7 @@ pub enum WebError {
     Internal {
         message: String,
         component: String,
+        status_code: StatusCode,
         #[source]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },

@@ -4,6 +4,7 @@ mod embedded;
 mod endpoints;
 mod error;
 mod extractors;
+mod middleware;
 mod services;
 mod state;
 pub(crate) mod templates;
@@ -129,6 +130,18 @@ pub async fn app() -> anyhow::Result<Router> {
         .route(
             "/api/test-query-error",
             get(endpoints::api::test_errors::test_query_error),
+        )
+        .route(
+            "/api/test-template-error",
+            get(endpoints::api::test_errors::test_template_error),
+        )
+        .route(
+            "/api/test-internal-error",
+            get(endpoints::api::test_errors::test_internal_error),
+        )
+        .route(
+            "/api/test-daemon-error",
+            get(endpoints::api::test_errors::test_daemon_error),
         )
         .fallback(static_handler.layer(cache))
         .layer(compression_layer)
