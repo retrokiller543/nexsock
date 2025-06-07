@@ -2422,9 +2422,11 @@ name = "nexsock-web"
 version = "1.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "axum",
  "axum-response-cache",
  "bincode",
+ "bytes",
  "cfg-if",
  "deadpool",
  "derive_more",
@@ -2439,6 +2441,8 @@ dependencies = [
  "rust-embed",
  "serde",
  "serde_json",
+ "serde_urlencoded",
+ "strsim",
  "tera",
  "thiserror 2.0.12",
  "tikv-jemallocator",

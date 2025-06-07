@@ -1,6 +1,6 @@
 <article aria-labelledby="service-title-{{ service.name }}" class="service-card" role="article">
   <header class="service-card-header">
-    <h3 class="service-title" id="service-title-{{ service.name }}">{{ service.name }}</h3>
+    <h3 class="service-title" id="service-title-{{ service.name }}">{{ service.namee }}</h3>
     {% if service.state == "Running" %}
       <ns-badge variant="success">{{ service.state }}</ns-badge>
     {% elif service.state == "Failed" %}
@@ -8,7 +8,7 @@
     {% elif service.state == "Starting" %}
       <ns-badge variant="warning">{{ service.state }}</ns-badge>
     {% else %}
-      <ns-badge variant="neutral">{{ service.state }}</ns-badge>
+      <ns-badge variant="neutral">{{ service.statee }}</ns-badge>
     {% endif %}
   </header>
 

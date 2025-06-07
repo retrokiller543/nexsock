@@ -2,18 +2,19 @@ mod build_src;
 
 use build_src::{compile_typescript, create_tera_env, BuildError};
 use miette::{IntoDiagnostic, Result};
-use std::process;
 
-fn main() {
-    // Set up miette error handler with fancy reporting
-    let _handler = miette::set_hook(Box::new(|_| {
+fn main() -> Result<()> {
+    let _guard = miette::set_hook(Box::new(|_| {
         Box::new(
             miette::MietteHandlerOpts::new()
-                .footer("Build script error - check the error details above".to_string())
+                .terminal_links(true)
+                .unicode(true)
+                .context_lines(3)
+                .tab_width(4)
+                .with_cause_chain()
                 .build(),
         )
-    }))
-    .unwrap();
+    }))?;
 
     println!("cargo:rerun-if-changed=templates");
     println!("cargo:rerun-if-changed=public");
@@ -22,14 +23,12 @@ fn main() {
     println!("cargo:rerun-if-changed=tsconfig.json");
 
     if let Err(err) = run() {
-        // Report the error using miette's fancy diagnostics
-        eprintln!("{:?}", err);
-
         // Also print a cargo warning so it's visible in the build output
         println!("cargo:warning=Build script failed. See error details in the console output.");
 
-        // Exit with a non-zero status code
-        process::exit(1);
+        Err(err)
+    } else {
+        Ok(())
     }
 }
 

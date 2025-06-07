@@ -1,8 +1,9 @@
+use crate::extractors::{Form, Json};
 use crate::services::nexsock_services::git;
 use crate::state::AppState;
-use axum::extract::{Path, Query, State};
-use axum::response::Json;
-use axum::Form;
+use crate::{error::WebError, Result};
+use axum::extract::State;
+use axum::extract::{Path, Query};
 use nexsock_protocol::commands::manage_service::ServiceRef;
 use serde::Deserialize;
 use std::str::FromStr;
@@ -33,9 +34,25 @@ pub struct GitCheckoutCommitForm {
 pub async fn git_status(
     State(ref state): State<AppState>,
     Path(service_ref): Path<String>,
-) -> crate::Result<Json<nexsock_protocol::commands::git::RepoStatus>> {
-    let service_ref = ServiceRef::from_str(service_ref.as_str())?;
-    let status = git::get_repo_status(state, service_ref).await?;
+) -> Result<Json<nexsock_protocol::commands::git::RepoStatus>> {
+    let service_ref = ServiceRef::from_str(&service_ref).map_err(|error| {
+        WebError::internal(
+            format!("Invalid service reference '{}': {}", service_ref, error),
+            "git_status",
+            None::<std::io::Error>,
+        )
+    })?;
+
+    let status = git::get_repo_status(state, service_ref.clone())
+        .await
+        .map_err(|error| {
+            WebError::internal(
+                format!("Git status failed for '{}': {}", service_ref, error),
+                "git_status",
+                None::<std::io::Error>,
+            )
+        })?;
+
     Ok(Json(status))
 }
 
@@ -44,10 +61,26 @@ pub async fn git_branches(
     State(ref state): State<AppState>,
     Path(service_ref): Path<String>,
     Query(params): Query<GitBranchesQuery>,
-) -> crate::Result<Json<nexsock_protocol::commands::git::GitListBranchesResponse>> {
-    let service_ref = ServiceRef::from_str(service_ref.as_str())?;
+) -> Result<Json<nexsock_protocol::commands::git::GitListBranchesResponse>> {
+    let service_ref = ServiceRef::from_str(&service_ref).map_err(|error| {
+        WebError::internal(
+            format!("Invalid service reference '{}': {}", service_ref, error),
+            "git_branches",
+            None::<std::io::Error>,
+        )
+    })?;
+
     let include_remote = params.include_remote.unwrap_or(false);
-    let branches = git::list_branches(state, service_ref, include_remote).await?;
+    let branches = git::list_branches(state, service_ref.clone(), include_remote)
+        .await
+        .map_err(|error| {
+            WebError::internal(
+                format!("Git branches failed for '{}': {}", service_ref, error),
+                "git_branches",
+                None::<std::io::Error>,
+            )
+        })?;
+
     Ok(Json(branches))
 }
 

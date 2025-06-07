@@ -3,6 +3,7 @@ mod daemon_client;
 mod embedded;
 mod endpoints;
 mod error;
+mod extractors;
 mod services;
 mod state;
 pub(crate) mod templates;
@@ -25,7 +26,7 @@ use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{info, Span};
 
-type Result<T, E = error::ServiceError> = std::result::Result<T, E>;
+type Result<T, E = error::WebError> = std::result::Result<T, E>;
 
 #[inline]
 #[tracing::instrument]
@@ -115,6 +116,19 @@ pub async fn app() -> anyhow::Result<Router> {
         .route(
             "/api/services/{service_id}/git/pull",
             post(endpoints::api::service::git::git_pull),
+        )
+        // Test endpoints for error handling demonstration
+        /*.route(
+            "/api/test-json-error",
+            post(endpoints::api::test_errors::test_json_error),
+        )*/
+        .route(
+            "/api/test-form-error",
+            post(endpoints::api::test_errors::test_form_error),
+        )
+        .route(
+            "/api/test-query-error",
+            get(endpoints::api::test_errors::test_query_error),
         )
         .fallback(static_handler.layer(cache))
         .layer(compression_layer)

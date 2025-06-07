@@ -42,6 +42,13 @@ fn check_types() -> Result<(), BuildError> {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
 
+        // Debug output can be uncommented for troubleshooting
+        // println!("cargo:warning=Raw stdout from bun check:");
+        // println!("cargo:warning={}", stdout);
+        // println!("cargo:warning=Raw stderr from bun check:");
+        // println!("cargo:warning={}", stderr);
+
+        // Let the sophisticated error parsing in TypeScriptError handle the details
         return Err(TypeScriptError::new(
             TypeScriptErrorKind::TypeChecking,
             "TypeScript type checking failed".to_string(),

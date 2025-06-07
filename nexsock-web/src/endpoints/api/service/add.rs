@@ -1,5 +1,6 @@
 use crate::services::nexsock_services::add::add_service;
 use crate::state::AppState;
+use crate::Result;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -10,13 +11,18 @@ use tracing::error;
 pub async fn add_service_endpoint(
     State(ref state): State<AppState>,
     Json(payload): Json<AddServicePayload>,
-) -> impl IntoResponse {
-    match add_service(state, payload).await {
-        Ok(_) => StatusCode::CREATED,
-        Err(error) => {
-            error!(error = %error, "failed to add service");
+) -> Result<impl IntoResponse> {
+    let service_name = payload.name.clone();
 
-            StatusCode::INTERNAL_SERVER_ERROR
-        }
-    }
+    add_service(state, payload).await.map_err(|error| {
+        error!(error = %error, "failed to add service");
+
+        crate::error::WebError::internal(
+            format!("Failed to add service '{}': {}", service_name, error),
+            "add_service",
+            Some(error),
+        )
+    })?;
+
+    Ok(StatusCode::CREATED)
 }

@@ -1,70 +1,292 @@
 use miette::{Diagnostic, SourceSpan};
 use regex::Regex;
-use std::fmt;
 use thiserror::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Error, Diagnostic)]
+#[error("{}", self.format_error())]
+#[diagnostic(code(typescript::parse_error))]
 pub struct ParsedError {
     pub file: Option<String>,
     pub line: Option<u32>,
     pub column: Option<u32>,
     pub message: String,
     pub error_type: Option<String>,
+    pub error_code: Option<String>,
+
+    #[source_code]
+    source_code: miette::NamedSource<String>,
+
+    #[label("{}", self.format_label())]
+    label: Option<SourceSpan>,
+
+    // Additional context from surrounding lines
+    #[help]
+    additional_context: Option<String>,
 }
 
-impl fmt::Display for ParsedError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(file) = &self.file {
-            write!(f, "File: {}", file)?;
+impl ParsedError {
+    pub fn new(
+        file: Option<String>,
+        line: Option<u32>,
+        column: Option<u32>,
+        message: String,
+        error_type: Option<String>,
+    ) -> Self {
+        let mut error = Self {
+            file: file.clone(),
+            line,
+            column,
+            message,
+            error_type,
+            error_code: None,
+            // Initialize with empty source
+            source_code: miette::NamedSource::new(
+                file.clone().unwrap_or_else(|| "<unknown>".to_string()),
+                String::new(),
+            ),
+            label: None,
+            additional_context: None,
+        };
 
-            if let Some(line) = self.line {
-                write!(f, ":{}", line)?;
+        // Extract error code if present (e.g., TS2322)
+        if let Some(code) = Self::extract_error_code(&error.message) {
+            error.error_code = Some(code);
+        }
 
-                if let Some(column) = self.column {
-                    write!(f, ":{}", column)?;
+        if let Some(file_path) = &error.file {
+            if file_path.ends_with(".ts")
+                || file_path.ends_with(".tsx")
+                || file_path.ends_with(".js")
+                || file_path.ends_with(".jsx")
+            {
+                if let Ok(source) = std::fs::read_to_string(file_path) {
+                    // Update source code with actual content
+                    error.source_code = miette::NamedSource::new(file_path.clone(), source.clone())
+                        .with_language("typescript");
+
+                    if let (Some(line), Some(column)) = (error.line, error.column) {
+                        if let Some((offset, span_len)) =
+                            Self::calculate_span(&source, line, column, &error.message)
+                        {
+                            error.label = Some(miette::SourceSpan::new(offset.into(), span_len));
+                        }
+
+                        error.additional_context = Self::extract_context(&source, line);
+                    }
                 }
             }
-
-            write!(f, " - ")?;
         }
 
-        if let Some(error_type) = &self.error_type {
-            write!(f, "{}: ", error_type)?;
+        error
+    }
+
+    fn extract_error_code(message: &str) -> Option<String> {
+        let code_regex = Regex::new(r"TS(\d+)").unwrap();
+        code_regex
+            .captures(message)
+            .and_then(|cap| cap.get(0))
+            .map(|m| m.as_str().to_string())
+    }
+
+    fn format_label(&self) -> String {
+        if let Some(code) = &self.error_code {
+            format!("[{}]", code)
+        } else if let Some(error_type) = &self.error_type {
+            error_type.clone()
+        } else {
+            "error".to_string()
+        }
+    }
+
+    fn extract_context(source: &str, error_line: u32) -> Option<String> {
+        let lines: Vec<&str> = source.lines().collect();
+        let line_idx = (error_line as usize).saturating_sub(1);
+
+        if line_idx >= lines.len() {
+            return None;
         }
 
-        write!(f, "{}", self.message)
+        let mut context = String::new();
+
+        // Show 2 lines before and after the error
+        let start = line_idx.saturating_sub(2);
+        let end = (line_idx + 3).min(lines.len());
+
+        for i in start..end {
+            if i == line_idx {
+                context.push_str(&format!("→ {}: {}\n", i + 1, lines[i]));
+            } else {
+                context.push_str(&format!("  {}: {}\n", i + 1, lines[i]));
+            }
+        }
+
+        Some(context.trim().to_string())
+    }
+
+    fn calculate_span(
+        source: &str,
+        line: u32,
+        column: u32,
+        message: &str,
+    ) -> Option<(usize, usize)> {
+        let lines: Vec<&str> = source.lines().collect();
+
+        if line == 0 || line as usize > lines.len() {
+            return None;
+        }
+
+        let mut offset = 0;
+        for i in 0..(line - 1) as usize {
+            offset += lines[i].len() + 1;
+        }
+
+        let col_offset = (column.saturating_sub(1)) as usize;
+        offset += col_offset;
+
+        let line_content = lines[(line - 1) as usize];
+        let remaining_line = &line_content[col_offset.min(line_content.len())..];
+
+        let span_len = Self::estimate_span_length(remaining_line, message);
+
+        if offset + span_len <= source.len() {
+            Some((offset, span_len))
+        } else {
+            Some((offset, 1))
+        }
+    }
+
+    fn estimate_span_length(text_at_position: &str, message: &str) -> usize {
+        if let Some(quoted) = Self::extract_quoted_from_message(message) {
+            if text_at_position.starts_with(&quoted) {
+                return quoted.len();
+            }
+        }
+
+        if message.contains("Property")
+            || message.contains("Type")
+            || message.contains("Cannot find name")
+        {
+            let ident_chars: Vec<char> = text_at_position
+                .chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '$' || *c == '.')
+                .collect();
+
+            if !ident_chars.is_empty() {
+                return ident_chars.len();
+            }
+        }
+
+        if text_at_position.starts_with('"') || text_at_position.starts_with('\'') {
+            let quote_char = text_at_position.chars().next().unwrap();
+            let mut chars = text_at_position.chars().skip(1);
+            let mut len = 1;
+            let mut escaped = false;
+
+            while let Some(ch) = chars.next() {
+                len += 1;
+                if !escaped && ch == quote_char {
+                    return len;
+                }
+                escaped = ch == '\\' && !escaped;
+            }
+        }
+
+        text_at_position
+            .chars()
+            .take_while(|c| !c.is_whitespace())
+            .count()
+            .max(1)
+    }
+
+    fn extract_quoted_from_message(message: &str) -> Option<String> {
+        let quote_regex = Regex::new(r"'([^']+)'").unwrap();
+        quote_regex
+            .captures(message)
+            .and_then(|cap| cap.get(1))
+            .map(|m| m.as_str().to_string())
+    }
+
+    fn format_error(&self) -> String {
+        self.message.clone()
     }
 }
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("{kind_str} error: {message}{}", Self::format_parsed_errors(&parsed_errors))]
+// Wrapper type for displaying multiple errors
+#[derive(Debug, Clone, Error, Diagnostic)]
+#[error("TypeScript compilation failed with {} error{}", .errors.len(), if .errors.len() == 1 { "" } else { "s" })]
+#[diagnostic(code(typescript::compilation_failed))]
+pub struct TypeScriptCompilationErrors {
+    #[related]
+    pub errors: Vec<ParsedError>,
+
+    #[help]
+    pub summary: Option<String>,
+}
+
+impl TypeScriptCompilationErrors {
+    /// Manually print each error with source code and highlighting
+    pub fn print_errors(&self) {
+        eprintln!("\n╭─[TypeScript Compilation Failed]");
+        eprintln!(
+            "│ Found {} error{}",
+            self.errors.len(),
+            if self.errors.len() == 1 { "" } else { "s" }
+        );
+        eprintln!("╰─");
+
+        for (i, error) in self.errors.iter().enumerate() {
+            eprintln!(
+                "\n╭─[Error {}/{}]─────────────────────",
+                i + 1,
+                self.errors.len()
+            );
+
+            if let Some(file) = &error.file {
+                eprintln!("│ File: {}", file);
+                if let (Some(line), Some(column)) = (error.line, error.column) {
+                    eprintln!("│ Location: {}:{}", line, column);
+                }
+            }
+
+            if let Some(error_code) = &error.error_code {
+                eprintln!("│ Code: {}", error_code);
+            }
+
+            eprintln!("│ Message: {}", error.message);
+            eprintln!("│");
+
+            // Show source context with highlighting
+            if let Some(context) = &error.additional_context {
+                eprintln!("│ Source:");
+                for line in context.lines() {
+                    if line.starts_with('→') {
+                        eprintln!("│ \x1b[91m{}\x1b[0m", line); // Red for error line
+                    } else {
+                        eprintln!("│ \x1b[90m{}\x1b[0m", line); // Gray for context
+                    }
+                }
+            }
+
+            eprintln!("╰─");
+        }
+    }
+}
+
+// Keep the original TypeScriptError structure for compatibility
+#[derive(Debug, Error)]
+#[error("{kind_str} error: {message}")]
 pub struct TypeScriptError {
     message: String,
-    #[source_code]
-    source_code: Option<miette::NamedSource<String>>,
-    #[label]
+    source_code: miette::NamedSource<String>,
     label: Option<SourceSpan>,
-
-    // Private field to store the kind
     kind: TypeScriptErrorKind,
-
-    // Computed field for display
-    #[help]
     kind_str: String,
-
-    // Additional context fields
-    #[help]
     file_path: Option<String>,
-    #[help]
     context: Option<String>,
-
-    // Raw output fields (not displayed directly)
     stdout: Option<String>,
     stderr: Option<String>,
-
-    // Parsed error information
-    #[help]
     parsed_errors: Vec<ParsedError>,
+    error_summary: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -100,13 +322,14 @@ impl TypeScriptError {
             kind,
             kind_str: kind.as_str().to_string(),
             message,
-            source_code: None,
+            source_code: miette::NamedSource::new("<no-source>".to_string(), String::new()),
             label: None,
             stdout: None,
             stderr: None,
             file_path: None,
             context: None,
             parsed_errors: Vec::new(),
+            error_summary: None,
         }
     }
 
@@ -117,234 +340,154 @@ impl TypeScriptError {
         // Parse errors from stdout and stderr
         self.parsed_errors = Self::parse_typescript_errors(stdout, stderr);
 
-        // Try to load source code for the first file with an error
-        let mut source_code = None;
-        let mut file_name = None;
-        let mut label_offset = None;
+        // Generate error summary
+        if !self.parsed_errors.is_empty() {
+            let total = self.parsed_errors.len();
+            let by_type: std::collections::HashMap<String, usize> = self
+                .parsed_errors
+                .iter()
+                .filter_map(|e| e.error_code.as_ref())
+                .fold(std::collections::HashMap::new(), |mut map, code| {
+                    *map.entry(code.clone()).or_insert(0) += 1;
+                    map
+                });
 
-        // Collect information without modifying self
-        if let Some(first_error) = self.parsed_errors.first() {
-            if let Some(file_path) = &first_error.file {
-                // Only try to load the source if it's a TypeScript or TSX file
-                if file_path.ends_with(".ts") || file_path.ends_with(".tsx") {
-                    if let Ok(source) = std::fs::read_to_string(file_path) {
-                        // Store the source code and file name for later
-                        file_name = Some(file_path.clone());
+            let mut summary = format!("Found {} error{}", total, if total == 1 { "" } else { "s" });
 
-                        // If we have line and column information, calculate the offset
-                        if let (Some(line), Some(column)) = (first_error.line, first_error.column) {
-                            if let Some(offset) = Self::calculate_offset(&source, line, column) {
-                                label_offset = Some(offset);
-                            }
-                        }
-
-                        source_code = Some(source);
-                    }
-                }
+            if !by_type.is_empty() {
+                summary.push_str(" (");
+                let type_summary: Vec<String> = by_type
+                    .iter()
+                    .map(|(code, count)| format!("{}: {}", code, count))
+                    .collect();
+                summary.push_str(&type_summary.join(", "));
+                summary.push(')');
             }
+
+            self.error_summary = Some(summary);
         }
 
-        // Now apply the changes after all borrowing is done
-        if let (Some(source), Some(name)) = (source_code, file_name) {
-            self = self.with_source_code(source, name);
-
-            if let Some(offset) = label_offset {
-                self = self.with_label(miette::SourceSpan::new(offset.into(), 1));
+        // Try to load source code for the first file with an error
+        if let Some(first_error) = self.parsed_errors.first() {
+            if let (Some(file_path), Some(lbl)) = (&first_error.file, &first_error.label) {
+                // Clone the source code from the first error
+                let src_content = first_error.source_code.inner().to_string();
+                self.source_code = miette::NamedSource::new(file_path.clone(), src_content);
+                self.label = Some(*lbl);
             }
         }
 
         self
     }
 
-    // Helper method to calculate character offset from line and column
-    fn calculate_offset(source: &str, line: u32, column: u32) -> Option<usize> {
-        let lines: Vec<&str> = source.lines().collect();
-
-        // Check if the line number is valid (1-based to 0-based)
-        if line == 0 || line as usize > lines.len() {
-            return None;
-        }
-
-        // Calculate offset by summing lengths of previous lines plus newlines
-        let mut offset = 0;
-        for i in 0..(line - 1) as usize {
-            offset += lines[i].len() + 1; // +1 for newline
-        }
-
-        // Add column offset (1-based to 0-based)
-        offset += (column - 1) as usize;
-
-        // Make sure we don't go past the end of the line
-        if (column as usize) <= lines[(line - 1) as usize].len() {
-            Some(offset)
-        } else {
-            // If column is beyond line length, point to the end of the line
-            Some(offset - (column as usize) + lines[(line - 1) as usize].len())
-        }
-    }
-
-    fn format_parsed_errors(errors: &[ParsedError]) -> String {
-        if errors.is_empty() {
-            return String::new();
-        }
-
-        let mut result = String::new();
-        result.push_str("\nDetailed errors:\n");
-
-        for (i, error) in errors.iter().enumerate() {
-            result.push_str(&format!("{}. {}\n", i + 1, error));
-        }
-
-        result
-    }
-
     fn parse_typescript_errors(stdout: Option<String>, stderr: Option<String>) -> Vec<ParsedError> {
         let mut errors = Vec::new();
 
-        // Common TypeScript error patterns
-        let file_line_col_regex =
-            Regex::new(r"(?m)([^:]+):(\d+):(\d+)(?:\s*-\s*(?:error|warning)\s*\w*\s*:\s*(.+))?")
-                .unwrap();
-        let error_message_regex = Regex::new(r"(?m)(?:error|warning)\s*\w*\s*:\s*(.+)").unwrap();
+        let patterns = vec![
+            (
+                Regex::new(r"(?m)([^(]+)\((\d+),(\d+)\):\s*(?:error|warning)\s+(TS\d+):\s*(.+)")
+                    .unwrap(),
+                true,
+            ),
+            (
+                Regex::new(r"(?m)([^:]+):(\d+):(\d+)\s*-\s*(?:error|warning)\s+(TS\d+):\s*(.+)")
+                    .unwrap(),
+                true,
+            ),
+            (
+                Regex::new(r"(?m)([^:]+):(\d+):(\d+):\s*(.+)").unwrap(),
+                false,
+            ),
+        ];
 
-        // Bun check specific patterns - matches format like "src-ts/services/config-service.ts(19,9): error TS2322: Type 'string' is not assignable to type 'number'."
-        let bun_tsc_error_regex =
-            Regex::new(r"(?m)([^(]+)\((\d+),(\d+)\):\s*(?:error|warning)\s+TS\d+:\s*(.+)").unwrap();
-
-        // Process stdout first as TypeScript outputs errors to stdout
         if let Some(stdout_content) = &stdout {
-            // Try to match bun tsc error pattern first (file(line,column): error TSxxxx: message)
-            for cap in bun_tsc_error_regex.captures_iter(stdout_content) {
-                let file = cap.get(1).map(|m| m.as_str().trim().to_string());
-                let line = cap.get(2).and_then(|m| m.as_str().parse::<u32>().ok());
-                let column = cap.get(3).and_then(|m| m.as_str().parse::<u32>().ok());
-                let message = cap
-                    .get(4)
-                    .map(|m| m.as_str().trim().to_string())
-                    .unwrap_or_else(|| "Unknown error".to_string());
-
-                errors.push(ParsedError {
-                    file,
-                    line,
-                    column,
-                    message,
-                    error_type: Some("TypeScript".to_string()),
-                });
-            }
-
-            // If still no errors found, try the original file:line:column pattern
-            if errors.is_empty() {
-                for cap in file_line_col_regex.captures_iter(stdout_content) {
-                    let file = cap.get(1).map(|m| m.as_str().to_string());
+            for (regex, has_error_code) in &patterns {
+                for cap in regex.captures_iter(stdout_content) {
+                    let file = cap.get(1).map(|m| m.as_str().trim().to_string());
                     let line = cap.get(2).and_then(|m| m.as_str().parse::<u32>().ok());
                     let column = cap.get(3).and_then(|m| m.as_str().parse::<u32>().ok());
-                    let message = cap.get(4).map_or_else(
-                        || "Unknown error".to_string(),
-                        |m| m.as_str().trim().to_string(),
-                    );
 
-                    errors.push(ParsedError {
+                    let (error_code, message) = if *has_error_code {
+                        (
+                            cap.get(4).map(|m| m.as_str().to_string()),
+                            cap.get(5)
+                                .map(|m| m.as_str().trim().to_string())
+                                .unwrap_or_else(|| "Unknown error".to_string()),
+                        )
+                    } else {
+                        (
+                            None,
+                            cap.get(4)
+                                .map(|m| m.as_str().trim().to_string())
+                                .unwrap_or_else(|| "Unknown error".to_string()),
+                        )
+                    };
+
+                    let mut parsed_error = ParsedError::new(
                         file,
                         line,
                         column,
                         message,
-                        error_type: Some("Error".to_string()),
-                    });
-                }
-            }
+                        Some("TypeScript".to_string()),
+                    );
 
-            // If no structured errors found, look for general error messages
-            if errors.is_empty() {
-                for cap in error_message_regex.captures_iter(stdout_content) {
-                    if let Some(message) = cap.get(1) {
-                        errors.push(ParsedError {
-                            file: None,
-                            line: None,
-                            column: None,
-                            message: message.as_str().trim().to_string(),
-                            error_type: Some("Error".to_string()),
-                        });
+                    if let Some(code) = error_code {
+                        parsed_error.error_code = Some(code);
                     }
-                }
-            }
 
-            // If still no errors found, use the whole stdout as a single error
-            if errors.is_empty() && !stdout_content.trim().is_empty() {
-                errors.push(ParsedError {
-                    file: None,
-                    line: None,
-                    column: None,
-                    message: stdout_content.trim().to_string(),
-                    error_type: None,
-                });
+                    errors.push(parsed_error);
+                }
+
+                if !errors.is_empty() {
+                    break;
+                }
             }
         }
 
-        // Process stderr if no errors found in stdout
         if errors.is_empty() {
             if let Some(stderr_content) = &stderr {
-                // Look for file:line:column patterns
-                for cap in file_line_col_regex.captures_iter(stderr_content) {
-                    let file = cap.get(1).map(|m| m.as_str().to_string());
-                    let line = cap.get(2).and_then(|m| m.as_str().parse::<u32>().ok());
-                    let column = cap.get(3).and_then(|m| m.as_str().parse::<u32>().ok());
-                    let message = cap.get(4).map_or_else(
-                        || "Unknown error".to_string(),
-                        |m| m.as_str().trim().to_string(),
-                    );
+                for (regex, has_error_code) in &patterns {
+                    for cap in regex.captures_iter(stderr_content) {
+                        let file = cap.get(1).map(|m| m.as_str().trim().to_string());
+                        let line = cap.get(2).and_then(|m| m.as_str().parse::<u32>().ok());
+                        let column = cap.get(3).and_then(|m| m.as_str().parse::<u32>().ok());
 
-                    errors.push(ParsedError {
-                        file,
-                        line,
-                        column,
-                        message,
-                        error_type: Some("Error".to_string()),
-                    });
-                }
+                        let (error_code, message) = if *has_error_code {
+                            (
+                                cap.get(4).map(|m| m.as_str().to_string()),
+                                cap.get(5)
+                                    .map(|m| m.as_str().trim().to_string())
+                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                            )
+                        } else {
+                            (
+                                None,
+                                cap.get(4)
+                                    .map(|m| m.as_str().trim().to_string())
+                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                            )
+                        };
 
-                // If no structured errors found, look for general error messages
-                if errors.is_empty() {
-                    for cap in error_message_regex.captures_iter(stderr_content) {
-                        if let Some(message) = cap.get(1) {
-                            errors.push(ParsedError {
-                                file: None,
-                                line: None,
-                                column: None,
-                                message: message.as_str().trim().to_string(),
-                                error_type: Some("Error".to_string()),
-                            });
+                        let mut parsed_error = ParsedError::new(
+                            file,
+                            line,
+                            column,
+                            message,
+                            Some("TypeScript".to_string()),
+                        );
+
+                        if let Some(code) = error_code {
+                            parsed_error.error_code = Some(code);
                         }
+
+                        errors.push(parsed_error);
+                    }
+
+                    if !errors.is_empty() {
+                        break;
                     }
                 }
-
-                // If still no errors found, use the whole stderr as a single error
-                if errors.is_empty() && !stderr_content.trim().is_empty() {
-                    errors.push(ParsedError {
-                        file: None,
-                        line: None,
-                        column: None,
-                        message: stderr_content.trim().to_string(),
-                        error_type: None,
-                    });
-                }
             }
-        }
-
-        // If no errors were parsed but we have raw output, add a fallback error
-        if errors.is_empty() && (stdout.is_some() || stderr.is_some()) {
-            let message = match (stdout, stderr) {
-                (Some(out), _) if !out.trim().is_empty() => out.trim().to_string(),
-                (_, Some(err)) if !err.trim().is_empty() => err.trim().to_string(),
-                _ => "Unknown error occurred".to_string(),
-            };
-
-            errors.push(ParsedError {
-                file: None,
-                line: None,
-                column: None,
-                message,
-                error_type: None,
-            });
         }
 
         errors
@@ -360,14 +503,63 @@ impl TypeScriptError {
         self
     }
 
-    pub fn with_source_code(mut self, source: String, file_name: String) -> Self {
-        self.source_code = Some(miette::NamedSource::new(file_name, source));
-        self
-    }
+    // Convert TypeScriptError to a proper Diagnostic for display
+    pub fn into_diagnostic(self) -> Box<dyn miette::Diagnostic + Send + Sync + 'static> {
+        match self.parsed_errors.len() {
+            0 => {
+                // No parsed errors, create a simple error
+                Box::new(ParsedError::new(
+                    self.file_path,
+                    None,
+                    None,
+                    self.message,
+                    Some(self.kind_str),
+                ))
+            }
+            1 => {
+                // Single error - print it with custom formatting and return it
+                let error = self.parsed_errors.into_iter().next().unwrap();
 
-    pub fn with_label(mut self, span: SourceSpan) -> Self {
-        self.label = Some(span);
-        self
+                eprintln!("\n╭─[TypeScript Error]─────────────────────");
+                if let Some(file) = &error.file {
+                    eprintln!("│ File: {}", file);
+                    if let (Some(line), Some(column)) = (error.line, error.column) {
+                        eprintln!("│ Location: {}:{}", line, column);
+                    }
+                }
+                if let Some(error_code) = &error.error_code {
+                    eprintln!("│ Code: {}", error_code);
+                }
+                eprintln!("│ Message: {}", error.message);
+                eprintln!("│");
+
+                if let Some(context) = &error.additional_context {
+                    eprintln!("│ Source:");
+                    for line in context.lines() {
+                        if line.starts_with('→') {
+                            eprintln!("│ \x1b[91m{}\x1b[0m", line); // Red for error line
+                        } else {
+                            eprintln!("│ \x1b[90m{}\x1b[0m", line); // Gray for context
+                        }
+                    }
+                }
+                eprintln!("╰─");
+
+                Box::new(error)
+            }
+            _ => {
+                // Multiple errors - wrap them and print them with miette formatting
+                let compilation_errors = TypeScriptCompilationErrors {
+                    summary: self.error_summary,
+                    errors: self.parsed_errors,
+                };
+
+                // Print the detailed errors to stderr immediately
+                compilation_errors.print_errors();
+
+                Box::new(compilation_errors)
+            }
+        }
     }
 }
 
@@ -389,11 +581,19 @@ pub enum BuildError {
     #[diagnostic(code(build::template_not_found))]
     TemplateNotFound(String),
 
+    // Custom variant for TypeScript errors that converts to diagnostic
     #[error(transparent)]
     #[diagnostic(transparent)]
-    TypeScriptError(#[from] TypeScriptError),
+    TypeScriptDiagnostic(#[from] Box<dyn miette::Diagnostic + Send + Sync + 'static>),
 
     #[error("I/O error: {0}")]
     #[diagnostic(code(build::io_error))]
     IoError(#[from] std::io::Error),
+}
+
+// Implement From<TypeScriptError> for BuildError
+impl From<TypeScriptError> for BuildError {
+    fn from(error: TypeScriptError) -> Self {
+        BuildError::TypeScriptDiagnostic(error.into_diagnostic())
+    }
 }

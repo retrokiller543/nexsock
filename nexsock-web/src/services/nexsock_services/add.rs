@@ -1,5 +1,4 @@
-use crate::daemon_client::get_client;
-use crate::state::AppState;
+use crate::{daemon_client::get_client, error::WebError, state::AppState};
 use nexsock_protocol::commands::add_service::{AddServiceCommand, AddServicePayload};
 
 /// Adds a new service to be managed
@@ -7,12 +6,19 @@ use nexsock_protocol::commands::add_service::{AddServiceCommand, AddServicePaylo
 pub async fn add_service(
     state: &AppState,
     add_service_payload: AddServicePayload,
-) -> anyhow::Result<()> {
+) -> Result<(), WebError> {
     let mut client = get_client(state).await?;
 
+    let service_name = add_service_payload.name.clone();
     let command: AddServiceCommand = add_service_payload.into();
 
-    client.execute_command(command).await?;
+    client.execute_command(command).await.map_err(|error| {
+        WebError::internal(
+            format!("Failed to execute add_service command: {}", error),
+            "add_service",
+            None::<std::io::Error>,
+        )
+    })?;
 
     Ok(())
 }
