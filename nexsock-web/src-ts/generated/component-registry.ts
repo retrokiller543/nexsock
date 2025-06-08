@@ -1,13 +1,13 @@
 // Auto-generated component registry - do not edit manually
 // This file is regenerated on every build
 
-import {ErrorModal} from '../components/ErrorModal';
-import {NsCard} from '../components/NsCard';
-import {NsBadge} from '../components/NsBadge';
-import {ErrorNotification} from '../components/ErrorNotification';
-import {NsButton} from '../components/NsButton';
+import { ErrorModal } from '../components/ErrorModal';
+import { NsCard } from '../components/NsCard';
+import { NsBadge } from '../components/NsBadge';
+import { ErrorNotification } from '../components/ErrorNotification';
+import { NsButton } from '../components/NsButton';
 
-import {registerComponent} from '../core/web-components';
+import { registerComponent } from '../core/web-components';
 
 export const COMPONENT_REGISTRY = {
   'error-modal': ErrorModal,

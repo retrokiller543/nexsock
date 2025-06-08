@@ -24,7 +24,20 @@ fn main() {
 
     if let Err(err) = run() {
         println!("cargo:warning=Build script failed. See error details in the console output.");
+
+        #[cfg(debug_assertions)]
         println!("cargo:warning=Build error: {:#?}", err);
+
+        if !matches!(err, BuildError::TypeScriptDiagnostic(..)) {
+            let mut output = String::new();
+
+            miette::GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+                .render_report(&mut output, &err)
+                .expect("Failed to render miette report");
+
+            eprintln!("{}", output);
+        }
+
         panic!();
     }
 }

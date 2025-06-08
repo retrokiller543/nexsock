@@ -118,31 +118,6 @@ pub async fn app() -> anyhow::Result<Router> {
             "/api/services/{service_id}/git/pull",
             post(endpoints::api::service::git::git_pull),
         )
-        // Test endpoints for error handling demonstration
-        /*.route(
-            "/api/test-json-error",
-            post(endpoints::api::test_errors::test_json_error),
-        )*/
-        .route(
-            "/api/test-form-error",
-            post(endpoints::api::test_errors::test_form_error),
-        )
-        .route(
-            "/api/test-query-error",
-            get(endpoints::api::test_errors::test_query_error),
-        )
-        .route(
-            "/api/test-template-error",
-            get(endpoints::api::test_errors::test_template_error),
-        )
-        .route(
-            "/api/test-internal-error",
-            get(endpoints::api::test_errors::test_internal_error),
-        )
-        .route(
-            "/api/test-daemon-error",
-            get(endpoints::api::test_errors::test_daemon_error),
-        )
         .fallback(static_handler.layer(cache))
         .layer(compression_layer)
         .layer(
