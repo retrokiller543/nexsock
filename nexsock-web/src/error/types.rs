@@ -6,20 +6,8 @@ use thiserror::Error;
 #[derive(Debug, Error, Diagnostic)]
 pub enum WebError {
     /// JSON parsing or serialization errors with source code context
-    #[error("JSON parsing failed in {context}")]
-    #[diagnostic(
-        code(nexsock_web::json_parse_error),
-        help("Check the JSON syntax for missing commas, brackets, or quotes")
-    )]
-    JsonParse {
-        context: String,
-        #[source_code]
-        source_code: NamedSource<String>,
-        #[label("Syntax error here")]
-        error_span: Option<SourceSpan>,
-        #[source]
-        source: serde_json::Error,
-    },
+    #[error(transparent)]
+    JsonParse(#[from] Box<JsonParseError>),
 
     /// JSON serialization errors
     #[error("Failed to serialize data to JSON in {context}")]
@@ -32,59 +20,16 @@ pub enum WebError {
     },
 
     /// Template rendering errors with template source and context
-    #[error("Template '{template_name}' failed to render")]
-    #[diagnostic(
-        code(nexsock_web::template_render_error),
-        help("Check template syntax and ensure all variables are defined in the context")
-    )]
-    TemplateRender {
-        template_name: String,
-        #[source_code]
-        template_source: Option<NamedSource<String>>,
-        #[label(primary, "Error occurred here")]
-        error_span: Option<SourceSpan>,
-        #[label(collection, "Potential other issues")]
-        secondary_spans: Vec<LabeledSpan>,
-        template_context: String,
-        #[source]
-        source: tera::Error,
-    },
+    #[error(transparent)]
+    TemplateRender(#[from] Box<TemplateRenderError>),
 
     /// Form data validation errors
-    #[error("Form validation failed for field '{field_name}'")]
-    #[diagnostic(
-        code(nexsock_web::form_validation_error),
-        help("Check the form field format and required values")
-    )]
-    FormValidation {
-        field_name: String,
-        field_value: String,
-        expected_format: String,
-        #[source_code]
-        form_data: Option<NamedSource<String>>,
-        #[label("Invalid field")]
-        field_span: Option<SourceSpan>,
-        #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
+    #[error(transparent)]
+    FormValidation(#[from] Box<FormValidationError>),
 
     /// Query parameter parsing errors
-    #[error("Invalid query parameter '{parameter_name}'")]
-    #[diagnostic(
-        code(nexsock_web::query_param_error),
-        help("Check the URL query parameter format and encoding")
-    )]
-    QueryParameter {
-        parameter_name: String,
-        parameter_value: String,
-        expected_type: String,
-        #[source_code]
-        query_string: Option<NamedSource<String>>,
-        #[label("Invalid parameter")]
-        param_span: Option<SourceSpan>,
-        #[source]
-        source: Box<dyn std::error::Error + Send + Sync>,
-    },
+    #[error(transparent)]
+    QueryParameter(#[from] Box<QueryParameterError>),
 
     /// Service reference parsing errors
     #[error("Invalid service reference '{service_ref}'")]
@@ -170,4 +115,79 @@ pub enum WebError {
         #[source]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
+}
+
+/// Boxed JSON parsing error details
+#[derive(Debug, Error, Diagnostic)]
+#[error("JSON parsing failed in {context}")]
+#[diagnostic(
+    code(nexsock_web::json_parse_error),
+    help("Check the JSON syntax for missing commas, brackets, or quotes")
+)]
+pub struct JsonParseError {
+    pub context: String,
+    #[source_code]
+    pub source_code: NamedSource<String>,
+    #[label("Syntax error here")]
+    pub error_span: Option<SourceSpan>,
+    #[source]
+    pub source: serde_json::Error,
+}
+
+/// Boxed template rendering error details
+#[derive(Debug, Error, Diagnostic)]
+#[error("Template '{template_name}' failed to render")]
+#[diagnostic(
+    code(nexsock_web::template_render_error),
+    help("Check template syntax and ensure all variables are defined in the context")
+)]
+pub struct TemplateRenderError {
+    pub template_name: String,
+    #[source_code]
+    pub template_source: Option<NamedSource<String>>,
+    #[label(primary, "Error occurred here")]
+    pub error_span: Option<SourceSpan>,
+    #[label(collection, "Potential other issues")]
+    pub secondary_spans: Vec<LabeledSpan>,
+    pub template_context: String,
+    #[source]
+    pub source: tera::Error,
+}
+
+/// Boxed form validation error details
+#[derive(Debug, Error, Diagnostic)]
+#[error("Form validation failed for field '{field_name}'")]
+#[diagnostic(
+    code(nexsock_web::form_validation_error),
+    help("Check the form field format and required values")
+)]
+pub struct FormValidationError {
+    pub field_name: String,
+    pub field_value: String,
+    pub expected_format: String,
+    #[source_code]
+    pub form_data: Option<NamedSource<String>>,
+    #[label("Invalid field")]
+    pub field_span: Option<SourceSpan>,
+    #[source]
+    pub source: Option<Box<dyn std::error::Error + Send + Sync>>,
+}
+
+/// Boxed query parameter error details
+#[derive(Debug, Error, Diagnostic)]
+#[error("Invalid query parameter '{parameter_name}'")]
+#[diagnostic(
+    code(nexsock_web::query_param_error),
+    help("Check the URL query parameter format and encoding")
+)]
+pub struct QueryParameterError {
+    pub parameter_name: String,
+    pub parameter_value: String,
+    pub expected_type: String,
+    #[source_code]
+    pub query_string: Option<NamedSource<String>>,
+    #[label("Invalid parameter")]
+    pub param_span: Option<SourceSpan>,
+    #[source]
+    pub source: Box<dyn std::error::Error + Send + Sync>,
 }

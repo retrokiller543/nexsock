@@ -112,11 +112,11 @@ impl ParsedError {
         let start = line_idx.saturating_sub(2);
         let end = (line_idx + 3).min(lines.len());
 
-        for i in start..end {
-            if i == line_idx {
-                context.push_str(&format!("→ {}: {}\n", i + 1, lines[i]));
+        for (idx, line_content) in lines.iter().enumerate().take(end).skip(start) {
+            if idx == line_idx {
+                context.push_str(&format!("→ {}: {}\n", idx + 1, line_content));
             } else {
-                context.push_str(&format!("  {}: {}\n", i + 1, lines[i]));
+                context.push_str(&format!("  {}: {}\n", idx + 1, line_content));
             }
         }
 
@@ -136,8 +136,8 @@ impl ParsedError {
         }
 
         let mut offset = 0;
-        for i in 0..(line - 1) as usize {
-            offset += lines[i].len() + 1;
+        for line_content in lines.iter().take((line - 1) as usize) {
+            offset += line_content.len() + 1;
         }
 
         let col_offset = (column.saturating_sub(1)) as usize;

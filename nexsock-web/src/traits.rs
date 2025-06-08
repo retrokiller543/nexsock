@@ -143,7 +143,7 @@ pub fn create_template_context<T: Serialize>(
 /// Enhanced context creation with multiple variables
 /// Note: This function is removed due to trait object limitations with Serialize
 /// Use individual insert_template_var calls instead
-
+///
 /// Safe template variable insertion with validation
 #[allow(dead_code)]
 pub fn insert_template_var<T: Serialize>(

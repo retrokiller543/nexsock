@@ -16,11 +16,11 @@ impl IntoResponse for WebError {
 
 fn determine_status_code(error: &WebError) -> StatusCode {
     match error {
-        WebError::JsonParse { .. } => StatusCode::BAD_REQUEST,
+        WebError::JsonParse(_) => StatusCode::BAD_REQUEST,
         WebError::JsonSerialize { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-        WebError::TemplateRender { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-        WebError::FormValidation { .. } => StatusCode::BAD_REQUEST,
-        WebError::QueryParameter { .. } => StatusCode::BAD_REQUEST,
+        WebError::TemplateRender(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        WebError::FormValidation(_) => StatusCode::BAD_REQUEST,
+        WebError::QueryParameter(_) => StatusCode::BAD_REQUEST,
         WebError::ServiceReference { .. } => StatusCode::BAD_REQUEST,
         WebError::DaemonCommunication { .. } => StatusCode::BAD_GATEWAY,
         WebError::ServiceOperation { .. } => StatusCode::INTERNAL_SERVER_ERROR,
@@ -33,8 +33,9 @@ fn determine_status_code(error: &WebError) -> StatusCode {
 
 fn create_rich_error_html(error: &WebError) -> Html<String> {
     let mut miette_output = String::new();
-    if let Err(_) = miette::GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+    if miette::GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
         .render_report(&mut miette_output, error)
+        .is_err()
     {
         miette_output = "Unable to generate miette diagnostic".to_string();
     }
@@ -103,11 +104,11 @@ fn create_rich_error_html(error: &WebError) -> Html<String> {
 
 fn get_error_code(error: &WebError) -> &'static str {
     match error {
-        WebError::JsonParse { .. } => "JSON_PARSE_ERROR",
+        WebError::JsonParse(_) => "JSON_PARSE_ERROR",
         WebError::JsonSerialize { .. } => "JSON_SERIALIZE_ERROR",
-        WebError::TemplateRender { .. } => "TEMPLATE_RENDER_ERROR",
-        WebError::FormValidation { .. } => "FORM_VALIDATION_ERROR",
-        WebError::QueryParameter { .. } => "QUERY_PARAMETER_ERROR",
+        WebError::TemplateRender(_) => "TEMPLATE_RENDER_ERROR",
+        WebError::FormValidation(_) => "FORM_VALIDATION_ERROR",
+        WebError::QueryParameter(_) => "QUERY_PARAMETER_ERROR",
         WebError::ServiceReference { .. } => "SERVICE_REFERENCE_ERROR",
         WebError::DaemonCommunication { .. } => "DAEMON_COMMUNICATION_ERROR",
         WebError::ServiceOperation { .. } => "SERVICE_OPERATION_ERROR",
@@ -121,14 +122,11 @@ fn get_error_code(error: &WebError) -> &'static str {
 fn format_debug_with_pretty_context(error: &WebError) -> String {
     let debug_output = format!("{error:#?}");
 
-    if let WebError::TemplateRender {
-        template_context, ..
-    } = error
-    {
-        if !template_context.is_empty() {
+    if let WebError::TemplateRender(template_error) = error {
+        if !template_error.template_context.is_empty() {
             let formatted_context = format!(
                 "<div class=\"template-context-section\">\n<h5>📋 Template Context (Pretty-printed):</h5>\n<pre class=\"context-json\">{}</pre>\n</div>",
-                html_escape(template_context)
+                html_escape(&template_error.template_context)
             );
 
             return format!("{}\n\n{}", html_escape(&debug_output), formatted_context);

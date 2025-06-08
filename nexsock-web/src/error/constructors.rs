@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 
 use super::span_utils::*;
-use super::types::WebError;
+use super::types::{
+    FormValidationError, JsonParseError, QueryParameterError, TemplateRenderError, WebError,
+};
 use crate::embedded::templates::Templates;
 use miette::NamedSource;
 use serde::Serialize;
@@ -18,12 +20,12 @@ impl WebError {
 
         let error_span = calculate_json_error_span(&json_content, &source);
 
-        Self::JsonParse {
+        Self::JsonParse(Box::new(JsonParseError {
             context,
             source_code: NamedSource::new("JSON input", json_content),
             error_span,
             source,
-        }
+        }))
     }
 
     /// Create a JSON serialization error
@@ -80,14 +82,14 @@ impl WebError {
             (None, None, Vec::new())
         };
 
-        Self::TemplateRender {
+        Self::TemplateRender(Box::new(TemplateRenderError {
             template_name,
             template_source: template_source_named,
             error_span,
             secondary_spans,
             template_context,
             source,
-        }
+        }))
     }
 
     /// Create a form validation error
@@ -108,14 +110,14 @@ impl WebError {
             (None, None)
         };
 
-        Self::FormValidation {
+        Self::FormValidation(Box::new(FormValidationError {
             field_name,
             field_value,
             expected_format: expected_format.into(),
             form_data: form_data_source,
             field_span,
             source,
-        }
+        }))
     }
 
     /// Create a query parameter error
@@ -139,14 +141,14 @@ impl WebError {
             (None, None)
         };
 
-        Self::QueryParameter {
+        Self::QueryParameter(Box::new(QueryParameterError {
             parameter_name,
             parameter_value,
             expected_type: expected_type.into(),
             query_string: query_source,
             param_span,
             source: Box::new(source),
-        }
+        }))
     }
 
     /// Create a service reference error

@@ -167,6 +167,9 @@ fn generate_component_registry() -> Result<(), BuildError> {
 
     // Find all .tsx files in components directory
     let mut components = Vec::new();
+    // Move regex outside the loop to avoid recompilation
+    let export_regex = Regex::new(r"export\s+const\s+([A-Z][a-zA-Z]*)\s*=").unwrap();
+
     for entry in fs::read_dir(components_dir).map_err(|e| {
         TypeScriptError::new(
             TypeScriptErrorKind::ComponentRegistryGeneration,
@@ -192,7 +195,6 @@ fn generate_component_registry() -> Result<(), BuildError> {
             })?;
 
             // Look for export const ComponentName pattern
-            let export_regex = Regex::new(r"export\s+const\s+([A-Z][a-zA-Z]*)\s*=").unwrap();
 
             for cap in export_regex.captures_iter(&file_content) {
                 if let Some(component_name) = cap.get(1) {

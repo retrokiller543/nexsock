@@ -14,8 +14,8 @@ pub fn calculate_json_error_span(
         let lines: Vec<&str> = json_content.lines().collect();
         let mut offset = 0;
 
-        for i in 0..(line - 1).min(lines.len()) {
-            offset += lines[i].len() + 1;
+        for line_content in lines.iter().take((line - 1).min(lines.len())) {
+            offset += line_content.len() + 1;
         }
 
         offset += column.saturating_sub(1);
