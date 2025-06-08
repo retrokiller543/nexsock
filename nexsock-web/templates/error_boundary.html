@@ -1,5 +1,5 @@
-<div class="alert alert-error">
-    <div class="alert-icon">⚠️</div>
+<div class="alert alert-error" role="alert" aria-live="polite">
+    <div class="alert-icon" aria-hidden="true">⚠️</div>
     <div>
         <h4 class="error-title">Something went wrong</h4>
         <p class="error-message">{{ error_message | default(value="An unexpected error occurred while loading this content.") }}</p>

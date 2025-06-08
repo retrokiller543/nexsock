@@ -1,8 +1,8 @@
-<div class="modal-overlay" onclick="closeModal()">
-    <div class="modal" onclick="event.stopPropagation()">
+<div class="modal-overlay" onclick="closeModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal" onclick="event.stopPropagation()" tabindex="-1">
         <div class="modal-header">
-            <h3>Manage Configurations - {{ service }}</h3>
-            <button class="button button-icon" onclick="closeModal()">×</button>
+            <h3 id="modal-title">Manage Configurations - {{ service }}</h3>
+            <button class="button button-icon" onclick="closeModal()" aria-label="Close modal">×</button>
         </div>
         <div class="modal-body" 
              hx-get="/api/templates/config-modal-content?service={{ service }}"
@@ -11,3 +11,13 @@
         </div>
     </div>
 </div>
+<script>
+// Add keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+// Focus the modal when opened
+document.querySelector('.modal').focus();
+</script>

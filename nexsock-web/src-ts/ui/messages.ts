@@ -25,9 +25,13 @@ export function showMessage(message: string, type: MessageType = 'info'): void {
   container.appendChild(messageEl);
 
   // Auto-remove after 5 seconds
-  setTimeout(() => {
-    if (messageEl.parentNode) {
-      messageEl.parentNode.removeChild(messageEl);
-    }
+  const timeoutId = setTimeout(() => {
+    messageEl.remove();
   }, 5000);
+  
+  // Allow manual removal to clear timeout
+  messageEl.addEventListener('click', () => {
+    clearTimeout(timeoutId);
+    messageEl.remove();
+  });
 }
