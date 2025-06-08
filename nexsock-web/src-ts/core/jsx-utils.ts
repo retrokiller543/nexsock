@@ -136,11 +136,15 @@ export function createElement(
         const scopeId = generateScopedClassName('inline');
         injectScopedCSS(value, scopeId);
         element.setAttribute('data-scope', scopeId);
+      } else if (key === 'innerHTML') {
+        element.innerHTML = value;
+      } else if (key === 'style' && typeof value === 'object') {
+        Object.assign(element.style, value);
       } else if (key.startsWith('on') && typeof value === 'function') {
         const event = key.toLowerCase().slice(2);
         element.addEventListener(event, value);
-      } else {
-        element.setAttribute(key, value);
+      } else if (typeof value === 'string' || typeof value === 'number') {
+        element.setAttribute(key, value.toString());
       }
     });
   }

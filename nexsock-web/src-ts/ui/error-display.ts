@@ -5,6 +5,8 @@
 
 import {MessageType} from '../types/ui';
 import {showMessage} from './messages';
+import {ErrorModal} from '../components/ErrorModal';
+import {ErrorNotification} from '../components/ErrorNotification';
 
 export interface ErrorDetails {
   errorCode: string;
@@ -16,7 +18,7 @@ export interface ErrorDetails {
 }
 
 /**
- * Creates a modal overlay to display detailed error information
+ * Creates a modal overlay to display detailed error information using JSX
  */
 export function showErrorModal(errorDetails: ErrorDetails): void {
   // Remove any existing error modal
@@ -25,88 +27,44 @@ export function showErrorModal(errorDetails: ErrorDetails): void {
     existingModal.remove();
   }
 
-  // Create modal overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'error-modal-overlay modal-overlay';
-  overlay.innerHTML = `
-    <div class="error-modal modal">
-      <div class="error-modal-header">
-        <h2>🚨 Error Details</h2>
-        <button class="close-button" onclick="this.closest('.error-modal-overlay').remove()">×</button>
-      </div>
-      <div class="error-modal-body">
-        <div class="error-code">${escapeHtml(errorDetails.errorCode)}</div>
-        <div class="error-message">${escapeHtml(errorDetails.errorMessage)}</div>
-        <div class="error-diagnostics">
-          <h3>🔍 Diagnostics</h3>
-          <div class="diagnostics-content">${errorDetails.diagnostics}</div>
-        </div>
-        ${errorDetails.debugInfo ? `
-          <div class="error-debug">
-            <button class="debug-toggle" onclick="toggleErrorDebug(this)">🐛 Show Debug Info</button>
-            <div class="debug-content" style="display: none;">
-              <pre>${escapeHtml(errorDetails.debugInfo)}</pre>
-            </div>
-          </div>
-        ` : ''}
-      </div>
-      <div class="error-modal-footer">
-        ${errorDetails.fullErrorPageUrl ? `
-          <button class="button button-primary" onclick="window.open('${errorDetails.fullErrorPageUrl}', '_blank')">
-            🔍 View Full Error Page
-          </button>
-        ` : ''}
-        ${isDebugMode() ? `
-          <button class="button button-warning" onclick="navigateToErrorPage('${errorDetails.originalUrl || ''}')">
-            🚧 Debug Mode: Go to Error Page
-          </button>
-        ` : ''}
-        <button class="button button-secondary" onclick="this.closest('.error-modal-overlay').remove()">Close</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  // Make debug toggle function globally available
-  (window as any).toggleErrorDebug = (button: HTMLElement) => {
-    const debugContent = button.nextElementSibling as HTMLElement;
-    if (debugContent.style.display === 'none') {
-      debugContent.style.display = 'block';
-      button.textContent = '🐛 Hide Debug Info';
-    } else {
-      debugContent.style.display = 'none';
-      button.textContent = '🐛 Show Debug Info';
+  // Create modal using JSX component
+  const modalElement = ErrorModal({ 
+    errorDetails,
+    onClose: () => {
+      const modal = document.querySelector('.error-modal-overlay');
+      if (modal) {
+        modal.remove();
+      }
     }
-  };
+  }) as unknown as HTMLElement;
+
+  document.body.appendChild(modalElement);
 }
 
 /**
- * Shows an inline error notification in the messages container
+ * Shows an inline error notification in the messages container using JSX
  */
 export function showInlineError(errorDetails: ErrorDetails): void {
   const container = getOrCreateMessagesContainer();
   
-  // Create enhanced error message element
-  const errorEl = document.createElement('div');
-  errorEl.className = 'message message-error enhanced-error';
-  errorEl.innerHTML = `
-    <div class="error-summary">
-      <strong>${escapeHtml(errorDetails.errorCode)}</strong>
-      <p>${escapeHtml(errorDetails.errorMessage)}</p>
-      <button class="error-details-button" onclick="showErrorDetailsModal(this)">View Details</button>
-    </div>
-  `;
-
-  // Store error details on the element for the modal
-  (errorEl as any).errorDetails = errorDetails;
+  // Create enhanced error notification using JSX component
+  const errorElement = ErrorNotification({ 
+    errorDetails,
+    onViewDetails: () => showErrorModal(errorDetails),
+    onClose: () => {
+      const elem = errorElement as HTMLElement;
+      if (elem.parentNode) {
+        elem.parentNode.removeChild(elem);
+      }
+    }
+  }) as unknown as HTMLElement;
   
-  container.appendChild(errorEl);
+  container.appendChild(errorElement);
 
   // Auto-remove after 10 seconds (longer than regular messages)
   setTimeout(() => {
-    if (errorEl.parentNode) {
-      errorEl.parentNode.removeChild(errorEl);
+    if (errorElement.parentNode) {
+      errorElement.parentNode.removeChild(errorElement);
     }
   }, 10000);
 }
@@ -178,16 +136,16 @@ function escapeHtml(text: string): string {
  */
 function isDebugMode(): boolean {
   // Check for debug indicators
-  return !!(
-    // URL parameter
-    new URLSearchParams(window.location.search).has('debug') ||
-    // Local storage flag
-    localStorage.getItem('nexsock-debug') === 'true' ||
-    // Development environment indicators
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    // Console debug flag
-    (window as any).NEXSOCK_DEBUG === true
+  return (
+      // URL parameter
+      new URLSearchParams(window.location.search).has('debug') ||
+      // Local storage flag
+      localStorage.getItem('nexsock-debug') === 'true' ||
+      // Development environment indicators
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      // Console debug flag
+      (window as any).NEXSOCK_DEBUG === true
   );
 }
 
@@ -205,8 +163,7 @@ function createErrorPageUrl(originalUrl: string): string {
  */
 function navigateToErrorPage(originalUrl: string): void {
   if (originalUrl) {
-    const errorPageUrl = createErrorPageUrl(originalUrl);
-    window.location.href = errorPageUrl;
+    window.location.href = createErrorPageUrl(originalUrl);
   } else {
     showMessage('No original URL available for error page navigation', 'warning');
   }
@@ -287,15 +244,6 @@ export function handleHTMXError(xhr: XMLHttpRequest, requestUrl?: string): void 
   showMessage(errorMessage, errorType);
 }
 
-/**
- * Global function to show error details modal (called from inline error buttons)
- */
-(window as any).showErrorDetailsModal = (button: HTMLElement) => {
-  const errorEl = button.closest('.enhanced-error') as any;
-  if (errorEl && errorEl.errorDetails) {
-    showErrorModal(errorEl.errorDetails);
-  }
-};
 
 /**
  * Global function to navigate to error page (called from modal buttons)
