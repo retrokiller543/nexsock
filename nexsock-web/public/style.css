@@ -411,3 +411,685 @@ body {
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
 }
+
+/* Configuration Management Styles */
+.config-section {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.config-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.config-controls select {
+    flex: 1;
+    min-width: 200px;
+}
+
+.config-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.config-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.config-table th,
+.config-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.config-table th {
+    background: var(--light-gray);
+    font-weight: 600;
+}
+
+.config-table tr:hover {
+    background: rgba(0, 112, 243, 0.05);
+}
+
+.text-muted {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Responsive adjustments for config controls */
+@media (max-width: 768px) {
+    .config-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .config-controls select {
+        min-width: unset;
+    }
+    
+    .config-actions {
+        justify-content: center;
+    }
+}
+
+/* Git Integration Styles */
+.git-section {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.git-status-content {
+    margin-bottom: 1rem;
+}
+
+.git-info {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.git-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.git-branch {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.git-commit {
+    background: var(--light-gray);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+}
+
+.git-remote {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.git-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.status-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Git Modal Styles */
+.git-modal {
+    max-width: 800px;
+    width: 90vw;
+}
+
+.git-modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-button.active {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+}
+
+.tab-button:hover {
+    background: var(--light-gray);
+}
+
+.git-tab-content {
+    display: none;
+}
+
+.git-tab-content.active {
+    display: block;
+}
+
+.git-tab-section h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.git-tab-section h5 {
+    margin: 1.5rem 0 0.75rem 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.branch-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.branch-controls select {
+    flex: 1;
+}
+
+.branch-create-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.branch-create-form input {
+    flex: 1;
+}
+
+.commit-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.commit-controls label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.commit-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.commit-item {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: white;
+}
+
+.commit-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.commit-hash {
+    background: var(--light-gray);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: var(--primary);
+}
+
+.commit-author {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.commit-date {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-left: auto;
+}
+
+.commit-message {
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.commit-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.button-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.text-error {
+    color: var(--danger);
+    font-style: italic;
+}
+
+.loading {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Responsive git styles */
+@media (max-width: 768px) {
+    .git-actions {
+        flex-direction: column;
+    }
+    
+    .branch-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .branch-create-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .commit-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .commit-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .commit-date {
+        margin-left: 0;
+    }
+}
+
+/* Structured Git Component Styles */
+
+/* Git Status Component */
+.git-status-container {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.git-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.git-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.git-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 60px;
+}
+
+.git-branch {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.git-commit {
+    background: var(--light-gray);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.git-remote {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.git-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.git-status-badge.clean {
+    background: #d4edda;
+    color: #155724;
+}
+
+.git-status-badge.dirty {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.git-status-badge.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.git-sync-info {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.git-ahead {
+    background: var(--success);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.git-behind {
+    background: var(--warning);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.git-no-repo {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Git Tabs */
+.git-tabs {
+    margin-top: 1.5rem;
+}
+
+.tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.tab-button.active {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.tab-button:hover {
+    background: var(--light-gray);
+}
+
+.tab-content {
+    min-height: 200px;
+}
+
+/* Git Branches Component */
+.git-branches-container {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.git-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.git-section-header h4 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.git-section-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.git-branches-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.git-branch-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    background: white;
+    transition: background-color 0.2s;
+}
+
+.git-branch-item:hover {
+    background: var(--light-gray);
+}
+
+.git-branch-name {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.git-branch-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.git-current-indicator {
+    background: var(--success);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.git-show-more {
+    text-align: center;
+    padding: 0.75rem;
+}
+
+.git-new-branch {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+/* Git Log Component */
+.git-log-container {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.git-commits-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.git-commit-item {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: white;
+    transition: background-color 0.2s;
+}
+
+.git-commit-item:hover {
+    background: var(--light-gray);
+}
+
+.git-commit-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.git-commit-hash {
+    background: var(--light-gray);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: var(--text-primary);
+}
+
+.git-commit-author {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.git-commit-date {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    margin-left: auto;
+}
+
+.git-commit-message {
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.git-commit-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Common Git Styles */
+.git-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    font-weight: 500;
+}
+
+.button-small {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.button-small:hover {
+    background: var(--light-gray);
+}
+
+.button-text {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-decoration: underline;
+    padding: 0.5rem;
+}
+
+.button-text:hover {
+    color: var(--text-primary);
+}
+
+.icon {
+    font-size: 0.875rem;
+}
+
+/* Responsive Structured Git Styles */
+@media (max-width: 768px) {
+    .git-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .git-section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .git-section-actions {
+        justify-content: center;
+    }
+    
+    .git-branch-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .git-commit-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .git-commit-date {
+        margin-left: 0;
+    }
+    
+    .tab-nav {
+        flex-direction: column;
+    }
+    
+    .tab-button {
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 0;
+    }
+    
+    .tab-button.active {
+        border-bottom-color: var(--border-color);
+        background: var(--light-gray);
+    }
+}

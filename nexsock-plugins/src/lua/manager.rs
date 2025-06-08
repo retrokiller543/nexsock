@@ -38,7 +38,7 @@ impl LuaPluginManager {
         shared.set(
             "log",
             lua.create_function(|_, msg: String| {
-                println!("[Lua] {}", msg);
+                println!("[Lua] {msg}");
                 Ok(())
             })?,
         )?;

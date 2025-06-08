@@ -46,7 +46,7 @@ where
     let mut client = match pool.get().await {
         Ok(client) => client,
         Err(e) => {
-            eprintln!("Failed to get client from pool: {}", e);
+            eprintln!("Failed to get client from pool: {e}");
             failure_count.fetch_add(1, Ordering::SeqCst);
             return None;
         }
@@ -58,7 +58,7 @@ where
             Some(start.elapsed().as_micros() as u64)
         }
         Err(error) => {
-            eprintln!("Write error: {}", error);
+            eprintln!("Write error: {error}");
             failure_count.fetch_add(1, Ordering::SeqCst);
             None
         }
@@ -172,13 +172,13 @@ async fn main() -> anyhow::Result<()> {
     // Print results
     println!("\n====== Load Test Results ======");
     println!("Test duration: {:.2} seconds", total_duration.as_secs_f64());
-    println!("Successful requests: {}", success);
-    println!("Failed requests: {}", failures);
-    println!("Throughput: {:.2} requests/second", requests_per_sec);
+    println!("Successful requests: {success}");
+    println!("Failed requests: {failures}");
+    println!("Throughput: {requests_per_sec:.2} requests/second");
 
     if !all_latencies.is_empty() {
         println!("\n====== Latency (microseconds) ======");
-        println!("Average: {:.2}", avg_latency);
+        println!("Average: {avg_latency:.2}");
         println!("Minimum: {}", all_latencies.first().unwrap());
         println!("Maximum: {}", all_latencies.last().unwrap());
         println!("Median (p50): {}", percentile(&all_latencies, 50));

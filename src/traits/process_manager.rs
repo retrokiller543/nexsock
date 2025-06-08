@@ -345,7 +345,7 @@ async fn spawn_service_process<T: ProcessManager + ?Sized>(
 
     let mut process = command
         .group_spawn()
-        .with_context(|| format!("Failed to spawn service process: {}", run_command))?;
+        .with_context(|| format!("Failed to spawn service process: {run_command}"))?;
 
     let child = process.inner();
     let stdout = child.stdout.take();

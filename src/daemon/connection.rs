@@ -462,7 +462,7 @@ where
 
             _ => Err(error::Error::Io(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                format!("Unsupported command: `{:?}`", command),
+                format!("Unsupported command: `{command:?}`"),
             ))),
         }
     }

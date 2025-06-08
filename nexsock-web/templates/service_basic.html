@@ -1,28 +1,55 @@
-<div class="service-card">
-  <div class="service-card-header">
-    <strong>{{ service.name }}</strong>
-    <span class="status-badge status-{{ service.state }}">{{ service.state }}</span>
-  </div>
+<article aria-labelledby="service-title-{{ service.name }}" class="service-card" role="article">
+  <header class="service-card-header">
+    <h3 class="service-title" id="service-title-{{ service.name }}">{{ service.name }}</h3>
+    {% if service.state == "Running" %}
+      <ns-badge variant="success">{{ service.state }}</ns-badge>
+    {% elif service.state == "Failed" %}
+      <ns-badge variant="error">{{ service.state }}</ns-badge>
+    {% elif service.state == "Starting" %}
+      <ns-badge variant="warning">{{ service.state }}</ns-badge>
+    {% else %}
+      <ns-badge variant="neutral">{{ service.statee }}</ns-badge>
+    {% endif %}
+  </header>
 
   <div class="service-card-body">
     <div class="service-card-info">
-      <div>Port: {{ service.port }}</div>
-      <div>Dependencies:
-        <span class="badge">
-          {% if service.has_dependencies %}Yes{% else %}No{% endif %}
-        </span>
+      <div class="info-item">
+        <span class="info-label">Port:</span>
+        <span class="info-value">{{ service.port }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Dependencies:</span>
+        {% if service.has_dependencies %}
+          <ns-badge size="small" variant="info">Yes</ns-badge>
+        {% else %}
+          <ns-badge size="small" variant="neutral">No</ns-badge>
+        {% endif %}
       </div>
     </div>
 
     <div class="service-card-actions">
-      <button class="button button-secondary" hx-get="/services/{{ service.name }}" hx-push-url="true" hx-swap="innerHTML" hx-target="#page-content">Details</button>
-      <button aria-label="Toggle Management" class="button button-icon" onclick="toggleManagement('{{ service.name }}')">
+      <ns-button 
+        aria-label="View details for {{ service.name }}"
+        hx-get="/services/{{ service.name }}"
+        hx-push-url="/services/{{ service.name }}"
+        hx-swap="innerHTML"
+        hx-target="#page-content"
+        size="small"
+        variant="secondary">
+        Details
+      </ns-button>
+      <ns-button 
+        aria-label="Toggle management options for {{ service.name }}"
+        onclick="nexsock.toggleManagement('{{ service.name }}')"
+        size="small"
+        variant="ghost">
         ⚙️
-      </button>
+      </ns-button>
     </div>
   </div>
 
-  <div class="service-card-management" id="management-{{ service.name }}" style="display: none;">
+  <div aria-label="Management options for {{ service.name }}" class="service-card-management" id="management-{{ service.name }}" role="region" style="display: none;">
     {% include "management.html" %}
   </div>
-</div>
+</article>

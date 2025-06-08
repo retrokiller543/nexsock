@@ -1,0 +1,39 @@
+<main class="services-container" role="main">
+  <header class="services-header">
+    <h1>Service Management</h1>
+    <ns-button 
+      aria-label="Add a new service"
+      hx-get="/add-service"
+      hx-push-url="/add-service"
+      hx-swap="innerHTML"
+      hx-target="#page-content"
+      variant="primary">
+      Add Service
+    </ns-button>
+  </header>
+
+  {% if services_list.services %}
+  <section aria-label="Service list" class="service-grid" role="region">
+    {% for service in services_list.services %}
+    {% include "service_basic.html" %}
+    {% endfor %}
+  </section>
+  {% else %}
+  <section aria-label="No services message" class="empty-state" role="region">
+    <ns-card subtitle="Get started by adding your first service" title="No Services">
+      <p>No services configured yet.</p>
+      <div style="margin-top: 16px;">
+        <ns-button 
+          aria-label="Add your first service"
+          hx-get="/add-service"
+          hx-push-url="/add-service"
+          hx-swap="innerHTML"
+          hx-target="#page-content"
+          variant="primary">
+          Add Your First Service
+        </ns-button>
+      </div>
+    </ns-card>
+  </section>
+  {% endif %}
+</main>

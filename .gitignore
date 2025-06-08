@@ -3,3 +3,6 @@
 *.db-*
 *.log
 /logs
+/node_modules
+/nexsock-web/node_modules/
+.idea/

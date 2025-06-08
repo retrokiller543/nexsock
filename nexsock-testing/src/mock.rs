@@ -100,16 +100,16 @@ impl MockDaemon {
                     self.state.log_command("list_services");
                 }
                 MockCommand::AddService(name) => {
-                    self.state.log_command(&format!("add_service:{}", name));
+                    self.state.log_command(&format!("add_service:{name}"));
                 }
                 MockCommand::StartService(name) => {
-                    self.state.log_command(&format!("start_service:{}", name));
+                    self.state.log_command(&format!("start_service:{name}"));
                 }
                 MockCommand::StopService(name) => {
-                    self.state.log_command(&format!("stop_service:{}", name));
+                    self.state.log_command(&format!("stop_service:{name}"));
                 }
                 MockCommand::GetStatus(name) => {
-                    self.state.log_command(&format!("get_status:{}", name));
+                    self.state.log_command(&format!("get_status:{name}"));
                 }
                 MockCommand::Shutdown => {
                     break;

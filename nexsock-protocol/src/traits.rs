@@ -24,7 +24,7 @@ impl PayloadDebug for [u8] {
             if i > 0 {
                 write!(s, ", ").unwrap();
             }
-            write!(s, "{:#04x}", b).unwrap();
+            write!(s, "{b:#04x}").unwrap();
         }
         write!(s, "]").unwrap();
         s

@@ -1,11 +1,13 @@
-use crate::state::AppState;
-use anyhow::anyhow;
+use crate::{error::WebError, state::AppState};
 use deadpool::managed::Object;
 use nexsock_client::ClientManager;
 
-pub async fn get_client(state: &AppState) -> anyhow::Result<Object<ClientManager>> {
-    match state.get().await {
-        Ok(client) => Ok(client),
-        Err(error) => Err(anyhow!(error)),
-    }
+pub async fn get_client(state: &AppState) -> Result<Object<ClientManager>, WebError> {
+    state.get().await.map_err(|error| {
+        WebError::internal(
+            format!("Failed to get daemon client: {error}"),
+            "daemon_client",
+            None::<std::io::Error>,
+        )
+    })
 }

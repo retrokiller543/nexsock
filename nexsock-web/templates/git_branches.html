@@ -1,0 +1,61 @@
+<div class="git-branches-container">
+  <div class="git-section-header">
+    <h4>Branches</h4>
+    <div class="git-section-actions">
+      <button class="button button-secondary button-sm"
+              hx-get="/api/services/{{ branches.service_name }}/git/branches?include_remote=true"
+              hx-swap="outerHTML"
+              hx-target="#git-branches-list">
+        <span class="icon">🌐</span>
+        Include Remote
+      </button>
+      <button class="button button-icon"
+              onclick="nexsock.toggleGitContent('git-branches-list')"
+              title="Toggle branches visibility">
+        🌿
+      </button>
+    </div>
+  </div>
+
+  <div class="git-branches-list collapsible-content" id="git-branches-list">
+    {% for branch in branches.branches %}
+    <div class="git-branch-item">
+      <span class="git-branch-name">{{ branch }}</span>
+      <div class="git-branch-actions">
+        <button class="button button-secondary button-sm"
+                hx-confirm="Switch to branch {{ branch }}?"
+                hx-post="/api/services/{{ branches.service_name }}/git/checkout/branch"
+                hx-swap="outerHTML"
+                hx-target="#git-section"
+                hx-vals='{"branch": "{{ branch }}"}'>
+          Checkout
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if branches.has_more %}
+    <div class="git-show-more">
+      <button class="button-text"
+              hx-get="/api/templates/git-branches?service={{ branches.service_name }}&show_all=true"
+              hx-swap="outerHTML"
+              hx-target="#git-branches-list">
+        Show {{ branches.remaining_count }} more branches...
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="git-new-branch">
+    <div class="form-row">
+      <input class="form-input"
+             id="new-branch-name"
+             placeholder="New branch name"
+             type="text" />
+      <button class="button-primary"
+              onclick="createNewBranch('{{ branches.service_name }}')">
+        Create Branch
+      </button>
+    </div>
+  </div>
+</div>

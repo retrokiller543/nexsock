@@ -1,0 +1,46 @@
+<div class="management-card" id="config-section-{{ service }}">
+    <div class="card-header">
+        <h3 class="card-title">
+            <span class="icon">⚙️</span>
+            Configuration Templates
+        </h3>
+        <div class="card-actions">
+            <button class="button button-secondary button-sm" onclick="nexsock.showSaveConfigModal('{{ service }}')">
+                💾 Save Current
+            </button>
+            <div class="dropdown" id="config-actions-{{ service }}">
+                <button class="dropdown-toggle button button-secondary button-sm" onclick="nexsock.toggleDropdown('config-actions-{{ service }}')">
+                    📋 Manage
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item"
+                            hx-get="/api/templates/config-modal?service={{ service }}"
+                            hx-swap="beforeend"
+                            hx-target="body">
+                        📋 View All Configs
+                    </button>
+                    <button class="dropdown-item"
+                            onclick="nexsock.clearCurrentEnvVars('{{ service }}')">
+                        🗑️ Clear Current
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item"
+                            onclick="nexsock.showMessage('Export/Import coming soon', 'info')">
+                        📤 Export/Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        <div class="form-group">
+            <label class="form-label" for="config-dropdown-{{ service }}">
+                Load Saved Configuration
+            </label>
+            <select class="form-select" id="config-dropdown-{{ service }}" onchange="nexsock.loadConfigFromSelection('{{ service }}', this.value)">
+                <option value="">Select a saved configuration...</option>
+            </select>
+        </div>
+    </div>
+</div>

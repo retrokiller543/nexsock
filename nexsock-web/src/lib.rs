@@ -3,6 +3,8 @@ mod daemon_client;
 mod embedded;
 mod endpoints;
 mod error;
+mod extractors;
+mod middleware;
 mod services;
 mod state;
 pub(crate) mod templates;
@@ -25,7 +27,7 @@ use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{info, Span};
 
-type Result<T, E = error::ServiceError> = std::result::Result<T, E>;
+type Result<T, E = error::WebError> = std::result::Result<T, E>;
 
 #[inline]
 #[tracing::instrument]
@@ -57,6 +59,64 @@ pub async fn app() -> anyhow::Result<Router> {
         .route(
             "/services/{service_id}/stop",
             post(endpoints::api::service::stop::stop_service),
+        )
+        .route(
+            "/api/templates/env-var-pair",
+            get(endpoints::templates::env_var_pair),
+        )
+        .route(
+            "/api/templates/config-section",
+            get(endpoints::templates::config_section),
+        )
+        .route(
+            "/api/templates/config-modal",
+            get(endpoints::templates::config_modal),
+        )
+        .route(
+            "/api/templates/config-modal-content",
+            get(endpoints::templates::config_modal_content),
+        )
+        .route(
+            "/api/templates/git-section",
+            get(endpoints::templates::git_section),
+        )
+        .route(
+            "/api/templates/git-status",
+            get(endpoints::templates::git_status_template),
+        )
+        .route(
+            "/api/templates/git-modal",
+            get(endpoints::templates::git_modal),
+        )
+        .route(
+            "/api/templates/git-branches",
+            get(endpoints::templates::git_branches),
+        )
+        .route("/api/templates/git-log", get(endpoints::templates::git_log))
+        // Git endpoints
+        .route(
+            "/api/services/{service_id}/git/status",
+            get(endpoints::api::service::git::git_status),
+        )
+        .route(
+            "/api/services/{service_id}/git/branches",
+            get(endpoints::api::service::git::git_branches),
+        )
+        .route(
+            "/api/services/{service_id}/git/log",
+            get(endpoints::api::service::git::git_log),
+        )
+        .route(
+            "/api/services/{service_id}/git/checkout/branch",
+            post(endpoints::api::service::git::git_checkout_branch),
+        )
+        .route(
+            "/api/services/{service_id}/git/checkout/commit",
+            post(endpoints::api::service::git::git_checkout_commit),
+        )
+        .route(
+            "/api/services/{service_id}/git/pull",
+            post(endpoints::api::service::git::git_pull),
         )
         .fallback(static_handler.layer(cache))
         .layer(compression_layer)

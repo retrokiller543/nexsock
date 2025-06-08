@@ -186,7 +186,7 @@ pub fn create_test_add_service_command(
         name.to_string(),
         repo_url.to_string(),
         port,
-        format!("/tmp/{}", name),
+        format!("/tmp/{name}"),
         None,
         None,
         None,
