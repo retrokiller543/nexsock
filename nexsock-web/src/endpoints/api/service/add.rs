@@ -18,7 +18,7 @@ pub async fn add_service_endpoint(
         error!(error = %error, "failed to add service");
 
         crate::error::WebError::internal(
-            format!("Failed to add service '{}': {}", service_name, error),
+            format!("Failed to add service '{service_name}': {error}"),
             "add_service",
             Some(error),
         )

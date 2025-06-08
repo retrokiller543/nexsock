@@ -45,7 +45,7 @@ pub async fn global_error_handler(request: Request, next: Next) -> Result<Respon
                 None::<std::convert::Infallible>,
             ),
             _ => WebError::internal(
-                format!("HTTP error: {}", status),
+                format!("HTTP error: {status}"),
                 "http_handler",
                 None::<std::convert::Infallible>,
             ),
@@ -82,7 +82,7 @@ pub async fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> impl 
     error!("Application panic: {}", panic_msg);
 
     WebError::internal(
-        format!("Application panic: {}", panic_msg),
+        format!("Application panic: {panic_msg}"),
         "panic_handler",
         None::<std::convert::Infallible>,
     )

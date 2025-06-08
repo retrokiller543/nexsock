@@ -285,7 +285,7 @@ impl NexsockConfig {
         let config_path = path.unwrap_or_else(|| PROJECT_DIRECTORIES.config_dir());
 
         std::fs::create_dir_all(config_path).map_err(|e| {
-            NexsockConfigError::InvalidPath(format!("Failed to create config directory: {}", e))
+            NexsockConfigError::InvalidPath(format!("Failed to create config directory: {e}"))
         })?;
 
         let config_file = config_path.join("config.toml");
@@ -333,18 +333,18 @@ impl NexsockConfig {
         let config_path = project_dirs.config_dir();
         std::fs::create_dir_all(config_path).map_err(|e| {
             error!(error = %e, "Failed to create config directory");
-            NexsockConfigError::InvalidPath(format!("Failed to create config directory: {}", e))
+            NexsockConfigError::InvalidPath(format!("Failed to create config directory: {e}"))
         })?;
 
         let config_file = config_path.join("config.toml");
         let toml = toml::to_string_pretty(&self.inner).map_err(|e| {
             error!(error = %e, "Failed to serialize config");
-            NexsockConfigError::InvalidPath(format!("Failed to serialize config: {}", e))
+            NexsockConfigError::InvalidPath(format!("Failed to serialize config: {e}"))
         })?;
 
         std::fs::write(&config_file, toml).map_err(|e| {
             error!(error = %e, "Failed to write config");
-            NexsockConfigError::InvalidPath(format!("Failed to write config file: {}", e))
+            NexsockConfigError::InvalidPath(format!("Failed to write config file: {e}"))
         })?;
 
         Ok(())

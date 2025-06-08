@@ -90,7 +90,7 @@ impl ParsedError {
 
     fn format_label(&self) -> String {
         if let Some(code) = &self.error_code {
-            format!("[{}]", code)
+            format!("[{code}]")
         } else if let Some(error_type) = &self.error_type {
             error_type.clone()
         } else {
@@ -178,11 +178,11 @@ impl ParsedError {
 
         if text_at_position.starts_with('"') || text_at_position.starts_with('\'') {
             let quote_char = text_at_position.chars().next().unwrap();
-            let mut chars = text_at_position.chars().skip(1);
+            let chars = text_at_position.chars().skip(1);
             let mut len = 1;
             let mut escaped = false;
 
-            while let Some(ch) = chars.next() {
+            for ch in chars {
                 len += 1;
                 if !escaped && ch == quote_char {
                     return len;
@@ -242,14 +242,14 @@ impl TypeScriptCompilationErrors {
             );
 
             if let Some(file) = &error.file {
-                eprintln!("│ File: {}", file);
+                eprintln!("│ File: {file}");
                 if let (Some(line), Some(column)) = (error.line, error.column) {
-                    eprintln!("│ Location: {}:{}", line, column);
+                    eprintln!("│ Location: {line}:{column}");
                 }
             }
 
             if let Some(error_code) = &error.error_code {
-                eprintln!("│ Code: {}", error_code);
+                eprintln!("│ Code: {error_code}");
             }
 
             eprintln!("│ Message: {}", error.message);
@@ -260,9 +260,9 @@ impl TypeScriptCompilationErrors {
                 eprintln!("│ Source:");
                 for line in context.lines() {
                     if line.starts_with('→') {
-                        eprintln!("│ \x1b[91m{}\x1b[0m", line); // Red for error line
+                        eprintln!("│ \x1b[91m{line}\x1b[0m"); // Red for error line
                     } else {
-                        eprintln!("│ \x1b[90m{}\x1b[0m", line); // Gray for context
+                        eprintln!("│ \x1b[90m{line}\x1b[0m"); // Gray for context
                     }
                 }
             }
@@ -322,7 +322,7 @@ impl TypeScriptError {
             kind,
             kind_str: kind.as_str().to_string(),
             message,
-            source_code: miette::NamedSource::new("<no-source>".to_string(), String::new()),
+            source_code: miette::NamedSource::new("<no-source>", String::new()),
             label: None,
             stdout: None,
             stderr: None,
@@ -358,7 +358,7 @@ impl TypeScriptError {
                 summary.push_str(" (");
                 let type_summary: Vec<String> = by_type
                     .iter()
-                    .map(|(code, count)| format!("{}: {}", code, count))
+                    .map(|(code, count)| format!("{code}: {count}"))
                     .collect();
                 summary.push_str(&type_summary.join(", "));
                 summary.push(')');
@@ -522,13 +522,13 @@ impl TypeScriptError {
 
                 eprintln!("\n╭─[TypeScript Error]─────────────────────");
                 if let Some(file) = &error.file {
-                    eprintln!("│ File: {}", file);
+                    eprintln!("│ File: {file}");
                     if let (Some(line), Some(column)) = (error.line, error.column) {
-                        eprintln!("│ Location: {}:{}", line, column);
+                        eprintln!("│ Location: {line}:{column}");
                     }
                 }
                 if let Some(error_code) = &error.error_code {
-                    eprintln!("│ Code: {}", error_code);
+                    eprintln!("│ Code: {error_code}");
                 }
                 eprintln!("│ Message: {}", error.message);
                 eprintln!("│");
@@ -537,9 +537,9 @@ impl TypeScriptError {
                     eprintln!("│ Source:");
                     for line in context.lines() {
                         if line.starts_with('→') {
-                            eprintln!("│ \x1b[91m{}\x1b[0m", line); // Red for error line
+                            eprintln!("│ \x1b[91m{line}\x1b[0m"); // Red for error line
                         } else {
-                            eprintln!("│ \x1b[90m{}\x1b[0m", line); // Gray for context
+                            eprintln!("│ \x1b[90m{line}\x1b[0m"); // Gray for context
                         }
                     }
                 }

@@ -75,10 +75,7 @@ impl ServiceConfigRepository<'_> {
             .one(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while fetching service configuration with ID `{}`",
-                    id
-                )
+                format!("Database error while fetching service configuration with ID `{id}`")
             })
     }
 
@@ -143,8 +140,7 @@ impl ServiceConfigRepository<'_> {
 
             active_model.update(db).await.with_context(|| {
                 format!(
-                    "Database error while updating service configuration with ID `{}`",
-                    original_id
+                    "Database error while updating service configuration with ID `{original_id}`"
                 )
             })?;
         }
@@ -177,15 +173,12 @@ impl ServiceConfigRepository<'_> {
         let config_to_delete = self
             .get_by_id(id)
             .await
-            .with_context(|| format!("Database error while fetching service configuration for deletion with ID `{}`", id))?
+            .with_context(|| format!("Database error while fetching service configuration for deletion with ID `{id}`"))?
             .ok_or_else(|| anyhow!("Cannot delete service configuration: Service configuration with ID `{}` not found", id))?;
 
         let model: ServiceConfigActiveModel = config_to_delete.into();
         model.delete(db).await.with_context(|| {
-            format!(
-                "Database error while deleting service configuration with ID `{}`",
-                id
-            )
+            format!("Database error while deleting service configuration with ID `{id}`")
         })?;
 
         Ok(())

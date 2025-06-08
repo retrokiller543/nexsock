@@ -116,11 +116,7 @@ fn get_template_source(renderer: &Tera, template_name: &str) -> Option<String> {
     renderer
         .get_template(template_name)
         .ok()
-        .and_then(|template| {
-            // Try to extract the source content
-            // Note: This might need adjustment based on Tera's internal API
-            Some(format!("{:?}", template))
-        })
+        .map(|template| format!("{template:?}"))
 }
 
 /// Enhanced context creation with validation
@@ -158,7 +154,7 @@ pub fn insert_template_var<T: Serialize>(
     // Validate that the value can be serialized
     if let Err(json_error) = serde_json::to_value(value) {
         return Err(WebError::json_serialize(
-            &format!("template variable '{}'", name),
+            format!("template variable '{name}'"),
             std::any::type_name::<T>(),
             json_error,
         ));

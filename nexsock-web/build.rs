@@ -3,7 +3,7 @@ mod build_src;
 use build_src::{compile_typescript, create_tera_env, BuildError};
 
 fn main() {
-    let _guard = miette::set_hook(Box::new(|_| {
+    miette::set_hook(Box::new(|_| {
         Box::new(
             miette::MietteHandlerOpts::new()
                 .terminal_links(true)
@@ -26,7 +26,7 @@ fn main() {
         println!("cargo:warning=Build script failed. See error details in the console output.");
 
         #[cfg(debug_assertions)]
-        println!("cargo:warning=Build error: {:#?}", err);
+        println!("cargo:warning=Build error: {err:#?}");
 
         if !matches!(err, BuildError::TypeScriptDiagnostic(..)) {
             let mut output = String::new();
@@ -35,7 +35,7 @@ fn main() {
                 .render_report(&mut output, &err)
                 .expect("Failed to render miette report");
 
-            eprintln!("{}", output);
+            eprintln!("{output}");
         }
 
         panic!();

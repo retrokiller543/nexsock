@@ -37,7 +37,7 @@ pub async fn git_status(
 ) -> Result<Json<nexsock_protocol::commands::git::RepoStatus>> {
     let service_ref = ServiceRef::from_str(&service_ref).map_err(|error| {
         WebError::internal(
-            format!("Invalid service reference '{}': {}", service_ref, error),
+            format!("Invalid service reference '{service_ref}': {error}"),
             "git_status",
             None::<std::io::Error>,
         )
@@ -47,7 +47,7 @@ pub async fn git_status(
         .await
         .map_err(|error| {
             WebError::internal(
-                format!("Git status failed for '{}': {}", service_ref, error),
+                format!("Git status failed for '{service_ref}': {error}"),
                 "git_status",
                 None::<std::io::Error>,
             )
@@ -64,7 +64,7 @@ pub async fn git_branches(
 ) -> Result<Json<nexsock_protocol::commands::git::GitListBranchesResponse>> {
     let service_ref = ServiceRef::from_str(&service_ref).map_err(|error| {
         WebError::internal(
-            format!("Invalid service reference '{}': {}", service_ref, error),
+            format!("Invalid service reference '{service_ref}': {error}"),
             "git_branches",
             None::<std::io::Error>,
         )
@@ -75,7 +75,7 @@ pub async fn git_branches(
         .await
         .map_err(|error| {
             WebError::internal(
-                format!("Git branches failed for '{}': {}", service_ref, error),
+                format!("Git branches failed for '{service_ref}': {error}"),
                 "git_branches",
                 None::<std::io::Error>,
             )

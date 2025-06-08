@@ -32,9 +32,9 @@ impl ServiceFixture {
     pub fn new(name: &str) -> Self {
         Self {
             name: name.to_string(),
-            repo_url: format!("https://github.com/test/{}.git", name),
+            repo_url: format!("https://github.com/test/{name}.git"),
             port: crate::setup::generate_test_port(),
-            repo_path: format!("/tmp/test_{}", name),
+            repo_path: format!("/tmp/test_{name}"),
             status: ServiceStatus::Stopped,
             config: None,
         }

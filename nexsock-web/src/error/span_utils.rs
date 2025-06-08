@@ -102,7 +102,7 @@ fn extract_keys_recursive(value: &Value, prefix: String, keys: &mut HashSet<Stri
                 let full_key = if prefix.is_empty() {
                     key.clone()
                 } else {
-                    format!("{}.{}", prefix, key)
+                    format!("{prefix}.{key}")
                 };
 
                 keys.insert(full_key.clone());
@@ -111,7 +111,7 @@ fn extract_keys_recursive(value: &Value, prefix: String, keys: &mut HashSet<Stri
         }
         Value::Array(arr) => {
             for (i, val) in arr.iter().enumerate() {
-                let full_key = format!("{}[{}]", prefix, i);
+                let full_key = format!("{prefix}[{i}]");
                 keys.insert(full_key.clone());
                 extract_keys_recursive(val, full_key, keys);
             }
@@ -126,13 +126,13 @@ fn find_missing_variable_in_template(
     variable_name: &str,
 ) -> Option<SourceSpan> {
     let variable_patterns = [
-        format!("{{{{ {} }}}}", variable_name),
+        format!("{{{{ {variable_name} }}}}"),
         format!(
             "{{{{ {}.* }}}}",
             variable_name.split('.').next().unwrap_or(variable_name)
         ),
-        format!("{{{{ {} | ", variable_name),
-        format!("{{{{ {} }}", variable_name),
+        format!("{{{{ {variable_name} | "),
+        format!("{{{{ {variable_name} }}"),
     ];
 
     for pattern in &variable_patterns {
@@ -186,7 +186,7 @@ fn find_similar_variables_in_template(
                     find_missing_variable_in_template(template_content, &template_var)
                 {
                     spans.push(LabeledSpan::new(
-                        Some(format!("Did you mean '{}'?", similar_var)),
+                        Some(format!("Did you mean '{similar_var}'?")),
                         span.offset(),
                         span.len(),
                     ));
@@ -225,14 +225,13 @@ fn is_variable_similar(target: &str, candidate: &str) -> bool {
     // Check for substring matches only if they're similar length
     if target_lower.len() >= 3 && candidate_lower.len() >= 3 {
         let length_ratio = target_lower.len() as f32 / candidate_lower.len() as f32;
-        if length_ratio >= 0.7 && length_ratio <= 1.3 {
-            if candidate_lower
+        if (0.7..=1.3).contains(&length_ratio)
+            && (candidate_lower
                 .contains(&target_lower[..target_lower.len().min(candidate_lower.len())])
                 || target_lower
-                    .contains(&candidate_lower[..candidate_lower.len().min(target_lower.len())])
-            {
-                return true;
-            }
+                    .contains(&candidate_lower[..candidate_lower.len().min(target_lower.len())]))
+        {
+            return true;
         }
     }
 
@@ -245,7 +244,7 @@ fn extract_variable_from_tera_error(error_msg: &str) -> Option<String> {
     }
 
     if let Some(captures) = extract_with_pattern(error_msg, "filter") {
-        return Some(format!("| {}", captures));
+        return Some(format!("| {captures}"));
     }
 
     if let Some(captures) = extract_with_pattern(error_msg, "function") {
@@ -253,11 +252,11 @@ fn extract_variable_from_tera_error(error_msg: &str) -> Option<String> {
     }
 
     if let Some(captures) = extract_with_pattern(error_msg, "block") {
-        return Some(format!("{{% block {} %}}", captures));
+        return Some(format!("{{% block {captures} %}}"));
     }
 
     if let Some(captures) = extract_with_pattern(error_msg, "test") {
-        return Some(format!("is {}", captures));
+        return Some(format!("is {captures}"));
     }
 
     None
@@ -373,13 +372,13 @@ fn is_similar_variable_name(target: &str, candidate: &str) -> bool {
 
 #[allow(dead_code)]
 fn find_scope_definition_span(template_content: &str, variable_name: &str) -> Option<SourceSpan> {
-    let for_pattern = format!("{{% for {} in", variable_name);
+    let for_pattern = format!("{{% for {variable_name} in");
     if let Some(pos) = template_content.find(&for_pattern) {
         let var_start = pos + 9;
         return Some(SourceSpan::new(var_start.into(), variable_name.len()));
     }
 
-    let set_pattern = format!("{{% set {} =", variable_name);
+    let set_pattern = format!("{{% set {variable_name} =");
     if let Some(pos) = template_content.find(&set_pattern) {
         let var_start = pos + 8;
         return Some(SourceSpan::new(var_start.into(), variable_name.len()));
@@ -394,7 +393,7 @@ fn find_variable_span_in_template(
     variable_name: &str,
 ) -> Option<SourceSpan> {
     for pattern in &[
-        format!("{{ {} }}", variable_name),
+        format!("{{ {variable_name} }}"),
         format!(
             "{{ {}.",
             variable_name.split('.').next().unwrap_or(variable_name)
@@ -418,8 +417,8 @@ fn find_template_variable_by_regex(
     let mut current_offset = 0;
 
     for line in lines {
-        if line.contains(&format!("{{ {}", variable_name))
-            || line.contains(&format!("{{% .* {} %}}", variable_name))
+        if line.contains(&format!("{{ {variable_name}"))
+            || line.contains(&format!("{{% .* {variable_name} %}}"))
         {
             if let Some(pos_in_line) = line.find(variable_name) {
                 return Some(SourceSpan::new(

@@ -7,12 +7,12 @@ pub fn ensure_node_modules_exists() -> Result<(), BuildError> {
     if !Path::new("node_modules").exists() {
         println!("cargo:warning=node_modules not found, running bun install...");
         let output = Command::new("bun")
-            .args(&["install"])
+            .args(["install"])
             .output()
             .map_err(|e| {
                 TypeScriptError::new(
                     TypeScriptErrorKind::NodeModulesInstall,
-                    format!("Failed to run bun install: {}", e),
+                    format!("Failed to run bun install: {e}"),
                 )
             })?;
 
@@ -31,10 +31,10 @@ pub fn ensure_node_modules_exists() -> Result<(), BuildError> {
 }
 
 fn check_types() -> Result<(), BuildError> {
-    let output = Command::new("bun").args(&["check"]).output().map_err(|e| {
+    let output = Command::new("bun").args(["check"]).output().map_err(|e| {
         TypeScriptError::new(
             TypeScriptErrorKind::TypeChecking,
-            format!("Failed to run bun check: {}", e),
+            format!("Failed to run bun check: {e}"),
         )
     })?;
 
@@ -71,7 +71,7 @@ fn generate_css_modules() -> Result<(), BuildError> {
         fs::create_dir_all(css_modules_dir).map_err(|e| {
             TypeScriptError::new(
                 TypeScriptErrorKind::DirectoryCreation,
-                format!("Failed to create generated directory: {}", e),
+                format!("Failed to create generated directory: {e}"),
             )
             .with_file_path(css_modules_dir.to_string_lossy().to_string())
         })?;
@@ -97,7 +97,7 @@ fn generate_css_modules() -> Result<(), BuildError> {
     find_css_files(Path::new("src-ts"), &mut css_files).map_err(|e| {
         TypeScriptError::new(
             TypeScriptErrorKind::CssModuleGeneration,
-            format!("Failed to find CSS files: {}", e),
+            format!("Failed to find CSS files: {e}"),
         )
         .with_context("Scanning src-ts directory for CSS files".to_string())
     })?;
@@ -107,7 +107,7 @@ fn generate_css_modules() -> Result<(), BuildError> {
         let css_content = fs::read_to_string(&css_file).map_err(|e| {
             TypeScriptError::new(
                 TypeScriptErrorKind::FileRead,
-                format!("Failed to read CSS file: {}", e),
+                format!("Failed to read CSS file: {e}"),
             )
             .with_file_path(css_file.to_string_lossy().to_string())
         })?;
@@ -120,7 +120,7 @@ fn generate_css_modules() -> Result<(), BuildError> {
             fs::create_dir_all(parent).map_err(|e| {
                 TypeScriptError::new(
                     TypeScriptErrorKind::DirectoryCreation,
-                    format!("Failed to create parent directory: {}", e),
+                    format!("Failed to create parent directory: {e}"),
                 )
                 .with_file_path(parent.to_string_lossy().to_string())
             })?;
@@ -135,7 +135,7 @@ fn generate_css_modules() -> Result<(), BuildError> {
         fs::write(&ts_file, ts_content).map_err(|e| {
             TypeScriptError::new(
                 TypeScriptErrorKind::FileWrite,
-                format!("Failed to write TypeScript module: {}", e),
+                format!("Failed to write TypeScript module: {e}"),
             )
             .with_file_path(ts_file.to_string_lossy().to_string())
         })?;
@@ -159,7 +159,7 @@ fn generate_component_registry() -> Result<(), BuildError> {
         fs::create_dir_all(generated_dir).map_err(|e| {
             TypeScriptError::new(
                 TypeScriptErrorKind::DirectoryCreation,
-                format!("Failed to create generated directory: {}", e),
+                format!("Failed to create generated directory: {e}"),
             )
             .with_file_path(generated_dir.to_string_lossy().to_string())
         })?;
@@ -170,14 +170,14 @@ fn generate_component_registry() -> Result<(), BuildError> {
     for entry in fs::read_dir(components_dir).map_err(|e| {
         TypeScriptError::new(
             TypeScriptErrorKind::ComponentRegistryGeneration,
-            format!("Failed to read components directory: {}", e),
+            format!("Failed to read components directory: {e}"),
         )
         .with_file_path(components_dir.to_string_lossy().to_string())
     })? {
         let entry = entry.map_err(|e| {
             TypeScriptError::new(
                 TypeScriptErrorKind::ComponentRegistryGeneration,
-                format!("Failed to read directory entry: {}", e),
+                format!("Failed to read directory entry: {e}"),
             )
         })?;
 
@@ -186,7 +186,7 @@ fn generate_component_registry() -> Result<(), BuildError> {
             let file_content = fs::read_to_string(&path).map_err(|e| {
                 TypeScriptError::new(
                     TypeScriptErrorKind::FileRead,
-                    format!("Failed to read component file: {}", e),
+                    format!("Failed to read component file: {e}"),
                 )
                 .with_file_path(path.to_string_lossy().to_string())
             })?;
@@ -216,8 +216,7 @@ fn generate_component_registry() -> Result<(), BuildError> {
     // Add imports
     for (component_name, file_name, _) in &components {
         registry_content.push_str(&format!(
-            "import {{ {} }} from '../components/{}';\n",
-            component_name, file_name
+            "import {{ {component_name} }} from '../components/{file_name}';\n"
         ));
     }
 
@@ -226,7 +225,7 @@ fn generate_component_registry() -> Result<(), BuildError> {
     // Add registry object
     registry_content.push_str("export const COMPONENT_REGISTRY = {\n");
     for (component_name, _, tag_name) in &components {
-        registry_content.push_str(&format!("  '{}': {},\n", tag_name, component_name));
+        registry_content.push_str(&format!("  '{tag_name}': {component_name},\n"));
     }
     registry_content.push_str("} as const;\n\n");
 
@@ -249,7 +248,7 @@ fn generate_component_registry() -> Result<(), BuildError> {
     fs::write(&registry_file, registry_content).map_err(|e| {
         TypeScriptError::new(
             TypeScriptErrorKind::FileWrite,
-            format!("Failed to write component registry: {}", e),
+            format!("Failed to write component registry: {e}"),
         )
         .with_file_path(registry_file.to_string_lossy().to_string())
     })?;
@@ -265,9 +264,9 @@ fn generate_component_registry() -> Result<(), BuildError> {
 
 fn pascal_to_kebab_case(input: &str) -> String {
     let mut result = String::new();
-    let mut chars = input.chars().peekable();
+    let chars = input.chars().peekable();
 
-    while let Some(ch) = chars.next() {
+    for ch in chars {
         if ch.is_uppercase() && !result.is_empty() {
             result.push('-');
         }
@@ -296,7 +295,7 @@ pub fn compile_typescript() -> Result<(), BuildError> {
 
     // Build all TypeScript and TSX files
     let output = Command::new("bun")
-        .args(&[
+        .args([
             "build",
             "src-ts/main.ts",
             "--outdir=public/js",
@@ -312,7 +311,7 @@ pub fn compile_typescript() -> Result<(), BuildError> {
         .map_err(|e| {
             TypeScriptError::new(
                 TypeScriptErrorKind::Compilation,
-                format!("Failed to run bun build: {}", e),
+                format!("Failed to run bun build: {e}"),
             )
         })?;
 

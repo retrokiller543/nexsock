@@ -170,15 +170,12 @@ impl ServiceRepository<'_> {
             .one(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while fetching service and configuration for ID `{}`",
-                    id
-                )
+                format!("Database error while fetching service and configuration for ID `{id}`")
             })?;
 
         self._get_detailed_service_record(
             service_and_config,
-            &format!("Service with ID `{}` not found", id),
+            &format!("Service with ID `{id}` not found"),
         )
         .await
     }
@@ -220,14 +217,13 @@ impl ServiceRepository<'_> {
             .await
             .with_context(|| {
                 format!(
-                    "Database error while fetching service and configuration for name `{}`",
-                    name_str
+                    "Database error while fetching service and configuration for name `{name_str}`"
                 )
             })?;
 
         self._get_detailed_service_record(
             service_and_config,
-            &format!("Service with name `{}` not found", name_str),
+            &format!("Service with name `{name_str}` not found"),
         )
         .await
     }
@@ -263,12 +259,7 @@ impl ServiceRepository<'_> {
             ServiceRef::Id(id) => self.get_detailed_by_id(*id).await,
             ServiceRef::Name(name) => self.get_detailed_by_name(name).await,
         }
-        .with_context(|| {
-            format!(
-                "Failed to get detailed service for reference `{:?}`",
-                service_ref
-            )
-        })
+        .with_context(|| format!("Failed to get detailed service for reference `{service_ref:?}`"))
     }
 
     /// Fetches all services from the database.
@@ -457,10 +448,7 @@ impl ServiceRepository<'_> {
             };
 
             active_model.update(db).await.with_context(|| {
-                format!(
-                    "Database error while updating service with ID `{}`",
-                    original_id
-                )
+                format!("Database error while updating service with ID `{original_id}`")
             })?;
         }
 
@@ -499,7 +487,7 @@ impl ServiceRepository<'_> {
         model
             .delete(db)
             .await
-            .with_context(|| format!("Database error while deleting service with ID `{}`", id))?;
+            .with_context(|| format!("Database error while deleting service with ID `{id}`"))?;
 
         Ok(())
     }
@@ -575,8 +563,7 @@ impl ServiceRepository<'_> {
                 .await
                 .with_context(|| {
                     format!(
-                        "Database error while checking dependencies for service ID `{}`",
-                        service_id_for_context
+                        "Database error while checking dependencies for service ID `{service_id_for_context}`"
                     )
                 })?
                 > 0;
@@ -632,8 +619,7 @@ impl ServiceRepository<'_> {
                     .await
                     .with_context(|| {
                         format!(
-                            "Database error while trying to extract ID for service name `{}`",
-                            name
+                            "Database error while trying to extract ID for service name `{name}`"
                         )
                     })?
                     .ok_or_else(|| {
@@ -682,10 +668,7 @@ impl ServiceRepository<'_> {
             .one(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while fetching service with ID `{}`",
-                    service_id
-                )
+                format!("Database error while fetching service with ID `{service_id}`")
             })?
             .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
 
@@ -695,10 +678,7 @@ impl ServiceRepository<'_> {
         active_service.git_auth_type = Set(git_auth_type);
 
         active_service.update(db).await.with_context(|| {
-            format!(
-                "Failed to update Git information for service with ID `{}`",
-                service_id
-            )
+            format!("Failed to update Git information for service with ID `{service_id}`")
         })?;
 
         Ok(())
@@ -734,10 +714,7 @@ impl ServiceRepository<'_> {
             .one(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while fetching service with ID `{}`",
-                    service_id
-                )
+                format!("Database error while fetching service with ID `{service_id}`")
             })?
             .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
 
@@ -745,10 +722,7 @@ impl ServiceRepository<'_> {
         active_service.git_branch = Set(git_branch);
 
         active_service.update(db).await.with_context(|| {
-            format!(
-                "Failed to update Git branch for service with ID `{}`",
-                service_id
-            )
+            format!("Failed to update Git branch for service with ID `{service_id}`")
         })?;
 
         Ok(())
@@ -784,10 +758,7 @@ impl ServiceRepository<'_> {
             .one(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while fetching service with ID `{}`",
-                    service_id
-                )
+                format!("Database error while fetching service with ID `{service_id}`")
             })?
             .ok_or_else(|| anyhow!("Service with ID `{}` not found", service_id))?;
 
@@ -795,10 +766,7 @@ impl ServiceRepository<'_> {
         active_service.git_commit_hash = Set(git_commit_hash);
 
         active_service.update(db).await.with_context(|| {
-            format!(
-                "Failed to update Git commit hash for service with ID `{}`",
-                service_id
-            )
+            format!("Failed to update Git commit hash for service with ID `{service_id}`")
         })?;
 
         Ok(())
@@ -837,10 +805,7 @@ impl ServiceRepository<'_> {
             .all(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while searching for services on branch `{}`",
-                    branch_name
-                )
+                format!("Database error while searching for services on branch `{branch_name}`")
             })
     }
 
@@ -876,10 +841,7 @@ impl ServiceRepository<'_> {
             .all(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while searching for services on commit `{}`",
-                    commit_hash
-                )
+                format!("Database error while searching for services on commit `{commit_hash}`")
             })
     }
 }

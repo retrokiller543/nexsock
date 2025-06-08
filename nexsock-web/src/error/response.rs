@@ -40,7 +40,7 @@ fn create_rich_error_html(error: &WebError) -> Html<String> {
     }
 
     let diagnostic_output = if miette_output.trim().is_empty() {
-        format!("Error details:\n{:#?}", error)
+        format!("Error details:\n{error:#?}")
     } else {
         style_miette_output(&miette_output)
     };
@@ -119,7 +119,7 @@ fn get_error_code(error: &WebError) -> &'static str {
 }
 
 fn format_debug_with_pretty_context(error: &WebError) -> String {
-    let debug_output = format!("{:#?}", error);
+    let debug_output = format!("{error:#?}");
 
     if let WebError::TemplateRender {
         template_context, ..

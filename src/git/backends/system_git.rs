@@ -170,7 +170,7 @@ impl SystemGitBackend {
                 private_key_path,
                 passphrase,
             } => {
-                let ssh_command = format!("ssh -i {} -o BatchMode=yes", private_key_path);
+                let ssh_command = format!("ssh -i {private_key_path} -o BatchMode=yes");
                 if passphrase.is_some() {
                     warn!("SSH key passphrase provided but will be ignored - use ssh-add to add key to agent");
                 }

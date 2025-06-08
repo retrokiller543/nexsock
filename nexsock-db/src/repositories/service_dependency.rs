@@ -88,10 +88,7 @@ impl ServiceDependencyRepository<'_> {
             .one(db)
             .await
             .with_context(|| {
-                format!(
-                    "Database error while fetching service dependency with ID `{}`",
-                    id
-                )
+                format!("Database error while fetching service dependency with ID `{id}`")
             })?;
         Ok(dependency)
     }
@@ -152,8 +149,7 @@ impl ServiceDependencyRepository<'_> {
             .await
             .with_context(|| {
                 format!(
-                    "Database error while fetching joined dependencies for service ID `{}`",
-                    service_id
+                    "Database error while fetching joined dependencies for service ID `{service_id}`"
                 )
             })?;
 
@@ -219,10 +215,7 @@ impl ServiceDependencyRepository<'_> {
             };
 
             active_model.update(db).await.with_context(|| {
-                format!(
-                    "Database error while updating service dependency with ID `{}`",
-                    original_id
-                )
+                format!("Database error while updating service dependency with ID `{original_id}`")
             })?;
         }
 
@@ -256,8 +249,7 @@ impl ServiceDependencyRepository<'_> {
             .await
             .with_context(|| {
                 format!(
-                    "Database error while fetching service dependency for deletion with ID `{}`",
-                    id
+                    "Database error while fetching service dependency for deletion with ID `{id}`"
                 )
             })?
             .ok_or_else(|| {
@@ -269,10 +261,7 @@ impl ServiceDependencyRepository<'_> {
 
         let model: ServiceDependencyActiveModel = dependency_to_delete.into();
         model.delete(db).await.with_context(|| {
-            format!(
-                "Database error while deleting service dependency with ID `{}`",
-                id
-            )
+            format!("Database error while deleting service dependency with ID `{id}`")
         })?;
 
         Ok(())
@@ -309,7 +298,7 @@ impl ServiceDependencyRepository<'_> {
         let txn = db.begin().await.context("Database error: Failed to begin transaction for deleting multiple service dependencies")?;
 
         for id in ids {
-            ServiceDependencyEntity::delete_by_id(id).exec(&txn).await.with_context(|| format!("Database error: Failed to delete service dependency with ID `{}` during multi-delete transaction", id))?;
+            ServiceDependencyEntity::delete_by_id(id).exec(&txn).await.with_context(|| format!("Database error: Failed to delete service dependency with ID `{id}` during multi-delete transaction"))?;
         }
 
         // Commit the transaction
@@ -351,8 +340,7 @@ impl ServiceDependencyRepository<'_> {
             .await
             .with_context(|| {
                 format!(
-                    "Database error while fetching service dependency details for service ID `{}`",
-                    service_id
+                    "Database error while fetching service dependency details for service ID `{service_id}`"
                 )
             })?
             .into_iter()
@@ -403,8 +391,7 @@ impl ServiceDependencyRepository<'_> {
             .await
             .with_context(|| {
                 format!(
-                    "Failed to get dependency information for service ID `{}` (name: `{}`)",
-                    service_id, service_name
+                    "Failed to get dependency information for service ID `{service_id}` (name: `{service_name}`)"
                 )
             })?;
 

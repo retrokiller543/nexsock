@@ -17,7 +17,7 @@ pub fn create_tera_env() -> Result<Tera, BuildError> {
 
 fn load_templates(tera: &mut Tera) -> Result<(), BuildError> {
     for file in Templates::iter() {
-        eprintln!("Processing template: {}", file);
+        eprintln!("Processing template: {file}");
 
         let template =
             Templates::get(&file).ok_or_else(|| BuildError::TemplateNotFound(file.to_string()))?;

@@ -28,7 +28,7 @@ where
                     "json_extractor",
                     Some(std::io::Error::new(
                         std::io::ErrorKind::InvalidData,
-                        format!("Request body extraction failed: {}", rejection),
+                        format!("Request body extraction failed: {rejection}"),
                     )),
                 ));
             }
@@ -101,7 +101,7 @@ where
                     "form_extractor",
                     Some(std::io::Error::new(
                         std::io::ErrorKind::InvalidData,
-                        format!("Form data extraction failed: {}", rejection),
+                        format!("Form data extraction failed: {rejection}"),
                     )),
                 ));
             }

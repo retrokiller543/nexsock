@@ -13,7 +13,7 @@ pub async fn add_service(
 
     client.execute_command(command).await.map_err(|error| {
         WebError::internal(
-            format!("Failed to execute add_service command: {}", error),
+            format!("Failed to execute add_service command: {error}"),
             "add_service",
             None::<std::io::Error>,
         )
