@@ -193,6 +193,7 @@ fn extract_field_name_from_error(error_msg: &str) -> Option<&str> {
 }
 
 /// Helper function for enhanced JSON serialization with context
+#[allow(dead_code)]
 pub fn to_json_with_context<T>(value: &T, context: &str) -> Result<String, WebError>
 where
     T: serde::Serialize,
@@ -203,6 +204,7 @@ where
 }
 
 /// Helper function for enhanced JSON parsing with context
+#[allow(dead_code)]
 pub fn from_json_with_context<T>(json_str: &str, context: &str) -> Result<T, WebError>
 where
     T: DeserializeOwned,

@@ -8,6 +8,7 @@ pub enum ServiceError {
     #[error("Failed to render page: {0}")]
     Render(#[from] tera::Error),
     #[error("Template rendering failed")]
+    #[allow(dead_code)]
     TemplateDebug {
         template_name: String,
         error: tera::Error,

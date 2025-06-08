@@ -29,10 +29,12 @@ pub struct GitBranchesView {
 }
 
 impl GitBranchesView {
+    #[allow(dead_code)]
     pub fn new(branches_response: GitListBranchesResponse, service_name: String) -> Self {
         Self::with_pagination(branches_response, service_name, false, 10)
     }
 
+    #[allow(dead_code)]
     pub fn with_show_all(
         branches_response: GitListBranchesResponse,
         service_name: String,
@@ -41,6 +43,7 @@ impl GitBranchesView {
         Self::with_pagination(branches_response, service_name, show_all, 10)
     }
 
+    #[allow(dead_code)]
     pub fn with_limit(
         branches_response: GitListBranchesResponse,
         service_name: String,
@@ -97,10 +100,12 @@ pub struct GitLogView {
 }
 
 impl GitLogView {
+    #[allow(dead_code)]
     pub fn new(log_response: GitLogResponse, service_name: String) -> Self {
         Self::with_pagination(log_response, service_name, false, 5)
     }
 
+    #[allow(dead_code)]
     pub fn with_show_all(
         log_response: GitLogResponse,
         service_name: String,
@@ -109,6 +114,7 @@ impl GitLogView {
         Self::with_pagination(log_response, service_name, show_all, 5)
     }
 
+    #[allow(dead_code)]
     pub fn with_limit(log_response: GitLogResponse, service_name: String, limit: usize) -> Self {
         Self::with_pagination(log_response, service_name, false, limit)
     }

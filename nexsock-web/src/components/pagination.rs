@@ -15,6 +15,7 @@ impl<T> Page<T>
 where
     T: Clone + serde::Serialize,
 {
+    #[allow(dead_code)]
     pub fn new(page: u32, page_size: u32, total: u32, items: Vec<T>) -> Self {
         Self {
             page,

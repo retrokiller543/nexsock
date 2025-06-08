@@ -124,6 +124,7 @@ fn get_template_source(renderer: &Tera, template_name: &str) -> Option<String> {
 }
 
 /// Enhanced context creation with validation
+#[allow(dead_code)]
 pub fn create_template_context<T: Serialize>(
     variable_name: &str,
     data: &T,
@@ -148,6 +149,7 @@ pub fn create_template_context<T: Serialize>(
 /// Use individual insert_template_var calls instead
 
 /// Safe template variable insertion with validation
+#[allow(dead_code)]
 pub fn insert_template_var<T: Serialize>(
     context: &mut TemplateContext,
     name: &str,

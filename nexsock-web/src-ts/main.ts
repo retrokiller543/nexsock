@@ -10,13 +10,6 @@ import {registerAllComponents} from './generated/component-registry';
 import {initializeApp} from './core/init';
 import {createGlobalAPI} from './core/api';
 
-// Declare global window extension
-declare global {
-  interface Window {
-    nexsock?: any; // Replace with proper type from createGlobalAPI
-  }
-}
-
 // ===============================================
 // Initialization
 // ===============================================

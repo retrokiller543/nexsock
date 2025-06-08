@@ -7,6 +7,7 @@ use tracing::error;
 use crate::error::WebError;
 
 /// Global error handler middleware that catches any unhandled errors and converts them to WebError
+#[allow(dead_code)]
 pub async fn global_error_handler(request: Request, next: Next) -> Result<Response, Response> {
     let method = request.method().clone();
     let uri = request.uri().clone();
@@ -58,6 +59,7 @@ pub async fn global_error_handler(request: Request, next: Next) -> Result<Respon
 }
 
 /// Handler for 404 Not Found errors
+#[allow(dead_code)]
 pub async fn handle_404() -> impl IntoResponse {
     WebError::internal(
         "The requested page or resource was not found",
@@ -67,6 +69,7 @@ pub async fn handle_404() -> impl IntoResponse {
 }
 
 /// Handler for panics - converts panics to WebError responses
+#[allow(dead_code)]
 pub async fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> impl IntoResponse {
     let panic_msg = if let Some(s) = err.downcast_ref::<String>() {
         s.clone()

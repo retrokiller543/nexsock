@@ -127,6 +127,7 @@ pub enum WebError {
     /// HTTP client errors (for external requests)
     #[error("HTTP request failed: {method} {url}")]
     #[diagnostic(code(nexsock_web::http_request_error))]
+    #[allow(dead_code)]
     HttpRequest {
         method: String,
         url: String,
@@ -139,6 +140,7 @@ pub enum WebError {
     /// File system operation errors
     #[error("File system operation failed: {operation}")]
     #[diagnostic(code(nexsock_web::filesystem_error))]
+    #[allow(dead_code)]
     FileSystem {
         operation: String,
         file_path: String,
@@ -149,6 +151,7 @@ pub enum WebError {
     /// Configuration errors
     #[error("Configuration error in {component}")]
     #[diagnostic(code(nexsock_web::config_error))]
+    #[allow(dead_code)]
     Configuration {
         component: String,
         config_key: Option<String>,

@@ -286,6 +286,7 @@ fn extract_with_pattern(text: &str, pattern_type: &str) -> Option<String> {
     None
 }
 
+#[allow(dead_code)]
 fn find_variable_span_with_suggestions(
     template_content: &str,
     variable_name: &str,
@@ -348,6 +349,7 @@ fn extract_all_template_variables(template_content: &str) -> Vec<String> {
     variables
 }
 
+#[allow(dead_code)]
 fn is_similar_variable_name(target: &str, candidate: &str) -> bool {
     let target_lower = target.to_lowercase();
     let candidate_lower = candidate.to_lowercase();
@@ -369,6 +371,7 @@ fn is_similar_variable_name(target: &str, candidate: &str) -> bool {
     false
 }
 
+#[allow(dead_code)]
 fn find_scope_definition_span(template_content: &str, variable_name: &str) -> Option<SourceSpan> {
     let for_pattern = format!("{{% for {} in", variable_name);
     if let Some(pos) = template_content.find(&for_pattern) {
@@ -385,6 +388,7 @@ fn find_scope_definition_span(template_content: &str, variable_name: &str) -> Op
     None
 }
 
+#[allow(dead_code)]
 fn find_variable_span_in_template(
     template_content: &str,
     variable_name: &str,
@@ -405,6 +409,7 @@ fn find_variable_span_in_template(
     find_template_variable_by_regex(template_content, variable_name)
 }
 
+#[allow(dead_code)]
 fn find_template_variable_by_regex(
     template_content: &str,
     variable_name: &str,

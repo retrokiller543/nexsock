@@ -148,6 +148,7 @@ impl WebError {
     }
 
     /// Create a service reference error
+    #[allow(dead_code)]
     pub fn service_reference<E>(
         service_ref: impl Into<String>,
         url_path: impl Into<String>,
@@ -182,6 +183,7 @@ impl WebError {
     }
 
     /// Create a service operation error
+    #[allow(dead_code)]
     pub fn service_operation<E>(
         operation: impl Into<String>,
         service_name: impl Into<String>,

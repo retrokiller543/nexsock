@@ -1,7 +1,6 @@
 mod build_src;
 
 use build_src::{compile_typescript, create_tera_env, BuildError};
-use miette::{IntoDiagnostic, Result};
 
 fn main() {
     let _guard = miette::set_hook(Box::new(|_| {

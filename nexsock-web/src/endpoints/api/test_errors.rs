@@ -1,24 +1,37 @@
+#[cfg(debug_assertions)]
 use axum::response::Json as AxumJson;
+#[cfg(debug_assertions)]
 use serde::Deserialize;
 
+#[cfg(debug_assertions)]
 use crate::error::WebError;
+#[cfg(debug_assertions)]
 use crate::extractors::Json;
 
+#[cfg(debug_assertions)]
 #[derive(Deserialize)]
 pub struct TestJsonPayload {
+    #[allow(dead_code)]
     pub name: String,
+    #[allow(dead_code)]
     pub value: i32,
+    #[allow(dead_code)]
     pub nested: NestedData,
 }
 
+#[cfg(debug_assertions)]
 #[derive(Deserialize)]
 pub struct NestedData {
+    #[allow(dead_code)]
     pub field: String,
+    #[allow(dead_code)]
     pub optional: Option<bool>,
 }
 
 /// Test endpoint that will trigger JSON parsing errors for demonstration
 /// POST to /api/test-json-error with malformed JSON to see enhanced error diagnostics
+#[cfg(debug_assertions)]
+#[allow(dead_code)]
 pub async fn test_json_error(
     Json(payload): Json<TestJsonPayload>,
 ) -> Result<AxumJson<TestJsonPayload>, WebError> {
@@ -112,6 +125,8 @@ pub async fn test_daemon_error() -> Result<&'static str, WebError> {
 
 /// Test endpoint that will panic - should be caught by global error handler
 /// GET /api/test-panic
+#[cfg(debug_assertions)]
+#[allow(dead_code)]
 pub async fn test_panic() -> Result<&'static str, WebError> {
     panic!("This is a test panic to verify global error handling works!");
 }
