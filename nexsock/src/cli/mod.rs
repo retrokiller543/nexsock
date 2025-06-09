@@ -1,11 +1,11 @@
 mod concurrent;
 
+use crate::display::OutputFormat;
 use clap::{Parser, Subcommand};
 pub use concurrent::*;
 use derive_more::IsVariant;
 // Git commands are handled in commands.rs
 use nexsock_protocol::commands::manage_service::ServiceRef;
-use crate::display::OutputFormat;
 use std::collections::HashMap;
 #[cfg(windows)]
 use std::net::SocketAddr;
@@ -27,20 +27,24 @@ pub struct Cli {
     pub address: Option<SocketAddr>,
 
     /// Output format
-    #[arg(long, value_enum, default_value = "table")]
+    #[arg(long, value_enum, default_value = "table", global = true)]
     pub format: OutputFormat,
 
     /// Enable verbose output
-    #[arg(short, long)]
+    #[arg(short, long, global = true)]
     pub verbose: bool,
 
     /// Disable headers in table output
-    #[arg(long)]
+    #[arg(long, global = true)]
     pub no_headers: bool,
 
     /// Force color output (overrides auto-detection)
-    #[arg(long)]
-    pub color: Option<bool>,
+    #[arg(long, global = true)]
+    pub color: bool,
+
+    /// Show detailed view for collections (lists, logs, etc.)
+    #[arg(long, global = true)]
+    pub detailed: bool,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -430,7 +434,8 @@ impl Cli {
             format: self.format,
             verbose: self.verbose,
             no_headers: self.no_headers,
-            color: self.color.unwrap_or_else(|| atty::is(atty::Stream::Stdout)),
+            color: if self.color { true } else { atty::is(atty::Stream::Stdout) },
+            detailed: self.detailed,
         }
     }
 

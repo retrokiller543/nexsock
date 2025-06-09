@@ -6,9 +6,9 @@ use nexsock::display::CliDisplay;
 use nexsock_client::Client;
 use nexsock_config::NexsockConfig;
 use nexsock_protocol::commands::ServiceCommand;
+use std::io;
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::io;
 use tracing::warn;
 
 #[cfg(feature = "jemalloc")]
@@ -20,9 +20,11 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 /// Currently, this function logs a warning that tool management is unsupported and does not implement any functionality for the provided command.
 ///
 /// # Parameters
+///
 /// - `command`: The tool management subcommand to handle.
 ///
 /// # Returns
+///
 /// Returns an error indicating that tool management is not supported.
 ///
 /// # Examples

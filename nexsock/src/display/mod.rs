@@ -1,8 +1,13 @@
+#![doc = include_str!("README.md")]
+
 use std::io::{self, Write};
 
 use nexsock_protocol::commands::CommandPayload;
 
-pub mod formatters;
+pub mod simple_formatter;
+pub mod protocol_formatters;
+
+pub use simple_formatter::{CollectionFormattable, CompactTableFormattable, SimpleFormattable, SimpleFormatter};
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum OutputFormat {
@@ -24,6 +29,7 @@ pub struct DisplayOptions {
     pub verbose: bool,
     pub no_headers: bool,
     pub color: bool,
+    pub detailed: bool,
 }
 
 impl Default for DisplayOptions {
@@ -33,75 +39,67 @@ impl Default for DisplayOptions {
             verbose: false,
             no_headers: false,
             color: atty::is(atty::Stream::Stdout),
+            detailed: false,
         }
     }
 }
 
+/// Simplified CliDisplay trait that uses the new formatter system
 pub trait CliDisplay {
-    fn display(&self, options: &DisplayOptions, writer: &mut dyn Write) -> io::Result<()> 
-    where 
-        Self: serde::Serialize,
-    {
-        match options.format {
-            OutputFormat::Table => self.display_table(options, writer),
-            OutputFormat::Json => self.display_json(writer),
-            OutputFormat::Yaml => self.display_yaml(writer),
-            OutputFormat::Plain => self.display_plain(options, writer),
-        }
-    }
-    
-    fn display_table(&self, options: &DisplayOptions, writer: &mut dyn Write) -> io::Result<()>;
-    fn display_plain(&self, options: &DisplayOptions, writer: &mut dyn Write) -> io::Result<()>;
-    
-    fn display_json(&self, writer: &mut dyn Write) -> io::Result<()>
-    where
-        Self: serde::Serialize,
-    {
-        let json = serde_json::to_string_pretty(self)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        writeln!(writer, "{}", json)
-    }
-    
-    fn display_yaml(&self, writer: &mut dyn Write) -> io::Result<()>
-    where
-        Self: serde::Serialize,
-    {
-        let yaml = serde_yaml::to_string(self)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        write!(writer, "{}", yaml)
-    }
+    fn display(&self, options: &DisplayOptions, writer: &mut dyn Write) -> io::Result<()>;
 }
 
-impl CliDisplay for CommandPayload {
-    fn display_table(&self, options: &DisplayOptions, writer: &mut dyn Write) -> io::Result<()> {
-        match self {
-            CommandPayload::Status(status) => status.display_table(options, writer),
-            CommandPayload::ListServices(list) => list.display_table(options, writer),
-            CommandPayload::ServiceConfig(config) => config.display_table(options, writer),
-            CommandPayload::Dependencies(deps) => deps.display_table(options, writer),
-            CommandPayload::GitLog(log) => log.display_table(options, writer),
-            CommandPayload::GitBranches(branches) => branches.display_table(options, writer),
-            CommandPayload::GitStatus(status) => status.display_table(options, writer),
-            CommandPayload::Stdout(output) => write!(writer, "{}", output),
-            CommandPayload::Error(error) => error.display_table(options, writer),
-            CommandPayload::Empty => Ok(()),
-            _ => writeln!(writer, "Unknown response type"),
-        }
-    }
+/// Helper function to display any formattable data with the given options
+pub fn display_data<T>(
+    data: &T,
+    options: &DisplayOptions,
+    writer: &mut dyn Write,
+) -> io::Result<()>
+where
+    T: SimpleFormattable + serde::Serialize,
+{
+    let formatter = SimpleFormatter::from_options(options);
+    formatter.format_simple(data, writer)
+}
 
-    fn display_plain(&self, options: &DisplayOptions, writer: &mut dyn Write) -> io::Result<()> {
+// We'll implement Formattable for the protocol types in a separate file
+// For now, let's keep the old CommandPayload implementation but use display_data
+impl CliDisplay for CommandPayload {
+    fn display(&self, options: &DisplayOptions, writer: &mut dyn Write) -> io::Result<()> {
+        let formatter = SimpleFormatter::from_options(options);
+        
         match self {
-            CommandPayload::Status(status) => status.display_plain(options, writer),
-            CommandPayload::ListServices(list) => list.display_plain(options, writer),
-            CommandPayload::ServiceConfig(config) => config.display_plain(options, writer),
-            CommandPayload::Dependencies(deps) => deps.display_plain(options, writer),
-            CommandPayload::GitLog(log) => log.display_plain(options, writer),
-            CommandPayload::GitBranches(branches) => branches.display_plain(options, writer),
-            CommandPayload::GitStatus(status) => status.display_plain(options, writer),
+            CommandPayload::Status(status) => formatter.format_simple(status, writer),
+            CommandPayload::ListServices(list) => {
+                use crate::display::CompactTableFormattable;
+                // Show detailed view only when explicitly requested
+                if options.detailed || options.verbose {
+                    list.format_detailed(&formatter, writer)
+                } else {
+                    // Use compact table format by default
+                    list.format_compact_table(&formatter, writer)
+                }
+            },
+            CommandPayload::GitLog(log) => {
+                use crate::display::CompactTableFormattable;
+                // Git log should show detailed view unless compact requested
+                if options.detailed || options.verbose {
+                    log.format_detailed(&formatter, writer)
+                } else {
+                    log.format_compact_table(&formatter, writer)
+                }
+            },
+            CommandPayload::GitBranches(branches) => formatter.format_simple(branches, writer),
+            CommandPayload::GitStatus(status) => formatter.format_simple(status, writer),
+            CommandPayload::ServiceConfig(config) => formatter.format_simple(config, writer),
+            CommandPayload::Dependencies(deps) => formatter.format_simple(deps, writer),
+            CommandPayload::Error(error) => formatter.format_simple(error, writer),
             CommandPayload::Stdout(output) => write!(writer, "{}", output),
-            CommandPayload::Error(error) => error.display_plain(options, writer),
             CommandPayload::Empty => Ok(()),
-            _ => writeln!(writer, "Unknown response"),
+            _ => {
+                // For types that don't have SimpleFormattable yet, fall back to serialization
+                formatter.format_serializable(self, writer)
+            }
         }
     }
 }
@@ -128,8 +126,8 @@ pub mod colors {
 }
 
 pub mod utils {
-    use std::io::{self, Write};
     use super::{colors, DisplayOptions};
+    use std::io::{self, Write};
 
     pub fn colorize(text: &str, color: &str, options: &DisplayOptions) -> String {
         if options.color {
@@ -154,7 +152,7 @@ pub mod utils {
         writer: &mut dyn Write,
         columns: &[&str],
         widths: &[usize],
-        options: &DisplayOptions,
+        _options: &DisplayOptions,
     ) -> io::Result<()> {
         for (i, (column, &width)) in columns.iter().zip(widths.iter()).enumerate() {
             if i > 0 {
