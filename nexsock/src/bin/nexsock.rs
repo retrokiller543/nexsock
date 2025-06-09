@@ -2,11 +2,13 @@ use anyhow::{bail, Context};
 use clap::Parser;
 use nexsock::cli::{Cli, Commands, ToolCommands};
 use nexsock::commands::create_command;
+use nexsock::display::CliDisplay;
 use nexsock_client::Client;
 use nexsock_config::NexsockConfig;
-use nexsock_protocol::commands::{CommandPayload, ServiceCommand};
+use nexsock_protocol::commands::ServiceCommand;
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::io;
 use tracing::warn;
 
 #[cfg(feature = "jemalloc")]
@@ -74,6 +76,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let config = NexsockConfig::new()?;
+    let display_options = cli.display_options();
 
     #[cfg(unix)]
     let socket = if let Some(socket) = cli.socket {
@@ -100,7 +103,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let mut client = Client::connect(socket).await?;
-
+    
     let command = create_command(cli.command)?;
 
     let response = match command {
@@ -133,11 +136,10 @@ async fn main() -> anyhow::Result<()> {
         _ => bail!("Unknown command"),
     };
 
-    match response {
-        CommandPayload::Stdout(log) => print!("{log}"),
-        res => {
-            dbg!(res);
-        }
+    let mut stdout = io::stdout();
+    
+    if let Err(e) = response.display(&display_options, &mut stdout) {
+        eprintln!("Error displaying output: {}", e);
     }
 
     Ok(())

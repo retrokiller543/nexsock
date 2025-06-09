@@ -5,11 +5,13 @@ pub use concurrent::*;
 use derive_more::IsVariant;
 // Git commands are handled in commands.rs
 use nexsock_protocol::commands::manage_service::ServiceRef;
+use crate::display::OutputFormat;
 use std::collections::HashMap;
 #[cfg(windows)]
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
+
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -23,6 +25,22 @@ pub struct Cli {
     #[cfg(windows)]
     #[arg(short, long)]
     pub address: Option<SocketAddr>,
+
+    /// Output format
+    #[arg(long, value_enum, default_value = "table")]
+    pub format: OutputFormat,
+
+    /// Enable verbose output
+    #[arg(short, long)]
+    pub verbose: bool,
+
+    /// Disable headers in table output
+    #[arg(long)]
+    pub no_headers: bool,
+
+    /// Force color output (overrides auto-detection)
+    #[arg(long)]
+    pub color: Option<bool>,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -406,6 +424,16 @@ impl FromStr for ToolType {
 // Note: Git command conversion is handled directly in commands.rs
 
 impl Cli {
+    /// Creates display options from CLI arguments
+    pub fn display_options(&self) -> crate::display::DisplayOptions {
+        crate::display::DisplayOptions {
+            format: self.format,
+            verbose: self.verbose,
+            no_headers: self.no_headers,
+            color: self.color.unwrap_or_else(|| atty::is(atty::Stream::Stdout)),
+        }
+    }
+
     /// Parses a list of environment variable strings in `KEY=VALUE` format into a map.
     ///
     /// Ignores entries that do not contain an '=' character.
