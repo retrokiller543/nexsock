@@ -9,6 +9,7 @@ use derive_more::Display;
 use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
+use std::collections::HashMap;
 
 service_command! {
     pub struct GetServiceStatus<ServiceRef, ServiceStatus> = GetServiceStatus
@@ -19,11 +20,8 @@ service_command! {
     Clone,
     Default,
     Debug,
-    Ord,
-    PartialOrd,
     PartialEq,
     Eq,
-    Hash,
     Serialize,
     Deserialize,
     Encode,
@@ -45,6 +43,10 @@ pub struct ServiceStatus {
     pub git_commit_hash: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub git_auth_type: Option<String>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub default_env_vars: HashMap<String, String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub aliases: Vec<String>,
 }
 
 #[cfg_attr(feature = "savefile", derive(Savefile))]

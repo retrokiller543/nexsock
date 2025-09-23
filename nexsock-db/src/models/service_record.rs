@@ -48,6 +48,8 @@ impl From<DetailedServiceRecord> for ServiceStatus {
             git_branch: record.service.git_branch,
             git_commit_hash: record.service.git_commit_hash,
             git_auth_type: record.service.git_auth_type,
+            default_env_vars: std::collections::HashMap::new(),
+            aliases: Vec::new(),
         }
     }
 }

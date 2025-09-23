@@ -10,6 +10,13 @@ pub use super::service::Model as Service;
 pub use super::service::PrimaryKey as ServicePrimaryKey;
 pub use super::service::Relation as ServiceRelation;
 
+pub use super::service_alias::ActiveModel as ServiceAliasActiveModel;
+pub use super::service_alias::Column as ServiceAliasColumn;
+pub use super::service_alias::Entity as ServiceAliasEntity;
+pub use super::service_alias::Model as ServiceAlias;
+pub use super::service_alias::PrimaryKey as ServiceAliasPrimaryKey;
+pub use super::service_alias::Relation as ServiceAliasRelation;
+
 pub use super::service_config::ActiveModel as ServiceConfigActiveModel;
 pub use super::service_config::Column as ServiceConfigColumn;
 pub use super::service_config::Entity as ServiceConfigEntity;
@@ -23,6 +30,13 @@ pub use super::service_dependency::Entity as ServiceDependencyEntity;
 pub use super::service_dependency::Model as ServiceDependency;
 pub use super::service_dependency::PrimaryKey as ServiceDependencyPrimaryKey;
 pub use super::service_dependency::Relation as ServiceDependencyRelation;
+
+pub use super::service_env_var::ActiveModel as ServiceEnvVarActiveModel;
+pub use super::service_env_var::Column as ServiceEnvVarColumn;
+pub use super::service_env_var::Entity as ServiceEnvVarEntity;
+pub use super::service_env_var::Model as ServiceEnvVar;
+pub use super::service_env_var::PrimaryKey as ServiceEnvVarPrimaryKey;
+pub use super::service_env_var::Relation as ServiceEnvVarRelation;
 
 pub use super::service_dep::*;
 pub use super::service_record::*;

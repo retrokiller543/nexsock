@@ -1,5 +1,6 @@
 use crate::get_db_connection;
 use crate::models::prelude::*;
+use crate::repositories::{ServiceAliasRepository, ServiceEnvVarRepository};
 use anyhow::{anyhow, bail, Context};
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::ServiceRef;
@@ -568,12 +569,30 @@ impl ServiceRepository<'_> {
                 })?
                 > 0;
 
+            // Get default environment variables for this service
+            let default_env_vars = ServiceEnvVarRepository::find_env_map_by_service_id(
+                self.connection,
+                service.id,
+            )
+            .await
+            .map_err(|e| anyhow::Error::from(e).context("Failed to load default environment variables"))?;
+
+            // Get aliases for this service
+            let aliases = ServiceAliasRepository::find_alias_names_by_service_id(
+                self.connection,
+                service.id,
+            )
+            .await
+            .map_err(|e| anyhow::Error::from(e).context("Failed to load service aliases"))?;
+
             let service_info = nexsock_protocol::commands::list_services::ServiceInfo {
                 id: service.id,
                 name: service.name,
                 state: service.status.into(),
                 port: service.port,
                 has_dependencies,
+                default_env_vars,
+                aliases,
             };
 
             result_services.push(service_info);

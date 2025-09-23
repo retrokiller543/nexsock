@@ -3,7 +3,7 @@ use derive_more::{AsMut, AsRef, Deref, DerefMut};
 use nexsock_client::ClientManager;
 use nexsock_config::NexsockConfig;
 
-#[derive(Clone, AsRef, AsMut, Deref, DerefMut)]
+#[derive(Debug, Clone, AsRef, AsMut, Deref, DerefMut)]
 pub struct AppState {
     config: NexsockConfig,
     #[deref]

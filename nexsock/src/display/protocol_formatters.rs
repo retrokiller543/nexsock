@@ -8,6 +8,8 @@ use nexsock_protocol::commands::{
     error::ErrorPayload,
     git::{GitCommitInfo, GitListBranchesResponse, GitLogResponse, RepoStatus},
     list_services::{ListServicesResponse, ServiceInfo},
+    service_aliases::AliasesResponse,
+    service_env_vars::EnvVarsResponse,
     service_status::ServiceStatus,
 };
 
@@ -45,6 +47,17 @@ impl SimpleFormattable for ServiceStatus {
                 .collect();
             pairs.push(("Dependencies".to_string(), deps.join(", ")));
         }
+
+        if !self.default_env_vars.is_empty() {
+            let env_vars: Vec<String> = self.default_env_vars.iter()
+                .map(|(k, v)| format!("{}={}", k, v))
+                .collect();
+            pairs.push(("Default Environment Variables".to_string(), env_vars.join(", ")));
+        }
+
+        if !self.aliases.is_empty() {
+            pairs.push(("Aliases".to_string(), self.aliases.join(", ")));
+        }
         
         pairs
     }
@@ -57,32 +70,100 @@ impl SimpleFormattable for ServiceStatus {
 impl SimpleFormattable for ErrorPayload {
     fn to_key_value_pairs(&self) -> Vec<(String, String)> {
         let mut pairs = vec![
-            ("Error Code".to_string(), self.code.to_string()),
-            ("Message".to_string(), self.message.clone()),
+            ("Error".to_string(), format_error_message(self.code, &self.message)),
         ];
         
         if let Some(ref details) = self.details {
             pairs.push(("Details".to_string(), details.clone()));
         }
         
+        // Add suggestions based on error code
+        if let Some(suggestion) = get_error_suggestion(self.code) {
+            pairs.push(("Suggestion".to_string(), suggestion.to_string()));
+        }
+        
         pairs
     }
     
     fn title(&self) -> Option<String> {
-        Some("Error".to_string())
+        Some(format!("❌ Operation Failed (Error Code: {})", self.code))
+    }
+}
+
+/// Formats error messages with appropriate emoji and styling
+fn format_error_message(code: u32, message: &str) -> String {
+    match code {
+        // Service management errors (1000-1099)
+        1001 => format!("🔍 {}", message), // Service not found
+        1002 => format!("🏃 {}", message), // Already running
+        1003 => format!("🛑 {}", message), // Not running
+        1004 => format!("🚪 {}", message), // Port in use
+        1005 => format!("⚙️  {}", message), // No configuration
+        1006 => format!("📄 {}", message), // No run command
+        1007 => format!("🚀 {}", message), // Process spawn failure
+        1008 => format!("⛔ {}", message), // Process termination failure
+        1009 => format!("💾 {}", message), // Database error
+        1010 => format!("🌱 {}", message), // Invalid environment variable
+        1011 => format!("🏷️  {}", message), // Invalid alias
+        1012 => format!("🔄 {}", message), // Dependency cycle
+        1013 => format!("🔗 {}", message), // Dependency not satisfied
+        1014 => format!("🔒 {}", message), // Service locked
+        1015 => format!("🌿 {}", message), // Git error
+        1016 => format!("💿 {}", message), // I/O error
+        1017 => format!("✅ {}", message), // Validation error
+        
+        // Generic errors
+        _ => format!("⚠️  {}", message),
+    }
+}
+
+/// Provides helpful suggestions based on error codes
+fn get_error_suggestion(code: u32) -> Option<&'static str> {
+    match code {
+        1001 => Some("Check if the service name or ID is correct using 'nexsock list'"),
+        1002 => Some("Use 'nexsock stop <service>' first, or 'nexsock restart <service>' to restart"),
+        1003 => Some("Start the service first using 'nexsock start <service>'"),
+        1004 => Some("Choose a different port or stop the service using that port"),
+        1005 => Some("Add configuration using 'nexsock config update <service>' command"),
+        1006 => Some("Set the run command in your service configuration"),
+        1007 => Some("Check if the command exists and is executable in the service directory"),
+        1008 => Some("The service may be unresponsive. Try waiting a moment and retry"),
+        1009 => Some("Check database connectivity and service permissions"),
+        1010 => Some("Environment variables must be in KEY=VALUE format"),
+        1011 => Some("Aliases must be unique and contain only alphanumeric characters and underscores"),
+        1012 => Some("Remove circular dependencies between services"),
+        1013 => Some("Start the dependent service first, or remove the dependency"),
+        1014 => Some("Wait a moment and try again, or restart the daemon if the issue persists"),
+        1015 => Some("Check Git credentials and repository access"),
+        1016 => Some("Check file permissions and disk space"),
+        1017 => Some("Review the service configuration for invalid values"),
+        _ => None,
     }
 }
 
 // ServiceInfo implementation for individual services
 impl SimpleFormattable for ServiceInfo {
     fn to_key_value_pairs(&self) -> Vec<(String, String)> {
-        vec![
+        let mut pairs = vec![
             ("ID".to_string(), self.id.to_string()),
             ("Name".to_string(), self.name.clone()),
             ("Status".to_string(), format!("{:?}", self.state)),
             ("Port".to_string(), self.port.to_string()),
             ("Has Dependencies".to_string(), if self.has_dependencies { "Yes" } else { "No" }.to_string()),
-        ]
+        ];
+
+        if !self.aliases.is_empty() {
+            pairs.push(("Aliases".to_string(), self.aliases.join(", ")));
+        }
+
+        if !self.default_env_vars.is_empty() {
+            let env_vars: Vec<String> = self.default_env_vars.iter()
+                .map(|(k, v)| format!("{}={}", k, v))
+                .collect();
+            pairs.push(("Default Environment Variables".to_string(), env_vars.join(", ")));
+        }
+
+        pairs
     }
     
     fn title(&self) -> Option<String> {
@@ -129,7 +210,7 @@ impl CollectionFormattable for ListServicesResponse {
 
 impl CompactTableFormattable for ListServicesResponse {
     fn table_headers(&self) -> Vec<&'static str> {
-        vec!["ID", "Name", "Status", "Port", "Dependencies"]
+        vec!["ID", "Name", "Status", "Port", "Dependencies", "Aliases"]
     }
     
     fn table_rows(&self) -> Vec<Vec<String>> {
@@ -140,6 +221,11 @@ impl CompactTableFormattable for ListServicesResponse {
                 format!("{:?}", service.state),
                 service.port.to_string(),
                 if service.has_dependencies { "Yes" } else { "No" }.to_string(),
+                if service.aliases.is_empty() { 
+                    "-".to_string() 
+                } else { 
+                    service.aliases.join(", ") 
+                },
             ]
         }).collect()
     }
@@ -313,5 +399,44 @@ impl SimpleFormattable for ListDependenciesResponse {
     
     fn title(&self) -> Option<String> {
         Some(format!("Dependencies for '{}'", self.service_name))
+    }
+}
+
+// Environment variables response
+impl SimpleFormattable for EnvVarsResponse {
+    fn to_key_value_pairs(&self) -> Vec<(String, String)> {
+        if self.env_vars.is_empty() {
+            vec![("Environment Variables".to_string(), format!("No default environment variables set for '{}'", self.service_name))]
+        } else {
+            let mut pairs = vec![("Service".to_string(), self.service_name.clone())];
+            
+            for (key, value) in &self.env_vars {
+                pairs.push((key.clone(), value.clone()));
+            }
+            
+            pairs
+        }
+    }
+    
+    fn title(&self) -> Option<String> {
+        Some(format!("🌱 Environment Variables for '{}'", self.service_name))
+    }
+}
+
+// Aliases response
+impl SimpleFormattable for AliasesResponse {
+    fn to_key_value_pairs(&self) -> Vec<(String, String)> {
+        if self.aliases.is_empty() {
+            vec![("Aliases".to_string(), format!("No aliases set for '{}'", self.service_name))]
+        } else {
+            vec![
+                ("Service".to_string(), self.service_name.clone()),
+                ("Aliases".to_string(), self.aliases.join(", ")),
+            ]
+        }
+    }
+    
+    fn title(&self) -> Option<String> {
+        Some(format!("🏷️ Aliases for '{}'", self.service_name))
     }
 }

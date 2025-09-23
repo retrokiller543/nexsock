@@ -139,6 +139,14 @@ pub enum Commands {
         /// Git authentication type (ssh_agent, token, none)
         #[arg(long, default_value = "ssh_agent")]
         git_auth: String,
+
+        /// Default environment variables in KEY=VALUE format
+        #[arg(long, value_delimiter = ',')]
+        default_env: Vec<String>,
+
+        /// Service aliases (alternative names for referencing the service)
+        #[arg(long, value_delimiter = ',')]
+        aliases: Vec<String>,
     },
 
     /// Remove a service
@@ -166,6 +174,18 @@ pub enum Commands {
     Git {
         #[command(subcommand)]
         command: GitCommands,
+    },
+
+    /// Manage environment variables
+    Env {
+        #[command(subcommand)]
+        command: EnvCommands,
+    },
+
+    /// Manage service aliases
+    Alias {
+        #[command(subcommand)]
+        command: AliasCommands,
     },
 
     /// Manage nexsock tools
@@ -260,6 +280,83 @@ pub enum DependencyCommands {
         /// The name or id of a service.
         ///
         /// The Parser will consider it a name if it fails to parse the text as an integer
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum EnvCommands {
+    /// List default environment variables for a service
+    List {
+        /// The name or id of a service.
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+    },
+
+    /// Add or update a default environment variable
+    Set {
+        /// The name or id of a service.
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+
+        /// Environment variable name
+        key: String,
+
+        /// Environment variable value
+        value: String,
+    },
+
+    /// Remove a default environment variable
+    Remove {
+        /// The name or id of a service.
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+
+        /// Environment variable name to remove
+        key: String,
+    },
+
+    /// Clear all default environment variables for a service
+    Clear {
+        /// The name or id of a service.
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum AliasCommands {
+    /// List aliases for a service
+    List {
+        /// The name or id of a service.
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+    },
+
+    /// Add an alias to a service
+    Add {
+        /// The name or id of a service.
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+
+        /// Alias name to add
+        alias: String,
+    },
+
+    /// Remove an alias from a service
+    Remove {
+        /// The name or id of a service.
+        #[arg(value_parser = ServiceRef::from_str)]
+        service: ServiceRef,
+
+        /// Alias name to remove
+        alias: String,
+    },
+
+    /// Clear all aliases for a service
+    Clear {
+        /// The name or id of a service.
         #[arg(value_parser = ServiceRef::from_str)]
         service: ServiceRef,
     },

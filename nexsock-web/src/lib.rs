@@ -15,7 +15,7 @@ use crate::endpoints::fallback::static_handler;
 use anyhow::Context;
 use axum::handler::Handler;
 use axum::http::{Request, Response};
-use axum::routing::{delete, post};
+use axum::routing::{delete, post, put};
 use axum::{routing::get, Router};
 use axum_response_cache::CacheLayer;
 use endpoints::get_services::get_nexsock_service;
@@ -117,6 +117,36 @@ pub async fn app() -> anyhow::Result<Router> {
         .route(
             "/api/services/{service_id}/git/pull",
             post(endpoints::api::service::git::git_pull),
+        )
+        // Environment variable endpoints
+        .route(
+            "/api/services/{service_id}/env",
+            get(endpoints::api::service::env_vars::list_env_vars),
+        )
+        .route(
+            "/api/services/{service_id}/env",
+            post(endpoints::api::service::env_vars::add_env_var),
+        )
+        .route(
+            "/api/services/{service_id}/env/{key}",
+            put(endpoints::api::service::env_vars::update_env_var),
+        )
+        .route(
+            "/api/services/{service_id}/env/{key}",
+            delete(endpoints::api::service::env_vars::delete_env_var),
+        )
+        // Alias endpoints
+        .route(
+            "/api/services/{service_id}/aliases",
+            get(endpoints::api::service::aliases::list_aliases),
+        )
+        .route(
+            "/api/services/{service_id}/aliases",
+            post(endpoints::api::service::aliases::add_alias),
+        )
+        .route(
+            "/api/services/{service_id}/aliases/{alias}",
+            delete(endpoints::api::service::aliases::remove_alias),
         )
         .fallback(static_handler.layer(cache))
         .layer(compression_layer)

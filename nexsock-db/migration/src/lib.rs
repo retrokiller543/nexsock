@@ -8,6 +8,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20220101_000001_create_base_service_tables;
 mod m20250605_000002_add_git_columns;
+mod m20250923_000003_add_env_vars_and_aliases;
 
 /// The main migrator struct that collects all defined migrations.
 ///
@@ -38,6 +39,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20220101_000001_create_base_service_tables::Migration),
             Box::new(m20250605_000002_add_git_columns::Migration),
+            Box::new(m20250923_000003_add_env_vars_and_aliases::Migration),
         ]
     }
 }

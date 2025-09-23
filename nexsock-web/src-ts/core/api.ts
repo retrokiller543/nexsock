@@ -7,7 +7,7 @@ import {NexsockAPI} from '../types/api';
 // Import services
 import {deleteServiceConfig, getServiceConfigs, loadServiceConfig, saveServiceConfig} from '../services/config-service';
 
-import {applyEnvVarsToForm, clearCurrentEnvVars, getCurrentEnvVars} from '../services/env-vars-service';
+import {applyEnvVarsToForm, clearCurrentEnvVars, getCurrentEnvVars, addEnvVar, editEnvVar, deleteEnvVar, addAlias, removeAlias} from '../services/env-vars-service';
 
 import {
   createNewBranch,
@@ -45,6 +45,11 @@ export const createGlobalAPI = (): NexsockAPI => {
     deleteServiceConfig,
     getCurrentEnvVars,
     applyEnvVarsToForm,
+    addEnvVar,
+    editEnvVar,
+    deleteEnvVar,
+    addAlias,
+    removeAlias,
     loadConfigFromSelection,
     showSaveConfigModal,
     refreshConfigUI,

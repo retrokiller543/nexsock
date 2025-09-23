@@ -195,6 +195,8 @@ impl Model {
             git_branch: self.git_branch.clone(),
             git_commit_hash: self.git_commit_hash.clone(),
             git_auth_type: self.git_auth_type.clone(),
+            default_env_vars: std::collections::HashMap::new(),
+            aliases: Vec::new(),
         }
     }
 }
@@ -211,6 +213,12 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     ServiceConfig,
+    /// Defines a "has_many" relationship with the `ServiceAlias` entity.
+    #[sea_orm(has_many = "super::service_alias::Entity")]
+    ServiceAlias,
+    /// Defines a "has_many" relationship with the `ServiceEnvVar` entity.
+    #[sea_orm(has_many = "super::service_env_var::Entity")]
+    ServiceEnvVar,
 }
 
 impl Related<super::service_config::Entity> for Entity {
@@ -224,6 +232,20 @@ impl Related<super::service_config::Entity> for Entity {
     /// ```
     fn to() -> RelationDef {
         Relation::ServiceConfig.def()
+    }
+}
+
+impl Related<super::service_alias::Entity> for Entity {
+    /// Returns the relation definition for the "has many" association with the `service_alias` entity.
+    fn to() -> RelationDef {
+        Relation::ServiceAlias.def()
+    }
+}
+
+impl Related<super::service_env_var::Entity> for Entity {
+    /// Returns the relation definition for the "has many" association with the `service_env_var` entity.
+    fn to() -> RelationDef {
+        Relation::ServiceEnvVar.def()
     }
 }
 

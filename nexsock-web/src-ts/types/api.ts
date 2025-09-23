@@ -28,6 +28,13 @@ export interface NexsockAPI {
   getCurrentEnvVars: (serviceName: string) => Record<string, string>;
   applyEnvVarsToForm: (serviceName: string, envVars: Record<string, string>) => void;
   clearCurrentEnvVars: (serviceName: string) => void;
+  addEnvVar: (serviceName: string) => void;
+  editEnvVar: (serviceName: string, key: string, currentValue: string) => void;
+  deleteEnvVar: (serviceName: string, key: string) => void;
+  
+  // Service alias management
+  addAlias: (serviceName: string) => void;
+  removeAlias: (serviceName: string, alias: string) => void;
   
   // UI helpers
   loadConfigFromSelection: (serviceName: string, configName: string) => void;

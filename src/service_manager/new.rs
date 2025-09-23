@@ -3,7 +3,7 @@
 //! This module contains the concrete implementation of service management
 //! functionality, providing process lifecycle management and service operations.
 
-use super::ServiceProcess;
+use super::{error::ServiceError, ServiceProcess};
 use crate::traits::git_management::GitManagement;
 use crate::traits::process_manager::{FullProcessManager, ProcessManager};
 use crate::traits::service_management::ServiceManagement;
@@ -12,14 +12,14 @@ use dashmap::try_result::TryResult;
 use dashmap::DashMap;
 use nexsock_db::prelude::{
     Service, ServiceConfig, ServiceConfigRepository, ServiceDependencyRepository, ServiceRepository,
+    ServiceAliasRepository, ServiceEnvVarRepository,
 };
 use nexsock_protocol::commands::add_service::AddServicePayload;
 use nexsock_protocol::commands::list_services::ListServicesResponse;
 use nexsock_protocol::commands::manage_service::{ServiceRef, StartServicePayload};
 use nexsock_protocol::commands::service_status::{ServiceState, ServiceStatus};
+use std::collections::HashMap;
 use port_selector::is_free_tcp;
-use rayon::prelude::*;
-use std::fmt::Debug;
 use std::sync::{Arc, LazyLock};
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
@@ -49,6 +49,8 @@ pub struct ServiceManager {
     service_repository: ServiceRepository<'static>,
     dependency_repository: ServiceDependencyRepository<'static>,
     config_repository: ServiceConfigRepository<'static>,
+    env_var_repository: ServiceEnvVarRepository,
+    alias_repository: ServiceAliasRepository,
 }
 
 impl ServiceManager {
@@ -93,6 +95,87 @@ impl Default for ServiceManager {
             service_repository: ServiceRepository::new_from_static(),
             dependency_repository: ServiceDependencyRepository::new_from_static(),
             config_repository: ServiceConfigRepository::new_from_static(),
+            env_var_repository: ServiceEnvVarRepository,
+            alias_repository: ServiceAliasRepository,
+        }
+    }
+}
+
+impl ServiceManager {
+    /// Merges default environment variables with provided environment variables.
+    ///
+    /// Default environment variables from the database are merged with environment
+    /// variables provided in the request. Request environment variables take precedence
+    /// over default values for the same keys.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_id` - The ID of the service to get default environment variables for
+    /// * `provided_env_vars` - Optional environment variables provided in the request
+    ///
+    /// # Returns
+    ///
+    /// A HashMap containing the merged environment variables.
+    async fn merge_environment_variables(
+        &self,
+        service_id: i64,
+        provided_env_vars: Option<HashMap<String, String>>,
+    ) -> crate::error::Result<Option<HashMap<String, String>>> {
+        // Get default environment variables from database
+        let default_env_vars = ServiceEnvVarRepository::find_env_map_by_service_id(
+            nexsock_db::get_db_connection(),
+            service_id,
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Database error: {}", e))?;
+
+        // Merge with provided environment variables (provided take precedence)
+        let mut merged_env_vars = default_env_vars;
+        if let Some(provided) = provided_env_vars {
+            merged_env_vars.extend(provided);
+        }
+
+        // Return None if no environment variables exist, Some if any exist
+        if merged_env_vars.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(merged_env_vars))
+        }
+    }
+
+    /// Resolves a service reference by alias if it's a name that corresponds to an alias.
+    ///
+    /// If the service reference is by name and matches an alias, returns the service ID
+    /// that the alias points to. Otherwise, returns the original service reference.
+    ///
+    /// # Arguments
+    ///
+    /// * `service_ref` - The service reference to potentially resolve
+    ///
+    /// # Returns
+    ///
+    /// The resolved service reference (potentially converted from alias to ID).
+    async fn resolve_service_reference(
+        &self,
+        service_ref: &ServiceRef,
+    ) -> crate::error::Result<ServiceRef> {
+        match service_ref {
+            ServiceRef::Name(name) => {
+                // Check if this name is actually an alias
+                if let Some(service_id) = ServiceAliasRepository::find_service_id_by_alias(
+                    nexsock_db::get_db_connection(),
+                    name,
+                )
+                .await
+                .map_err(|e| anyhow::anyhow!("Database error: {}", e))?
+                {
+                    Ok(ServiceRef::Id(service_id))
+                } else {
+                    // Not an alias, return original reference
+                    Ok(service_ref.clone())
+                }
+            }
+            ServiceRef::Id(_) => Ok(service_ref.clone()),
         }
     }
 }
@@ -146,21 +229,24 @@ impl ServiceManagement for ServiceManager {
     async fn start(&self, payload: &StartServicePayload) -> crate::error::Result<()> {
         let StartServicePayload { service, env_vars } = payload;
 
+        // Resolve service reference (handle aliases)
+        let resolved_service_ref = self.resolve_service_reference(service).await?;
+
         let service = self
             .service_repository
-            .get_by_service_ref(service)
+            .get_by_service_ref(&resolved_service_ref)
             .await?
-            .ok_or(anyhow!("No Service found with reference {}", service))?;
+            .ok_or_else(|| ServiceError::not_found(resolved_service_ref.clone()))?;
 
         let service_id = service.id;
 
         if !is_free_tcp(service.port as u16) {
-            return Err(anyhow!("Port is already in use").into());
+            return Err(ServiceError::port_in_use(service.port).into());
         }
 
         // Check current state
         if matches!(self.get_service_state(service_id), ServiceState::Running) {
-            return Err(anyhow!("Service is already running").into());
+            return Err(ServiceError::already_running(service_id, &service.name).into());
         }
 
         // Get the full service info including config
@@ -171,14 +257,27 @@ impl ServiceManagement for ServiceManager {
 
         let run_command = service
             .config
-            .ok_or_else(|| anyhow!("Service has no configuration"))?
+            .ok_or_else(|| ServiceError::NoConfiguration {
+                id: service_id,
+                name: service.service.name.clone(),
+            })?
             .run_command
-            .ok_or_else(|| anyhow!("Service has no run command"))?;
+            .ok_or_else(|| ServiceError::NoRunCommand {
+                id: service_id,
+                name: service.service.name.clone(),
+            })?;
 
         let path = service.service.repo_path;
 
+        // Merge default environment variables with provided ones
+        let merged_env_vars = self
+            .merge_environment_variables(service_id, Some(env_vars.clone()))
+            .await?;
+
+        let final_env_vars = merged_env_vars.unwrap_or_default();
+
         let service_process = self
-            .spawn_service_process(service_id, path, &run_command, env_vars.clone())
+            .spawn_service_process(service_id, path, &run_command, final_env_vars)
             .await?;
 
         self.running_services.insert(service_id, service_process);
@@ -201,9 +300,12 @@ impl ServiceManagement for ServiceManager {
     /// manager.stop(&service_ref).await?;
     /// ```
     async fn stop(&self, payload: &ServiceRef) -> crate::error::Result<()> {
+        // Resolve service reference (handle aliases)
+        let resolved_service_ref = self.resolve_service_reference(payload).await?;
+
         let service = self
             .service_repository
-            .get_by_service_ref(payload)
+            .get_by_service_ref(&resolved_service_ref)
             .await?
             .ok_or_else(|| anyhow!("No Service with reference `{payload}`"))?;
 
@@ -304,6 +406,8 @@ impl ServiceManagement for ServiceManager {
             config,
             git_branch,
             git_auth_type,
+            default_env_vars,
+            aliases,
         } = payload;
 
         let id = if let Some(config) = config {
@@ -336,6 +440,37 @@ impl ServiceManagement for ServiceManager {
         );
 
         self.service_repository.save(&mut record).await?;
+
+        let service_id = record.id;
+
+        // Save default environment variables if provided
+        if !default_env_vars.is_empty() {
+            let env_var_pairs: Vec<(&str, &str)> = default_env_vars
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_str()))
+                .collect();
+
+            ServiceEnvVarRepository::create_many(
+                nexsock_db::get_db_connection(),
+                service_id,
+                &env_var_pairs,
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Database error: {}", e))?;
+        }
+
+        // Save aliases if provided
+        if !aliases.is_empty() {
+            let alias_strs: Vec<&str> = aliases.iter().map(|s| s.as_str()).collect();
+
+            ServiceAliasRepository::create_many(
+                nexsock_db::get_db_connection(),
+                service_id,
+                &alias_strs,
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Database error: {}", e))?;
+        }
 
         Ok(())
     }
@@ -418,9 +553,28 @@ impl ServiceManagement for ServiceManager {
     /// assert_eq!(status.id, 1);
     /// ```
     async fn get_status(&self, payload: &ServiceRef) -> crate::error::Result<ServiceStatus> {
-        let mut service_status = self.service_repository.get_status(payload).await?;
+        // Resolve service reference (handle aliases)
+        let resolved_service_ref = self.resolve_service_reference(payload).await?;
+
+        let mut service_status = self.service_repository.get_status(&resolved_service_ref).await?;
 
         service_status.state = self.get_service_state(service_status.id);
+
+        // Add default environment variables
+        service_status.default_env_vars = ServiceEnvVarRepository::find_env_map_by_service_id(
+            nexsock_db::get_db_connection(),
+            service_status.id,
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Database error: {}", e))?;
+
+        // Add aliases
+        service_status.aliases = ServiceAliasRepository::find_alias_names_by_service_id(
+            nexsock_db::get_db_connection(),
+            service_status.id,
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Database error: {}", e))?;
 
         Ok(service_status)
     }
@@ -440,11 +594,11 @@ impl ServiceManagement for ServiceManager {
     async fn get_all(&self) -> crate::error::Result<ListServicesResponse> {
         let mut services = self.service_repository.get_all_with_dependencies().await?;
 
-        services.services.par_iter_mut().for_each(|service| {
+        // Update state for each service
+        for service in &mut services.services {
             let state = self.get_service_state(service.id);
-
             service.state = state;
-        });
+        }
 
         Ok(services)
     }

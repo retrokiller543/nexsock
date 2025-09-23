@@ -26,6 +26,16 @@
           <ns-badge size="small" variant="neutral">No</ns-badge>
         {% endif %}
       </div>
+      {% if service.aliases and service.aliases|length > 0 %}
+      <div class="info-item">
+        <span class="info-label">Aliases:</span>
+        <div class="aliases-list">
+          {% for alias in service.aliases %}
+            <ns-badge size="small" variant="secondary">{{ alias }}</ns-badge>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <div class="service-card-actions">

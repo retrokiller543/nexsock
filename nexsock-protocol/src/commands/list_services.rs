@@ -6,17 +6,15 @@ use derive_more::AsRef;
 #[cfg(feature = "savefile")]
 use savefile::prelude::Savefile;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[cfg_attr(feature = "savefile", derive(Savefile))]
 #[derive(
     Clone,
     Default,
     Debug,
-    Ord,
-    PartialOrd,
     PartialEq,
     Eq,
-    Hash,
     Serialize,
     Deserialize,
     Encode,
@@ -42,16 +40,13 @@ impl<T: Into<ServiceInfo>> FromIterator<T> for ListServicesResponse {
     }
 }
 
-#[cfg_attr(feature = "savefile", derive(Savefile))]
+#[cfg_attr(feature = "savefile", derive(savefile::prelude::Savefile))]
 #[derive(
     Clone,
     Default,
     Debug,
-    Ord,
-    PartialOrd,
     PartialEq,
     Eq,
-    Hash,
     Serialize,
     Deserialize,
     Encode,
@@ -63,4 +58,8 @@ pub struct ServiceInfo {
     pub state: ServiceState,
     pub port: i64,
     pub has_dependencies: bool,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub default_env_vars: HashMap<String, String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub aliases: Vec<String>,
 }

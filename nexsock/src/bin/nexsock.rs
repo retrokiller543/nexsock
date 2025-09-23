@@ -143,6 +143,18 @@ async fn main() -> anyhow::Result<()> {
         ServiceCommand::GitLog(cmd) => client.execute_command(cmd).await?,
         ServiceCommand::GitListBranches(cmd) => client.execute_command(cmd).await?,
 
+        // Environment variables commands
+        ServiceCommand::EnvVarsAdd(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::EnvVarsUpdate(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::EnvVarsRemove(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::EnvVarsList(cmd) => client.execute_command(cmd).await?,
+
+        // Service aliases commands
+        ServiceCommand::AliasesAdd(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::AliasesRemove(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::AliasesList(cmd) => client.execute_command(cmd).await?,
+        ServiceCommand::AliasResolve(cmd) => client.execute_command(cmd).await?,
+
         _ => bail!("Unknown command"),
     };
 

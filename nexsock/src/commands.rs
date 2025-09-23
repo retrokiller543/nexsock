@@ -1,4 +1,4 @@
-use crate::cli::{Cli, Commands, ConfigCommands, DependencyCommands, GitCommands};
+use crate::cli::{Cli, Commands, ConfigCommands, DependencyCommands, GitCommands, EnvCommands, AliasCommands};
 use nexsock_protocol::commands::add_service::AddServiceCommand;
 use nexsock_protocol::commands::config::{
     ConfigFormat, GetConfig, ServiceConfigPayload, UpdateConfigCommand,
@@ -16,6 +16,12 @@ use nexsock_protocol::commands::manage_service::{
     StopServiceCommand,
 };
 use nexsock_protocol::commands::service_status::GetServiceStatus;
+use nexsock_protocol::commands::service_env_vars::{
+    ListServiceEnvVars, UpdateServiceEnvVar, AddServiceEnvVars, RemoveServiceEnvVars,
+};
+use nexsock_protocol::commands::service_aliases::{
+    ListServiceAliases, AddServiceAliases, RemoveServiceAliases,
+};
 use nexsock_protocol::commands::stdout::GetServiceStdout;
 use nexsock_protocol::commands::ServiceCommand;
 
@@ -66,6 +72,8 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
             run_command,
             git_branch,
             git_auth,
+            default_env,
+            aliases,
         } => {
             let config = if let Some(config_path) = config {
                 let format = if config_path.extension().and_then(|s| s.to_str()) == Some("env") {
@@ -94,6 +102,8 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
                 Some(git_auth)
             };
 
+            let default_env_vars = Cli::parse_env_vars(default_env);
+
             Ok(AddServiceCommand::new(
                 name,
                 repo_url,
@@ -102,6 +112,8 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
                 config,
                 git_branch,
                 git_auth_type,
+                default_env_vars,
+                aliases,
             )
             .into())
         }
@@ -156,6 +168,33 @@ pub fn create_command(cli: Commands) -> anyhow::Result<ServiceCommand> {
                 Ok(GitListBranchesCommand::new(service, remote).into())
             }
         },
+
+        Commands::Env { command } => match command {
+            EnvCommands::List { service } => Ok(ListServiceEnvVars::new(service).into()),
+            EnvCommands::Set { service, key, value } => {
+                Ok(UpdateServiceEnvVar::new(service, key, value).into())
+            },
+            EnvCommands::Remove { service, key } => {
+                Ok(RemoveServiceEnvVars::new(service, vec![key]).into())
+            },
+            EnvCommands::Clear { service } => {
+                Ok(RemoveServiceEnvVars::new(service, vec![]).into())
+            },
+        },
+
+        Commands::Alias { command } => match command {
+            AliasCommands::List { service } => Ok(ListServiceAliases::new(service).into()),
+            AliasCommands::Add { service, alias } => {
+                Ok(AddServiceAliases::new(service, vec![alias]).into())
+            },
+            AliasCommands::Remove { service, alias } => {
+                Ok(RemoveServiceAliases::new(service, vec![alias]).into())
+            },
+            AliasCommands::Clear { service } => {
+                Ok(RemoveServiceAliases::new(service, vec![]).into())
+            },
+        },
+
         _ => Err(anyhow::anyhow!("invalid command")),
     }
 }

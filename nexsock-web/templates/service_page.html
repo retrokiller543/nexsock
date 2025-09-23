@@ -55,6 +55,88 @@
   </section>
   {% endif %}
 
+  <!-- Environment Variables Section -->
+  <section class="service-section service-env-section">
+    <h2>🌱 Environment Variables</h2>
+    <div class="management-card">
+      <div class="card-body">
+        {% if service.default_env_vars and service.default_env_vars|length > 0 %}
+          <div class="env-vars-list">
+            {% for key, value in service.default_env_vars %}
+              <div class="env-var-item">
+                <div class="env-var-key">{{ key }}</div>
+                <div class="env-var-value">{{ value }}</div>
+                <div class="env-var-actions">
+                  <ns-button 
+                    size="small" 
+                    variant="ghost"
+                    aria-label="Edit environment variable {{ key }}"
+                    onclick="nexsock.editEnvVar('{{ service.name }}', '{{ key }}', '{{ value }}')">
+                    ✏️
+                  </ns-button>
+                  <ns-button 
+                    size="small" 
+                    variant="ghost"
+                    aria-label="Delete environment variable {{ key }}"
+                    onclick="nexsock.deleteEnvVar('{{ service.name }}', '{{ key }}')">
+                    🗑️
+                  </ns-button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No default environment variables set</p>
+          </div>
+        {% endif %}
+        <div class="section-actions">
+          <ns-button 
+            variant="secondary"
+            onclick="nexsock.addEnvVar('{{ service.name }}')">
+            + Add Environment Variable
+          </ns-button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Service Aliases Section -->
+  <section class="service-section service-aliases-section">
+    <h2>🏷️ Service Aliases</h2>
+    <div class="management-card">
+      <div class="card-body">
+        {% if service.aliases and service.aliases|length > 0 %}
+          <div class="aliases-list">
+            {% for alias in service.aliases %}
+              <div class="alias-item">
+                <ns-badge variant="secondary">{{ alias }}</ns-badge>
+                <ns-button 
+                  size="small" 
+                  variant="ghost"
+                  aria-label="Remove alias {{ alias }}"
+                  onclick="nexsock.removeAlias('{{ service.name }}', '{{ alias }}')">
+                  ✕
+                </ns-button>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No aliases set for this service</p>
+          </div>
+        {% endif %}
+        <div class="section-actions">
+          <ns-button 
+            variant="secondary"
+            onclick="nexsock.addAlias('{{ service.name }}')">
+            + Add Alias
+          </ns-button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Git Repository Section -->
   <section class="service-section service-git-section">
     <h2>📁 Repository Management</h2>

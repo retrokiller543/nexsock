@@ -5,11 +5,15 @@ pub mod prelude;
 
 /// Defines the `Service` entity and related components.
 pub mod service;
+/// Defines the `ServiceAlias` entity and related components.
+pub mod service_alias;
 /// Defines the `ServiceConfig` entity and related components.
 pub mod service_config;
 /// Defines the `ServiceDep` entity and related components.
 pub mod service_dep;
 /// Defines the `ServiceDependency` entity and related components.
 pub mod service_dependency;
+/// Defines the `ServiceEnvVar` entity and related components.
+pub mod service_env_var;
 /// Defines the `ServiceRecord` entity and related components.
 pub mod service_record;

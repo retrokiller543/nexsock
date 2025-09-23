@@ -7,6 +7,8 @@ pub mod extra;
 pub mod git;
 pub mod list_services;
 pub mod manage_service;
+pub mod service_aliases;
+pub mod service_env_vars;
 pub mod service_status;
 pub mod stdout;
 
@@ -24,6 +26,14 @@ use crate::commands::git::{
 use crate::commands::list_services::{ListServicesCommand, ListServicesResponse};
 use crate::commands::manage_service::{
     RemoveServiceCommand, RestartServiceCommand, StartServiceCommand, StopServiceCommand,
+};
+use crate::commands::service_aliases::{
+    AddServiceAliases, AliasesResponse, ListServiceAliases, RemoveServiceAliases,
+    ResolveAliasResponse, ResolveServiceAlias,
+};
+use crate::commands::service_env_vars::{
+    AddServiceEnvVars, EnvVarsResponse, ListServiceEnvVars, RemoveServiceEnvVars,
+    UpdateServiceEnvVar,
 };
 use crate::commands::service_status::{GetServiceStatus, ServiceStatus};
 use crate::commands::stdout::GetServiceStdout;
@@ -81,13 +91,25 @@ pub enum Command {
     RemoveDependency = 21,
     ListDependencies = 22,
 
+    // Environment variables
+    AddServiceEnvVars = 23,
+    UpdateServiceEnvVar = 24,
+    RemoveServiceEnvVars = 25,
+    ListServiceEnvVars = 26,
+
+    // Service aliases
+    AddServiceAliases = 27,
+    RemoveServiceAliases = 28,
+    ListServiceAliases = 29,
+    ResolveServiceAlias = 30,
+
     // Repository operations
-    CheckoutBranch = 30,
-    GetRepoStatus = 31,
-    GitCheckoutCommit = 32,
-    GitPull = 33,
-    GitLog = 34,
-    GitListBranches = 35,
+    CheckoutBranch = 31,
+    GetRepoStatus = 32,
+    GitCheckoutCommit = 33,
+    GitPull = 34,
+    GitLog = 35,
+    GitListBranches = 36,
 
     // System operations
     Shutdown = 40,
@@ -117,6 +139,10 @@ pub enum CommandPayload {
     ServiceConfig(ServiceConfigPayload),
 
     Dependencies(ListDependenciesResponse),
+
+    EnvVars(EnvVarsResponse),
+    Aliases(AliasesResponse),
+    ResolveAlias(ResolveAliasResponse),
 
     GitLog(GitLogResponse),
     GitBranches(GitListBranchesResponse),
@@ -151,6 +177,16 @@ pub enum ServiceCommand {
     DependencyAdd(AddDependencyCommand),
     DependencyRemove(RemoveDependencyCommand),
     DependencyList(ListDependenciesCommand),
+
+    EnvVarsAdd(AddServiceEnvVars),
+    EnvVarsUpdate(UpdateServiceEnvVar),
+    EnvVarsRemove(RemoveServiceEnvVars),
+    EnvVarsList(ListServiceEnvVars),
+
+    AliasesAdd(AddServiceAliases),
+    AliasesRemove(RemoveServiceAliases),
+    AliasesList(ListServiceAliases),
+    AliasResolve(ResolveServiceAlias),
 
     GitCheckout(CheckoutCommand),
     GitCheckoutCommit(GitCheckoutCommitCommand),
