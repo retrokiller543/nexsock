@@ -3,10 +3,12 @@ use clap::Parser;
 use nexsock::cli::{Cli, Commands, ToolCommands};
 use nexsock::commands::create_command;
 use nexsock::display::CliDisplay;
+use nexsock::tui::run_tui;
 use nexsock_client::Client;
 use nexsock_config::NexsockConfig;
 use nexsock_protocol::commands::ServiceCommand;
 use std::io;
+use std::time::Duration;
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tracing::warn;
@@ -105,6 +107,12 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let mut client = Client::connect(socket).await?;
+    
+    // Handle TUI command separately
+    if let Commands::Tui { refresh_rate, service } = cli.command {
+        let refresh_duration = Duration::from_millis(refresh_rate);
+        return run_tui(client, refresh_duration, service).await;
+    }
     
     let command = create_command(cli.command)?;
 

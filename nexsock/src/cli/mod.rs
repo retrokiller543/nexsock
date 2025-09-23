@@ -173,6 +173,17 @@ pub enum Commands {
         #[command(subcommand)]
         command: ToolCommands,
     },
+
+    /// Launch interactive TUI (Terminal User Interface)
+    Tui {
+        /// Refresh rate in milliseconds
+        #[arg(long, default_value = "250")]
+        refresh_rate: u64,
+
+        /// Start with a specific service selected
+        #[arg(long)]
+        service: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]

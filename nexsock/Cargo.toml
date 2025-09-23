@@ -34,6 +34,13 @@ serde_yaml = "0.9"
 atty = "0.2"
 tabled = "0.17"
 
+# TUI dependencies for interactive terminal interface
+ratatui = "0.28"
+crossterm = { version = "0.28", features = ["event-stream"] }
+tokio-stream = "0.1"
+tui-textarea = "0.6"
+color-eyre = "0.6"
+
 [features]
 default = []
 jemalloc = ["tikv-jemallocator"]
