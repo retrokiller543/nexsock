@@ -2,9 +2,13 @@ use anyhow::{bail, Context};
 use clap::Parser;
 use nexsock::cli::{Cli, Commands, ToolCommands};
 use nexsock::commands::create_command;
+use nexsock::display::CliDisplay;
+use nexsock::tui::run_tui;
 use nexsock_client::Client;
 use nexsock_config::NexsockConfig;
-use nexsock_protocol::commands::{CommandPayload, ServiceCommand};
+use nexsock_protocol::commands::ServiceCommand;
+use std::io;
+use std::time::Duration;
 #[cfg(windows)]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tracing::warn;
@@ -18,9 +22,11 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 /// Currently, this function logs a warning that tool management is unsupported and does not implement any functionality for the provided command.
 ///
 /// # Parameters
+///
 /// - `command`: The tool management subcommand to handle.
 ///
 /// # Returns
+///
 /// Returns an error indicating that tool management is not supported.
 ///
 /// # Examples
@@ -74,6 +80,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let config = NexsockConfig::new()?;
+    let display_options = cli.display_options();
 
     #[cfg(unix)]
     let socket = if let Some(socket) = cli.socket {
@@ -100,7 +107,13 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let mut client = Client::connect(socket).await?;
-
+    
+    // Handle TUI command separately
+    if let Commands::Tui { refresh_rate, service } = cli.command {
+        let refresh_duration = Duration::from_millis(refresh_rate);
+        return run_tui(client, refresh_duration, service).await;
+    }
+    
     let command = create_command(cli.command)?;
 
     let response = match command {
@@ -133,11 +146,10 @@ async fn main() -> anyhow::Result<()> {
         _ => bail!("Unknown command"),
     };
 
-    match response {
-        CommandPayload::Stdout(log) => print!("{log}"),
-        res => {
-            dbg!(res);
-        }
+    let mut stdout = io::stdout();
+    
+    if let Err(e) = response.display(&display_options, &mut stdout) {
+        eprintln!("Error displaying output: {}", e);
     }
 
     Ok(())

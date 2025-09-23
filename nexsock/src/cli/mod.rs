@@ -1,5 +1,6 @@
 mod concurrent;
 
+use crate::display::OutputFormat;
 use clap::{Parser, Subcommand};
 pub use concurrent::*;
 use derive_more::IsVariant;
@@ -10,6 +11,7 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
+
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -23,6 +25,26 @@ pub struct Cli {
     #[cfg(windows)]
     #[arg(short, long)]
     pub address: Option<SocketAddr>,
+
+    /// Output format
+    #[arg(long, value_enum, default_value = "table", global = true)]
+    pub format: OutputFormat,
+
+    /// Enable verbose output
+    #[arg(short, long, global = true)]
+    pub verbose: bool,
+
+    /// Disable headers in table output
+    #[arg(long, global = true)]
+    pub no_headers: bool,
+
+    /// Force color output (overrides auto-detection)
+    #[arg(long, global = true)]
+    pub color: bool,
+
+    /// Show detailed view for collections (lists, logs, etc.)
+    #[arg(long, global = true)]
+    pub detailed: bool,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -150,6 +172,17 @@ pub enum Commands {
     Tools {
         #[command(subcommand)]
         command: ToolCommands,
+    },
+
+    /// Launch interactive TUI (Terminal User Interface)
+    Tui {
+        /// Refresh rate in milliseconds
+        #[arg(long, default_value = "250")]
+        refresh_rate: u64,
+
+        /// Start with a specific service selected
+        #[arg(long)]
+        service: Option<String>,
     },
 }
 
@@ -406,6 +439,17 @@ impl FromStr for ToolType {
 // Note: Git command conversion is handled directly in commands.rs
 
 impl Cli {
+    /// Creates display options from CLI arguments
+    pub fn display_options(&self) -> crate::display::DisplayOptions {
+        crate::display::DisplayOptions {
+            format: self.format,
+            verbose: self.verbose,
+            no_headers: self.no_headers,
+            color: if self.color { true } else { atty::is(atty::Stream::Stdout) },
+            detailed: self.detailed,
+        }
+    }
+
     /// Parses a list of environment variable strings in `KEY=VALUE` format into a map.
     ///
     /// Ignores entries that do not contain an '=' character.
