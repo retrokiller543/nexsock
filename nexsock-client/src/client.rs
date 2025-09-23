@@ -22,7 +22,7 @@ use tokio::net::unix::{OwnedReadHalf, OwnedWriteHalf};
 #[cfg(unix)]
 use tokio::net::UnixStream;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ClientManager {
     config: NexsockConfig,
 }
@@ -35,6 +35,11 @@ impl ClientManager {
     }
     pub fn from_config(config: NexsockConfig) -> Self {
         Self { config }
+    }
+
+    /// Create a new client connection
+    pub async fn create_client(&self) -> Result<Client> {
+        self.create().await
     }
 }
 

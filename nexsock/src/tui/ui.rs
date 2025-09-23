@@ -3,7 +3,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Row, Table, Tabs},
+    widgets::{Block, Borders, Paragraph, Row, Table, TableState, Tabs},
     Frame,
 };
 use std::collections::HashMap;
@@ -25,7 +25,6 @@ pub struct AppState {
     pub status_message: Option<String>,
     pub error_message: Option<String>,
     pub logs: HashMap<String, Vec<String>>,
-    pub list_state: ListState,
 }
 
 impl AppState {
@@ -37,7 +36,6 @@ impl AppState {
             status_message: None,
             error_message: None,
             logs: HashMap::new(),
-            list_state: ListState::default(),
         };
 
         // Select initial service if provided
@@ -73,7 +71,6 @@ impl AppState {
             self.selected_service_index = Some(0);
         }
         
-        self.update_list_state();
     }
 
     pub fn select_previous(&mut self) {
@@ -86,7 +83,6 @@ impl AppState {
         } else if !self.services.is_empty() {
             self.selected_service_index = Some(self.services.len() - 1);
         }
-        self.update_list_state();
     }
 
     pub fn select_next(&mut self) {
@@ -99,7 +95,6 @@ impl AppState {
         } else if !self.services.is_empty() {
             self.selected_service_index = Some(0);
         }
-        self.update_list_state();
     }
 
     pub fn selected_service(&self) -> Option<&ServiceInfo> {
@@ -123,7 +118,7 @@ impl AppState {
 
     pub fn add_log_entry(&mut self, service_name: String, timestamp: String, message: String) {
         let log_line = format!("[{}] {}", timestamp, message);
-        self.logs.entry(service_name).or_insert_with(Vec::new).push(log_line);
+        self.logs.entry(service_name.clone()).or_insert_with(Vec::new).push(log_line);
         
         // Keep only last 1000 lines
         let logs = self.logs.get_mut(&service_name).unwrap();
@@ -135,10 +130,6 @@ impl AppState {
     pub fn clear_temporary_messages(&mut self) {
         // Clear status messages after some time
         // This would be enhanced with timestamps in a real implementation
-    }
-
-    fn update_list_state(&mut self) {
-        self.list_state.select(self.selected_service_index);
     }
 }
 
@@ -223,43 +214,66 @@ fn render_services_list(frame: &mut Frame, area: Rect, app_state: &AppState) {
             .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
             .bottom_margin(1),
     )
-    .block(Block::default().borders(Borders::ALL).title("Services"));
+    .block(Block::default().borders(Borders::ALL).title(
+        if let Some(service) = app_state.selected_service() {
+            format!("Services - Selected: {}", service.name)
+        } else {
+            "Services - No selection".to_string()
+        }
+    ))
+    .highlight_style(Style::default().bg(Color::Blue).fg(Color::White).add_modifier(Modifier::BOLD))
+    .highlight_symbol("► ");
 
-    frame.render_widget(table, chunks[0]);
+    // Create a local table state based on current selection
+    let mut table_state = TableState::default();
+    table_state.select(app_state.selected_service_index);
+    
+    frame.render_stateful_widget(table, chunks[0], &mut table_state);
 
     // Right side: Key bindings help
     let help_text = vec![
-        Line::from("Controls:"),
+        Line::from(vec![
+            Span::styled("Controls:", Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        ]),
         Line::from(""),
         Line::from(vec![
+            Span::styled("Navigation:", Style::default().fg(Color::Cyan)),
+        ]),
+        Line::from(vec![
             Span::styled("↑/k", Style::default().fg(Color::Yellow)),
-            Span::raw("  Move up"),
+            Span::raw("  Move selection up"),
         ]),
         Line::from(vec![
             Span::styled("↓/j", Style::default().fg(Color::Yellow)),
-            Span::raw("  Move down"),
+            Span::raw("  Move selection down"),
         ]),
         Line::from(""),
         Line::from(vec![
+            Span::styled("Service Actions:", Style::default().fg(Color::Cyan)),
+        ]),
+        Line::from(vec![
             Span::styled("s", Style::default().fg(Color::Green)),
-            Span::raw("    Start service"),
+            Span::raw("    Start selected service"),
         ]),
         Line::from(vec![
             Span::styled("S", Style::default().fg(Color::Red)),
-            Span::raw("    Stop service"),
+            Span::raw("    Stop selected service"),
         ]),
         Line::from(vec![
             Span::styled("r", Style::default().fg(Color::Blue)),
-            Span::raw("    Restart service"),
+            Span::raw("    Restart selected service"),
         ]),
         Line::from(""),
         Line::from(vec![
+            Span::styled("Other:", Style::default().fg(Color::Cyan)),
+        ]),
+        Line::from(vec![
             Span::styled("F5/R", Style::default().fg(Color::Cyan)),
-            Span::raw("  Refresh"),
+            Span::raw("  Refresh services"),
         ]),
         Line::from(vec![
             Span::styled("q", Style::default().fg(Color::White)),
-            Span::raw("    Quit"),
+            Span::raw("    Quit application"),
         ]),
     ];
 

@@ -19,7 +19,7 @@ pub async fn run_tui(
     let terminal = ratatui::init();
     
     // Create and run app
-    let result = TuiApp::new(client, refresh_rate, initial_service)
+    let result = TuiApp::new(client, refresh_rate, initial_service)?
         .run(terminal)
         .await;
     

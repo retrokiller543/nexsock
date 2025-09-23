@@ -2,18 +2,32 @@ use anyhow::Result;
 use crossterm::event::{Event, EventStream, KeyCode, KeyEvent, KeyModifiers};
 use futures::StreamExt;
 use nexsock_client::Client;
-use nexsock_protocol::commands::{CommandPayload, list_services::ServiceInfo};
+use nexsock_protocol::commands::CommandPayload;
 use ratatui::DefaultTerminal;
 use std::time::Duration;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use super::events::TuiEvent;
 use super::ui::{render_ui, AppState, ViewMode};
 
+/// Command types that can be sent to the client task
+enum ClientCommand {
+    ListServices(nexsock_protocol::commands::list_services::ListServicesCommand),
+    StartService(nexsock_protocol::commands::manage_service::StartServiceCommand),
+    StopService(nexsock_protocol::commands::manage_service::StopServiceCommand),
+    RestartService(nexsock_protocol::commands::manage_service::RestartServiceCommand),
+}
+
+/// Command request sent to the client task
+struct ClientRequest {
+    command: ClientCommand,
+    response_tx: oneshot::Sender<Result<CommandPayload>>,
+}
+
 /// Main TUI application
 pub struct TuiApp {
-    client: Client,
+    command_tx: mpsc::UnboundedSender<ClientRequest>,
     refresh_rate: Duration,
     initial_service: Option<String>,
 }
@@ -24,12 +38,44 @@ impl TuiApp {
         client: Client,
         refresh_rate: Duration,
         initial_service: Option<String>,
-    ) -> Self {
-        Self {
-            client,
+    ) -> Result<Self> {
+        let (command_tx, command_rx) = mpsc::unbounded_channel();
+        
+        // Spawn the client task
+        Self::spawn_client_task(client, command_rx);
+        
+        Ok(Self {
+            command_tx,
             refresh_rate,
             initial_service,
-        }
+        })
+    }
+    
+    /// Spawn the client task that handles all command requests
+    fn spawn_client_task(mut client: Client, mut command_rx: mpsc::UnboundedReceiver<ClientRequest>) {
+        tokio::spawn(async move {
+            while let Some(request) = command_rx.recv().await {
+                let result = match request.command {
+                    ClientCommand::ListServices(cmd) => client.execute_command(cmd).await,
+                    ClientCommand::StartService(cmd) => client.execute_command(cmd).await,
+                    ClientCommand::StopService(cmd) => client.execute_command(cmd).await,
+                    ClientCommand::RestartService(cmd) => client.execute_command(cmd).await,
+                };
+                let _ = request.response_tx.send(result);
+            }
+        });
+    }
+    
+    /// Send a command to the client task and wait for response
+    async fn send_command(&self, command: ClientCommand) -> Result<CommandPayload> {
+        let (response_tx, response_rx) = oneshot::channel();
+        let request = ClientRequest {
+            command,
+            response_tx,
+        };
+        
+        self.command_tx.send(request)?;
+        response_rx.await?
     }
 
     /// Run the TUI application with full async event handling
@@ -87,7 +133,9 @@ impl TuiApp {
 
     /// Load services from daemon
     async fn load_services(&self, app_state: &mut AppState) -> Result<()> {
-        let response = self.client.list_services().await?;
+        use nexsock_protocol::commands::list_services::ListServicesCommand;
+        
+        let response = self.send_command(ClientCommand::ListServices(ListServicesCommand)).await?;
         
         if let CommandPayload::ListServices(list) = response {
             app_state.update_services(list.services);
@@ -162,7 +210,7 @@ impl TuiApp {
             }
             
             // Refresh
-            (KeyCode::F5, _) | (KeyCode::Char('R'), _) => {
+            (KeyCode::F(5), _) | (KeyCode::Char('R'), _) => {
                 self.refresh_services(event_tx).await?;
             }
             
@@ -225,15 +273,31 @@ impl TuiApp {
         service_name: &str,
         event_tx: &mpsc::UnboundedSender<TuiEvent>,
     ) -> Result<()> {
-        let client = self.client.clone();
+        let command_tx = self.command_tx.clone();
         let service_name = service_name.to_string();
         let event_tx = event_tx.clone();
         
         tokio::spawn(async move {
-            let task_id = format!("start_{}", service_name);
+            use nexsock_protocol::commands::manage_service::StartServiceCommand;
             
-            let result = client.start_service(&service_name, vec![]).await
-                .map_err(|e| e.to_string());
+            let task_id = format!("start_{}", service_name);
+            let command = StartServiceCommand::new(service_name, std::collections::HashMap::new());
+            
+            let (response_tx, response_rx) = oneshot::channel();
+            let request = ClientRequest {
+                command: ClientCommand::StartService(command),
+                response_tx,
+            };
+            
+            let result = if command_tx.send(request).is_ok() {
+                match response_rx.await {
+                    Ok(Ok(_)) => Ok(CommandPayload::Empty),
+                    Ok(Err(e)) => Err(e.to_string()),
+                    Err(_) => Err("Command channel closed".to_string()),
+                }
+            } else {
+                Err("Failed to send command".to_string())
+            };
             
             let _ = event_tx.send(TuiEvent::TaskComplete { task_id, result });
         });
@@ -247,15 +311,31 @@ impl TuiApp {
         service_name: &str,
         event_tx: &mpsc::UnboundedSender<TuiEvent>,
     ) -> Result<()> {
-        let client = self.client.clone();
+        let command_tx = self.command_tx.clone();
         let service_name = service_name.to_string();
         let event_tx = event_tx.clone();
         
         tokio::spawn(async move {
-            let task_id = format!("stop_{}", service_name);
+            use nexsock_protocol::commands::manage_service::StopServiceCommand;
             
-            let result = client.stop_service(&service_name).await
-                .map_err(|e| e.to_string());
+            let task_id = format!("stop_{}", service_name);
+            let command = StopServiceCommand::new(service_name);
+            
+            let (response_tx, response_rx) = oneshot::channel();
+            let request = ClientRequest {
+                command: ClientCommand::StopService(command),
+                response_tx,
+            };
+            
+            let result = if command_tx.send(request).is_ok() {
+                match response_rx.await {
+                    Ok(Ok(_)) => Ok(CommandPayload::Empty),
+                    Ok(Err(e)) => Err(e.to_string()),
+                    Err(_) => Err("Command channel closed".to_string()),
+                }
+            } else {
+                Err("Failed to send command".to_string())
+            };
             
             let _ = event_tx.send(TuiEvent::TaskComplete { task_id, result });
         });
@@ -269,24 +349,33 @@ impl TuiApp {
         service_name: &str,
         event_tx: &mpsc::UnboundedSender<TuiEvent>,
     ) -> Result<()> {
-        let client = self.client.clone();
+        let command_tx = self.command_tx.clone();
         let service_name = service_name.to_string();
         let event_tx = event_tx.clone();
         
         tokio::spawn(async move {
-            let task_id = format!("restart_{}", service_name);
+            use nexsock_protocol::commands::manage_service::RestartServiceCommand;
             
-            // Stop then start
-            let stop_result = client.stop_service(&service_name).await;
-            if stop_result.is_ok() {
-                tokio::time::sleep(Duration::from_millis(500)).await;
-                let start_result = client.start_service(&service_name, vec![]).await;
-                let result = start_result.map_err(|e| e.to_string());
-                let _ = event_tx.send(TuiEvent::TaskComplete { task_id, result });
+            let task_id = format!("restart_{}", service_name);
+            let command = RestartServiceCommand::new(service_name, std::collections::HashMap::new());
+            
+            let (response_tx, response_rx) = oneshot::channel();
+            let request = ClientRequest {
+                command: ClientCommand::RestartService(command),
+                response_tx,
+            };
+            
+            let result = if command_tx.send(request).is_ok() {
+                match response_rx.await {
+                    Ok(Ok(_)) => Ok(CommandPayload::Empty),
+                    Ok(Err(e)) => Err(e.to_string()),
+                    Err(_) => Err("Command channel closed".to_string()),
+                }
             } else {
-                let result = stop_result.map_err(|e| e.to_string());
-                let _ = event_tx.send(TuiEvent::TaskComplete { task_id, result });
-            }
+                Err("Failed to send command".to_string())
+            };
+            
+            let _ = event_tx.send(TuiEvent::TaskComplete { task_id, result });
         });
         
         Ok(())
@@ -297,14 +386,30 @@ impl TuiApp {
         &self,
         event_tx: &mpsc::UnboundedSender<TuiEvent>,
     ) -> Result<()> {
-        let client = self.client.clone();
+        let command_tx = self.command_tx.clone();
         let event_tx = event_tx.clone();
         
         tokio::spawn(async move {
-            let task_id = "refresh_services".to_string();
+            use nexsock_protocol::commands::list_services::ListServicesCommand;
             
-            let result = client.list_services().await
-                .map_err(|e| e.to_string());
+            let task_id = "refresh_services".to_string();
+            let command = ListServicesCommand;
+            
+            let (response_tx, response_rx) = oneshot::channel();
+            let request = ClientRequest {
+                command: ClientCommand::ListServices(command),
+                response_tx,
+            };
+            
+            let result = if command_tx.send(request).is_ok() {
+                match response_rx.await {
+                    Ok(Ok(response)) => Ok(response),
+                    Ok(Err(e)) => Err(e.to_string()),
+                    Err(_) => Err("Command channel closed".to_string()),
+                }
+            } else {
+                Err("Failed to send command".to_string())
+            };
             
             let _ = event_tx.send(TuiEvent::TaskComplete { task_id, result });
         });
@@ -318,7 +423,7 @@ impl TuiApp {
         event_tx: mpsc::UnboundedSender<TuiEvent>,
     ) -> Result<()> {
         // Background service status polling
-        let client = self.client.clone();
+        let command_tx = self.command_tx.clone();
         let tx = event_tx.clone();
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(5));
@@ -326,8 +431,18 @@ impl TuiApp {
             loop {
                 interval.tick().await;
                 
-                if let Ok(response) = client.list_services().await {
-                    let _ = tx.send(TuiEvent::ServiceUpdate(response));
+                use nexsock_protocol::commands::list_services::ListServicesCommand;
+                
+                let (response_tx, response_rx) = oneshot::channel();
+                let request = ClientRequest {
+                    command: ClientCommand::ListServices(ListServicesCommand),
+                    response_tx,
+                };
+                
+                if command_tx.send(request).is_ok() {
+                    if let Ok(Ok(response)) = response_rx.await {
+                        let _ = tx.send(TuiEvent::ServiceUpdate(response));
+                    }
                 }
             }
         });

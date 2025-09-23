@@ -105,7 +105,7 @@ pub enum Command {
 service_command!(pub struct PingCommand<_, ()> = Ping);
 
 #[cfg_attr(feature = "savefile", derive(Savefile))]
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, IsVariant, Unwrap, TryUnwrap, From)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode, IsVariant, Unwrap, TryUnwrap, From)]
 #[unwrap(ref, ref_mut)]
 #[try_unwrap(ref, ref_mut)]
 #[non_exhaustive]
